@@ -96,32 +96,6 @@ function freqToNote(freq){
     return {note: NOTES[noteIndex], octave};
 }
 
-// Start Synth
-function startSynth(){
-    if(audioCtx) return;
-
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-
-    osc = audioCtx.createOscillator();
-    osc.type = waveType;
-
-    gainNode = audioCtx.createGain();
-    gainNode.gain.value=0.2;
-
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    osc.start();
-}
-
-// Stop Synth
-function stopSynth(){
-    if(!osc) return;
-    osc.stop();
-    osc.disconnect();
-    osc = null;
-}
-
 // Map X → frequency
 function noteFromPad(x){
     const c3 = 130.81*Math.pow(2,octaveOffset);
@@ -143,9 +117,20 @@ function applyPitch(){
 const pad = document.getElementById("pad");
 
 pad.addEventListener("touchstart",e=>{
-    if(!audioCtx) startSynth();
-    isPlaying = true;
     const touch = e.touches[0];
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+
+    if(!osc){
+        osc = audioCtx.createOscillator();
+        osc.type = waveType;
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.2;
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+    }
+
+    isPlaying=true;
     baseFreq = noteFromPad(touch.clientX);
     applyPitch();
 });
@@ -159,7 +144,11 @@ pad.addEventListener("touchmove",e=>{
 
 pad.addEventListener("touchend",e=>{
     isPlaying=false;
-    stopSynth();
+    if(osc){
+        osc.stop();
+        osc.disconnect();
+        osc = null;
+    }
     noteDisplay.textContent = `Octave: ${3+octaveOffset} | Note: –`;
 });
 
@@ -170,7 +159,7 @@ document.getElementById("octDown").onclick = ()=>{ octaveOffset--; };
 // Waveform select
 document.getElementById("waveSelect").onchange = e=>{
     waveType = e.target.value;
-    if(osc) osc.type=waveType;
+    if(osc) osc.type = waveType;
 };
 
 // Disable context menu
