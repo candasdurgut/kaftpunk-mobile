@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Uçurucu Saykadelik Synth</title>
+<title>Sensor Synth Pad Start/Stop</title>
 <style>
 html, body {
     margin: 0; padding: 0; height: 100%;
@@ -16,9 +16,15 @@ html, body {
     overscroll-behavior: none;
 }
 
+#noteDisplay {
+    height: 8vh; line-height: 8vh;
+    text-align: center; font-size: 18px;
+    background: #222; color: #0f0;
+}
+
 #pad {
     width: 100vw;
-    height: 70vh;
+    height: 72vh;
     background: linear-gradient(135deg,#222,#333);
     -webkit-user-select: none;
     user-select: none;
@@ -29,12 +35,12 @@ html, body {
 }
 
 #controls {
-    height: 30vh; display: flex;
+    height: 20vh; display: flex;
     flex-wrap: wrap; padding: 10px;
     gap: 10px; justify-content: center; align-items: center;
 }
 
-button, select, input[type=range] {
+button, select {
     padding: 8px 14px;
     font-size: 16px;
     border-radius: 8px;
@@ -51,49 +57,27 @@ label { font-size: 14px; margin-right: 5px; }
 </head>
 <body>
 
+<div id="noteDisplay">Octave: 0 | Note: –</div>
 <div id="pad"></div>
 
 <div id="controls">
-    <button id="startBtn">Start Synth</button>
-    <button id="motionBtn">Enable Motion</button>
     <button id="octDown">Oct -</button>
     <button id="octUp">Oct +</button>
-    <div class="control-group">
-        <label for="waveSelect">Wave</label>
-        <select id="waveSelect">
-            <option value="sawtooth">Saw</option>
-            <option value="triangle">Triangle</option>
-            <option value="square">Square</option>
-            <option value="sine">Sine</option>
-        </select>
-    </div>
-    <div class="control-group">
-        <label for="detuneRange">Detune</label>
-        <input type="range" id="detuneRange" min="0" max="50" value="15">
-    </div>
-    <div class="control-group">
-        <label for="filterReso">Resonance</label>
-        <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-    </div>
-    <button id="toggleFlanger">Flanger</button>
-    <button id="togglePhaser">Phaser</button>
-    <button id="toggleDist">Distortion</button>
 </div>
 
 <script>
 let audioCtx;
-let oscillators = [];
-let gainNode, filter, reverb;
-let baseFreq = 261.63, octaveOffset = 0, tiltBend = 0;
-let isFlanger=false, isPhaser=false, isDist=false;
-const NUM_OSC = 7;
-let detuneAmount = 15;
-let waveType = "sawtooth";
+let osc;
+let gainNode;
+let baseFreq = 261.63;
+let octaveOffset = 0;
+let tiltBend = 0;
+let isPlaying = false;
 
-// === Simple Pseudo Reverb ===
+// Simple pseudo reverb
 function createReverb(ctx) {
     const convolver = ctx.createConvolver();
-    const len = 3*ctx.sampleRate;
+    const len = 2.5*ctx.sampleRate;
     const impulse = ctx.createBuffer(2,len,ctx.sampleRate);
     for(let c=0;c<2;c++){
         const buf = impulse.getChannelData(c);
@@ -105,109 +89,99 @@ function createReverb(ctx) {
     return convolver;
 }
 
+// Start synth
 function startSynth(){
+    if(audioCtx)return;
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+
+    osc = audioCtx.createOscillator();
+    osc.type="sawtooth";
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type="lowpass";
+    filter.frequency.value=8000;
+    filter.Q.value=1;
+
+    const reverb = createReverb(audioCtx);
 
     gainNode = audioCtx.createGain();
     gainNode.gain.value=0.15;
 
-    filter = audioCtx.createBiquadFilter();
-    filter.type="lowpass";
-    filter.frequency.value=9000;
-    filter.Q.value=1;
-
-    reverb = createReverb(audioCtx);
-
-    // OSCILLATORS
-    oscillators=[];
-    for(let i=0;i<NUM_OSC;i++){
-        const osc = audioCtx.createOscillator();
-        osc.type = waveType;
-        const detune = (i-Math.floor(NUM_OSC/2))*(detuneAmount);
-        osc.detune.value = detune;
-        osc.connect(filter);
-        osc.start();
-        oscillators.push(osc);
-    }
-
+    osc.connect(filter);
     filter.connect(reverb);
     reverb.connect(gainNode);
     gainNode.connect(audioCtx.destination);
+
+    osc.start();
 }
 
-// === Pad X→Pitch Y→Filter ===
+// Stop synth
+function stopSynth(){
+    if(!osc)return;
+    osc.stop();
+    osc.disconnect();
+    osc=null;
+}
+
+// Pad control
 const pad = document.getElementById("pad");
+const noteDisplay = document.getElementById("noteDisplay");
+
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+function freqToNote(freq){
+    const A4 = 440;
+    const semitones = Math.round(12*Math.log2(freq/ A4));
+    const noteIndex = (semitones+9+12*100)%12; // C4=261Hz base
+    const octave = 4 + Math.floor((semitones+9)/12);
+    return {note: NOTES[noteIndex], octave};
+}
+
 function noteFromPad(x){
-    const c4 = 261.63 * Math.pow(2,octaveOffset);
+    const c4 = 261.63*Math.pow(2,octaveOffset);
     const c5 = c4*2;
     const ratio = x/window.innerWidth;
     return c4 + (c5-c4)*ratio;
 }
 
 function applyPitch(){
+    if(!osc)return;
     const freq = baseFreq*Math.pow(2,tiltBend/12);
-    oscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,audioCtx.currentTime,0.01));
+    osc.frequency.setTargetAtTime(freq,audioCtx.currentTime,0.01);
+
+    const {note, octave} = freqToNote(freq);
+    noteDisplay.textContent = `Octave: ${octaveOffset} | Note: ${note}`;
 }
 
-pad.addEventListener("touchstart",handleTouch);
-pad.addEventListener("touchmove",handleTouch);
-function handleTouch(e){
-    const touch = e.touches[0]||e.changedTouches[0];
+// Touch events: start on touchstart, stop on touchend
+pad.addEventListener("touchstart",e=>{
+    if(!audioCtx)startSynth();
+    isPlaying=true;
+    const touch = e.touches[0];
     baseFreq = noteFromPad(touch.clientX);
-    filter.frequency.value = 500+((window.innerHeight-touch.clientY)/window.innerHeight)*8000;
     applyPitch();
-}
+});
 
-// === DeviceOrientation Whammy ===
-function enableMotion(){
-    if(typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(res=>{
-            if(res==='granted'){
-                window.addEventListener("deviceorientation", e=>{
-                    const norm = e.beta/45;
-                    tiltBend = norm*24; // ±2 octaves
-                    applyPitch();
-                });
-            }
-        });
-    }
-}
+pad.addEventListener("touchmove",e=>{
+    if(!isPlaying)return;
+    const touch = e.touches[0];
+    baseFreq = noteFromPad(touch.clientX);
+    applyPitch();
+});
 
-// === Octave Buttons ===
+pad.addEventListener("touchend",e=>{
+    isPlaying=false;
+    stopSynth();
+    noteDisplay.textContent = `Octave: ${octaveOffset} | Note: –`;
+});
+
+// Octave buttons
 document.getElementById("octUp").onclick = ()=>{ octaveOffset++; };
 document.getElementById("octDown").onclick = ()=>{ octaveOffset--; };
 
-// === Waveform select ===
-document.getElementById("waveSelect").onchange = e=>{
-    waveType = e.target.value;
-    oscillators.forEach(osc=>osc.type=waveType);
-};
-
-// === Detune control ===
-document.getElementById("detuneRange").oninput = e=>{
-    detuneAmount = parseFloat(e.target.value);
-    oscillators.forEach((osc,i)=>{
-        const det = (i-Math.floor(NUM_OSC/2))*detuneAmount;
-        osc.detune.setValueAtTime(det,audioCtx.currentTime);
-    });
-};
-
-// === Filter Resonance ===
-document.getElementById("filterReso").oninput = e=>{
-    filter.Q.value=parseFloat(e.target.value);
-};
-
-// === Toggle Effects ===
-document.getElementById("toggleFlanger").onclick = ()=>{ isFlanger=!isFlanger; }
-document.getElementById("togglePhaser").onclick = ()=>{ isPhaser=!isPhaser; }
-document.getElementById("toggleDist").onclick = ()=>{ isDist=!isDist; }
-
-// === Buttons ===
-document.getElementById("startBtn").onclick = ()=>startSynth();
-document.getElementById("motionBtn").onclick = ()=>enableMotion();
-
-// Prevent context menu globally
+// Disable context menu globally
 window.addEventListener("contextmenu", e=>e.preventDefault());
 </script>
+
 </body>
 </html>
