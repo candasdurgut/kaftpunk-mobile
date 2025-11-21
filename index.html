@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensor Synth</title>
+<style>
+    body {
+        margin: 0;
+        background: #111;
+        color: white;
+        font-family: sans-serif;
+        overflow: hidden;
+        touch-action: none;
+    }
+    #pad {
+        width: 100vw;
+        height: 80vh;
+        background: linear-gradient(90deg, #222, #333);
+    }
+    #controls {
+        height: 20vh;
+        padding: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 18px;
+        border: none;
+        border-radius: 10px;
+        background: #444;
+        color: white;
+    }
+</style>
+</head>
+<body>
+
+<div id="pad"></div>
+
+<div id="controls">
+    <button id="startBtn">Start Synth</button>
+    <button id="motionBtn">Enable Motion</button>
+    <button id="octDown">Oct -</button>
+    <button id="octUp">Oct +</button>
+</div>
+
+<script>
+let audioCtx;
+let osc, filter, reverb, gainNode;
+let baseFreq = 0;
+let octaveOffset = 0;
+let tiltBend = 0;
+
+// === Simple (fake) Reverb ===
+function createReverb(ctx) {
+    const convolver = ctx.createConvolver();
+    const len = 2.5 * ctx.sampleRate; // 2.5s reverb
+    const impulse = ctx.createBuffer(2, len, ctx.sampleRate);
+
+    for (let c = 0; c < 2; c++) {
+        let buf = impulse.getChannelData(c);
+        for (let i = 0; i < len; i++) {
+            buf[i] = (Math.random() * 2 - 1) * (1 - i / len); // noise fade
+        }
+    }
+    convolver.buffer = impulse;
+    return convolver;
+}
+
+function startSynth() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    osc = audioCtx.createOscillator();
+    osc.type = "sawtooth";
+
+    filter = audioCtx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 8000;
+    filter.Q.value = 1;
+
+    reverb = createReverb(audioCtx);
+
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.15;
+
+    osc.connect(filter);
+    filter.connect(reverb);
+    reverb.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start();
+}
+
+function noteFromPad(x) {
+    // 1 oktav: C4 (261.63) → C5 (523.25)
+    const c4 = 261.63 * Math.pow(2, octaveOffset);
+    const c5 = c4 * 2;
+    const ratio = x / window.innerWidth;
+    return c4 + (c5 - c4) * ratio;
+}
+
+function applyPitch() {
+    if (!osc) return;
+    // whammy bend: tiltBend (in semitones)
+    const freq = baseFreq * Math.pow(2, tiltBend / 12);
+    osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
+}
+
+// === PAD TOUCH CONTROL ===
+const pad = document.getElementById("pad");
+
+function handleTouch(e) {
+    const touch = e.touches[0] || e.changedTouches[0];
+    const x = touch.clientX;
+    baseFreq = noteFromPad(x);
+    applyPitch();
+}
+
+pad.addEventListener("touchstart", handleTouch);
+pad.addEventListener("touchmove", handleTouch);
+
+// === DeviceOrientation Whammy Bar ===
+function enableMotion() {
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission().then(res => {
+            if (res === "granted") {
+                window.addEventListener("deviceorientation", e => {
+                    // e.beta = -180 → 180
+                    // normalize tilt
+                    const norm = e.beta / 45; // 45° tilt = 1 oktav
+                    tiltBend = norm * 12; // semitones
+                    applyPitch();
+                });
+            }
+        });
+    }
+}
+
+// === Octave Buttons ===
+document.getElementById("octUp").onclick = () => { octaveOffset++; };
+document.getElementById("octDown").onclick = () => { octaveOffset--; };
+
+// === Buttons ===
+document.getElementById("startBtn").onclick = () => startSynth();
+document.getElementById("motionBtn").onclick = () => enableMotion();
+
+</script>
+
+</body>
+</html>
