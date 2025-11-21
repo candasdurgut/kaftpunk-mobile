@@ -1,22 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Sensor Synth</title>
+
 <style>
-    body {
+    /* === TÜM SAYFAYI NATIVE APP GİBİ YAPAN GENEL ÖNLEMLER === */
+    html, body {
         margin: 0;
+        padding: 0;
+        height: 100%;
         background: #111;
         color: white;
         font-family: sans-serif;
-        overflow: hidden;
+
+        /* METİN SEÇİMİ TAMAMEN KAPALI */
+        -webkit-user-select: none;
+        user-select: none;
+
+        /* UZUN BASMA MENÜLERİ TAMAMEN KAPALI */
+        -webkit-touch-callout: none;
+
+        /* SAFARI DOKUNMA HIGHLIGHT'INI KAPAT */
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+
+        /* HER TÜRLÜ PAN/ZOOM DAVRANIŞINI KAPAT */
         touch-action: none;
+        overscroll-behavior: none;
     }
+
     #pad {
         width: 100vw;
         height: 80vh;
         background: linear-gradient(90deg, #222, #333);
+
+        /* AYNI ENGELLEMELER PAD İÇİN DE */
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        touch-action: none;
     }
+
     #controls {
         height: 20vh;
         padding: 10px;
@@ -25,6 +50,7 @@
         align-items: center;
         justify-content: center;
     }
+
     button {
         padding: 10px 20px;
         font-size: 18px;
@@ -32,9 +58,13 @@
         border-radius: 10px;
         background: #444;
         color: white;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
     }
 </style>
 </head>
+
 <body>
 
 <div id="pad"></div>
@@ -53,18 +83,19 @@ let baseFreq = 0;
 let octaveOffset = 0;
 let tiltBend = 0;
 
-// === Simple (fake) Reverb ===
+// === Simple pseudo reverb ===
 function createReverb(ctx) {
     const convolver = ctx.createConvolver();
-    const len = 2.5 * ctx.sampleRate; // 2.5s reverb
+    const len = 2.5 * ctx.sampleRate;
     const impulse = ctx.createBuffer(2, len, ctx.sampleRate);
 
     for (let c = 0; c < 2; c++) {
         let buf = impulse.getChannelData(c);
         for (let i = 0; i < len; i++) {
-            buf[i] = (Math.random() * 2 - 1) * (1 - i / len); // noise fade
+            buf[i] = (Math.random() * 2 - 1) * (1 - i / len);
         }
     }
+
     convolver.buffer = impulse;
     return convolver;
 }
@@ -77,7 +108,7 @@ function startSynth() {
 
     filter = audioCtx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 8000;
+    filter.frequency.value = 9000;
     filter.Q.value = 1;
 
     reverb = createReverb(audioCtx);
@@ -94,7 +125,6 @@ function startSynth() {
 }
 
 function noteFromPad(x) {
-    // 1 oktav: C4 (261.63) → C5 (523.25)
     const c4 = 261.63 * Math.pow(2, octaveOffset);
     const c5 = c4 * 2;
     const ratio = x / window.innerWidth;
@@ -103,34 +133,33 @@ function noteFromPad(x) {
 
 function applyPitch() {
     if (!osc) return;
-    // whammy bend: tiltBend (in semitones)
     const freq = baseFreq * Math.pow(2, tiltBend / 12);
     osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
 }
 
-// === PAD TOUCH CONTROL ===
+// === PAD TOUCH ===
 const pad = document.getElementById("pad");
 
 function handleTouch(e) {
     const touch = e.touches[0] || e.changedTouches[0];
-    const x = touch.clientX;
-    baseFreq = noteFromPad(x);
+    baseFreq = noteFromPad(touch.clientX);
     applyPitch();
 }
 
 pad.addEventListener("touchstart", handleTouch);
 pad.addEventListener("touchmove", handleTouch);
 
-// === DeviceOrientation Whammy Bar ===
+// Disable context menu globally (fallback)
+window.addEventListener("contextmenu", e => e.preventDefault());
+
+// === DEVICE ORIENTATION WHAMMY ===
 function enableMotion() {
     if (typeof DeviceOrientationEvent.requestPermission === "function") {
         DeviceOrientationEvent.requestPermission().then(res => {
             if (res === "granted") {
                 window.addEventListener("deviceorientation", e => {
-                    // e.beta = -180 → 180
-                    // normalize tilt
-                    const norm = e.beta / 45; // 45° tilt = 1 oktav
-                    tiltBend = norm * 12; // semitones
+                    const norm = e.beta / 45;
+                    tiltBend = norm * 12;
                     applyPitch();
                 });
             }
@@ -138,14 +167,13 @@ function enableMotion() {
     }
 }
 
-// === Octave Buttons ===
+// === OCTAVE BUTTONS ===
 document.getElementById("octUp").onclick = () => { octaveOffset++; };
 document.getElementById("octDown").onclick = () => { octaveOffset--; };
 
-// === Buttons ===
+// === MAIN BUTTONS ===
 document.getElementById("startBtn").onclick = () => startSynth();
 document.getElementById("motionBtn").onclick = () => enableMotion();
-
 </script>
 
 </body>
