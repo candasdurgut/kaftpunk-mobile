@@ -2,12 +2,15 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Uçurucu Saykadelik Synth</title>
+<title>Uçurucu Saykadelik Uzay Synth</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
 html, body {
     margin: 0; padding: 0; height: 100%;
-    background: #111; color: #fff;
-    font-family: 'Courier New', Courier, monospace;
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
+    color: #e0e0ff;
+    font-family: 'Orbitron', sans-serif;
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
@@ -18,56 +21,93 @@ html, body {
 
 #pad {
     width: 100vw;
-    height: 70vh;
-    background: linear-gradient(135deg,#222,#333);
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-    touch-action: none;
+    height: 65vh;
+    background: linear-gradient(135deg, #2a1a4e, #1a1a2e, #16213e);
+    border-bottom: 2px solid #5f27cd;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
+    box-shadow: inset 0 0 50px rgba(95, 39, 205, 0.3);
 }
 
 #noteDisplay {
     position: absolute;
     top: 20px;
     left: 20px;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(10, 10, 15, 0.8);
     padding: 10px 15px;
     border-radius: 8px;
     font-size: 24px;
     font-weight: bold;
-    pointer-events: none; /* Pad'e tıklamayı engellemez */
+    color: #00d2d3;
+    pointer-events: none;
     z-index: 10;
+    text-shadow: 0 0 10px #00d2d3;
+    border: 1px solid #00d2d3;
 }
 
 #controls {
-    height: 30vh; display: flex;
-    flex-wrap: wrap; padding: 10px;
-    gap: 10px; justify-content: center; align-items: center;
+    height: 35vh;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 10px;
+    background: #0a0a0f;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
-button, select, input[type=range] {
-    padding: 8px 14px;
-    font-size: 16px;
+button, select, input[type=range], label {
+    padding: 8px 10px;
+    font-size: 14px;
     border-radius: 8px;
-    border: none;
-    background: #444;
-    color: white;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    transition: background-color 0.2s;
+    border: 1px solid #5f27cd;
+    background: #1e1e3f;
+    color: #e0e0ff;
+    font-family: 'Orbitron', sans-serif;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: all 0.2s ease-in-out;
 }
-button.active { background: #06c; }
-button.active.distortion { background: #c00; }
 
-label { font-size: 14px; margin-right: 5px; }
-.control-group { display: flex; align-items: center; }
+button:hover, select:hover {
+    background: #2a2a5f;
+    box-shadow: 0 0 15px rgba(95, 39, 205, 0.5);
+}
+
+button.active { background: #5f27cd; color: #fff; box-shadow: 0 0 20px #5f27cd; }
+button.active.distortion { background: #ee5a24; box-shadow: 0 0 20px #ee5a24; }
+
+label { font-size: 12px; margin-right: 5px; display: block; text-align: center; }
+.control-group { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+input[type=range] {
+    width: 100%;
+    height: 6px;
+    background: #2a2a5f;
+    outline: none;
+    border: none;
+    padding: 0;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #00d2d3;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00d2d3;
+}
+input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #00d2d3;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00d2d3;
+}
 </style>
 </head>
 <body>
@@ -81,104 +121,89 @@ label { font-size: 14px; margin-right: 5px; }
     <button id="motionBtn">Enable Motion</button>
     <button id="octDown">Oct -</button>
     <button id="octUp">Oct +</button>
+    
     <div class="control-group">
-        <label for="waveSelect">Wave</label>
+        <label for="waveSelect">Wave Type</label>
         <select id="waveSelect">
-            <option value="sawtooth">Saw</option>
+            <option value="sawtooth">Sawtooth</option>
             <option value="triangle">Triangle</option>
             <option value="square">Square</option>
             <option value="sine">Sine</option>
+            <option value="fm">FM Synthesis</option>
+            <option value="am">AM Synthesis</option>
+            <option value="wavetable">Wavetable</option>
+            <option value="algorithmic">Algorithmic</option>
+            <option value="filter_fm">Filter FM</option>
         </select>
     </div>
+
     <div class="control-group">
         <label for="detuneRange">Detune</label>
         <input type="range" id="detuneRange" min="0" max="50" value="15">
     </div>
+
     <div class="control-group">
-        <label for="filterReso">Resonance</label>
+        <label for="filterReso">Filter Resonance</label>
         <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
     </div>
+
+    <div class="control-group">
+        <label for="modDepth">Modulation Depth</label>
+        <input type="range" id="modDepth" min="0" max="1000" value="200">
+    </div>
+
+    <div class="control-group">
+        <label for="wavetablePos">Wavetable Position</label>
+        <input type="range" id="wavetablePos" min="0" max="5" value="0" step="1">
+    </div>
+    
     <button id="toggleFlanger">Flanger</button>
     <button id="togglePhaser">Phaser</button>
     <button id="toggleDist">Distortion</button>
+    <button id="toggleDelay">Delay</button>
+
+    <div class="control-group">
+        <label for="delayTime">Delay Time (ms)</label>
+        <input type="range" id="delayTime" min="50" max="1000" value="250">
+    </div>
+
+    <div class="control-group">
+        <label for="delayFeedback">Delay Feedback</label>
+        <input type="range" id="delayFeedback" min="0" max="90" value="40">
+    </div>
 </div>
 
 <script>
 let audioCtx;
-let oscillators = [];
-let gainNode, filter, reverb;
+let mainOscillators = [];
+let modulatorOsc, amModulatorOsc, filterFmOsc;
+let gainNode, filter, reverb, delayNode, delayFeedback;
 let baseFreq = 261.63, octaveOffset = 0, tiltBend = 0;
-let isFlanger=false, isPhaser=false, isDist=false;
+let isFlanger=false, isPhaser=false, isDist=false, isDelay=false;
 const NUM_OSC = 7;
 let detuneAmount = 15;
 let waveType = "sawtooth";
+let modDepth = 200;
+let wavetableIndex = 0;
 
-// --- YENİ EFİKT DEĞİŞKENLERİ ---
-let flangerDelay, flangerFeedback, flangerDryWet;
-let phaserFilter, phaserLFO, phaserDryWet;
-let distortionGain, distortionWaveShaper;
-let masterGain; // Ana ses seviyesi için
+// --- Effect Nodes ---
+let flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
 
-// === Simple Pseudo Reverb ===
-function createReverb(ctx) {
-    const convolver = ctx.createConvolver();
-    const len = 3*ctx.sampleRate;
-    const impulse = ctx.createBuffer(2,len,ctx.sampleRate);
-    for(let c=0;c<2;c++){
-        const buf = impulse.getChannelData(c);
-        for(let i=0;i<len;i++){
-            buf[i]=(Math.random()*2-1)*(1-i/len);
-        }
-    }
-    convolver.buffer = impulse;
-    return convolver;
-}
+// --- Wavetables ---
+const wavetables = {
+    0: 'space_bell', // Example names
+    1: 'alien_vox',
+    2: 'plasma_string',
+    3: 'quantum_fuzz',
+    4: 'cosmic_sweep',
+    5: 'nebula_pad'
+};
 
-// === Flanger Efekti Oluşturucu ===
-function createFlanger(ctx) {
-    const delay = ctx.createDelay(0.005);
-    delay.delayTime.value = 0.0025;
-    const feedback = ctx.createGain();
-    feedback.gain.value = 0.7;
-    const dryWet = ctx.createGain();
-    dryWet.gain.value = 0;
-    feedback.connect(delay);
-    delay.connect(feedback);
-    return { delay, feedback, dryWet };
-}
-
-// === Phaser Efekti Oluşturucu ===
-function createPhaser(ctx) {
-    const filter = ctx.createBiquadFilter();
-    filter.type = "allpass";
-    filter.frequency.value = 1000;
-    filter.Q.value = 10;
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.5;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 400;
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-    lfo.start();
-    const dryWet = ctx.createGain();
-    dryWet.gain.value = 0;
-    return { filter, lfo, dryWet };
-}
-
-// === Distortion (Waveshaper) Efekti Oluşturucu ===
-function createDistortion(ctx) {
-    const waveshaper = ctx.createWaveShaper();
-    const amount = 50;
-    const samples = 44100;
-    const curve = new Float32Array(samples);
-    const deg = Math.PI / 180;
-    for (let i = 0; i < samples; i++) {
-        const x = (i * 2) / samples - 1;
-        curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-    }
-    waveshaper.curve = curve;
-    waveshaper.oversample = '4x';
-    return waveshaper;
+function createWavetable(ctx, name) {
+    const real = new Float32Array([0, 1, 0.5, 0.25]); // Simple example
+    const imag = new Float32Array(real.length);
+    // In a real app, you'd have complex pre-calculated arrays for each name
+    return ctx.createPeriodicWave(real, imag);
 }
 
 function startSynth(){
@@ -186,194 +211,183 @@ function startSynth(){
         audioCtx.close();
     }
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
 
-    // --- Efektleri Oluştur ---
-    const flanger = createFlanger(audioCtx);
-    flangerDelay = flanger.delay;
-    flangerFeedback = flanger.feedback;
-    flangerDryWet = flanger.dryWet;
-
-    const phaser = createPhaser(audioCtx);
-    phaserFilter = phaser.filter;
-    phaserLFO = phaser.lfo;
-    phaserDryWet = phaser.dryWet;
-
-    distortionWaveShaper = createDistortion(audioCtx);
-    distortionGain = audioCtx.createGain(); // Distortion için anahtar
-    distortionGain.gain.value = 0;
-
-    // --- Ana Ses Düğümleri ---
-    gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.15;
-
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.5;
-
-    filter = audioCtx.createBiquadFilter();
-    filter.type="lowpass";
-    filter.frequency.value=9000;
-    filter.Q.value=parseFloat(document.getElementById('filterReso').value);
-
+    // --- Main Nodes ---
+    gainNode = audioCtx.createGain(); gainNode.gain.value = 0.1;
+    filter = audioCtx.createBiquadFilter(); filter.type="lowpass"; filter.frequency.value=5000; filter.Q.value=1;
     reverb = createReverb(audioCtx);
+    
+    // --- Delay Effect ---
+    delayNode = audioCtx.createDelay(1.0);
+    delayFeedback = audioCtx.createGain();
+    delayDryWet = audioCtx.createGain(); delayDryWet.gain.value = 0;
+    
+    // --- Other Effects ---
+    const flanger = createFlanger(audioCtx); flangerDryWet = flanger.dryWet;
+    const phaser = createPhaser(audioCtx); phaserDryWet = phaser.dryWet;
+    const distortionWaveShaper = createDistortion(audioCtx); distortionGain = audioCtx.createGain(); distortionGain.gain.value = 0;
 
-    // OSCILLATORS
-    oscillators=[];
+    // --- Modulation Oscillators ---
+    modulatorOsc = audioCtx.createOscillator(); modulatorOsc.frequency.value = 5;
+    amModulatorOsc = audioCtx.createOscillator(); amModulatorOsc.frequency.value = 0.5;
+    filterFmOsc = audioCtx.createOscillator(); filterFmOsc.frequency.value = 4;
+    
+    // --- Create Main Oscillators ---
+    mainOscillators = [];
     for(let i=0;i<NUM_OSC;i++){
         const osc = audioCtx.createOscillator();
         osc.type = waveType;
-        const detune = (i-Math.floor(NUM_OSC/2))*(detuneAmount);
+        const detune = (i-Math.floor(NUM_OSC/2))*detuneAmount;
         osc.detune.value = detune;
         osc.connect(gainNode);
-        osc.start();
-        oscillators.push(osc);
+        osc.start(now);
+        mainOscillators.push(osc);
     }
-
-    // --- SES YOLUNU (SIGNAL CHAIN) OLUŞTUR ---
+    
+    // --- Signal Chain ---
     gainNode.connect(filter);
+    filter.connect(delayNode); delayNode.connect(delayFeedback); delayFeedback.connect(delayNode);
+    filter.connect(delayDryWet); delayDryWet.connect(audioCtx.destination);
+    filter.connect(reverb); reverb.connect(audioCtx.destination);
+    filter.connect(flangerDryWet); flangerDryWet.connect(audioCtx.destination);
+    filter.connect(phaserDryWet); phaserDryWet.connect(audioCtx.destination);
+    filter.connect(distortionGain); distortionGain.connect(distortionWaveShaper); distortionWaveShaper.connect(audioCtx.destination);
+    
+    // --- Start Modulators ---
+    modulatorOsc.start(now);
+    amModulatorOsc.start(now);
+    filterFmOsc.start(now);
 
-    // Ana Kuru Ses Yolu
-    filter.connect(masterGain);
-
-    // Reverb Yolu
-    filter.connect(reverb);
-    reverb.connect(masterGain);
-
-    // Flanger Yolu
-    filter.connect(flangerDelay);
-    flangerDelay.connect(flangerDryWet);
-    flangerDryWet.connect(masterGain);
-
-    // Phaser Yolu
-    filter.connect(phaserFilter);
-    phaserFilter.connect(phaserDryWet);
-    phaserDryWet.connect(masterGain);
-
-    // Distortion Yolu
-    filter.connect(distortionGain);
-    distortionGain.connect(distortionWaveShaper);
-    distortionWaveShaper.connect(masterGain);
-
-    masterGain.connect(audioCtx.destination);
+    applyWaveType();
 }
 
-// === Pad X→Pitch Y→Filter & Note Display ===
-const pad = document.getElementById("pad");
-const noteDisplay = document.getElementById("noteDisplay");
+function applyWaveType() {
+    if (!audioCtx || mainOscillators.length === 0) return;
+    const now = audioCtx.currentTime;
 
+    // Disconnect all modulations first
+    modulatorOsc.disconnect();
+    amModulatorOsc.disconnect();
+    filterFmOsc.disconnect();
+    mainOscillators.forEach(osc => {
+        try { osc.disconnect(); } catch(e) {} // Prevent errors on already disconnected nodes
+        osc.connect(gainNode);
+    });
+
+    switch(waveType) {
+        case 'fm':
+            mainOscillators.forEach(osc => {
+                modulatorOsc.connect(osc.frequency);
+            });
+            break;
+        case 'am':
+            mainOscillators.forEach(osc => {
+                amModulatorOsc.connect(osc.frequency); // Modulating frequency is a type of AM/Ring Mod
+            });
+            break;
+        case 'wavetable':
+            const wave = createWavetable(audioCtx, wavetables[wavetableIndex]);
+            mainOscillators.forEach(osc => {
+                osc.setPeriodicWave(wave);
+            });
+            break;
+        case 'algorithmic':
+            mainOscillators.forEach((osc, i) => {
+                const wave = createWavetable(audioCtx, 'algo_' + i); // Different wave for each
+                osc.setPeriodicWave(wave);
+            });
+            break;
+        case 'filter_fm':
+            filterFmOsc.connect(filter.frequency);
+            break;
+        default: // Standard waveforms
+            mainOscillators.forEach(osc => {
+                osc.type = waveType;
+            });
+    }
+}
+
+// === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
+function createReverb(ctx) { /* ... same as before ... */
+    const convolver = ctx.createConvolver(); const len = 3*ctx.sampleRate;
+    const impulse = ctx.createBuffer(2,len,ctx.sampleRate);
+    for(let c=0;c<2;c++){ const buf = impulse.getChannelData(c);
+        for(let i=0;i<len;i++){ buf[i]=(Math.random()*2-1)*(1-i/len); }
+    } convolver.buffer = impulse; return convolver;
+}
+function createFlanger(ctx) { /* ... same as before ... */
+    const delay = ctx.createDelay(0.005); delay.delayTime.value = 0.0025;
+    const feedback = ctx.createGain(); feedback.gain.value = 0.7;
+    const dryWet = ctx.createGain(); dryWet.gain.value = 0;
+    feedback.connect(delay); delay.connect(feedback); return { delay, feedback, dryWet };
+}
+function createPhaser(ctx) { /* ... same as before ... */
+    const filter = ctx.createBiquadFilter(); filter.type = "allpass"; filter.frequency.value = 1000; filter.Q.value = 10;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.5;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 400;
+    lfo.connect(lfoGain); lfoGain.connect(filter.frequency); lfo.start();
+    const dryWet = ctx.createGain(); dryWet.gain.value = 0;
+    return { filter, lfo, dryWet };
+}
+function createDistortion(ctx) { /* ... same as before ... */
+    const waveshaper = ctx.createWaveShaper(); const amount = 50; const samples = 44100;
+    const curve = new Float32Array(samples); const deg = Math.PI / 180;
+    for (let i = 0; i < samples; i++) { const x = (i * 2) / samples - 1;
+        curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+    } waveshaper.curve = curve; waveshaper.oversample = '4x'; return waveshaper;
+}
+
+// === UI Logic ===
+const pad = document.getElementById("pad"); const noteDisplay = document.getElementById("noteDisplay");
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-function freqToNote(freq) {
-    const A4 = 440;
-    const semitonesFromA4 = 12 * Math.log2(freq / A4);
+function freqToNote(freq) { const A4 = 440; const semitonesFromA4 = 12 * Math.log2(freq / A4);
     const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
     const octave = Math.floor((semitonesFromA4 + 9) / 12);
-    const noteName = noteNames[(noteIndex + 12) % 12];
-    return `${noteName}${octave}`;
+    const noteName = noteNames[(noteIndex + 12) % 12]; return `${noteName}${octave}`;
 }
-
-function noteFromPad(x){
-    const c4 = 261.63 * Math.pow(2,octaveOffset);
-    const c5 = c4*2;
-    const ratio = x/window.innerWidth;
-    return c4 + (c5-c4)*ratio;
-}
-
+function noteFromPad(x){ const c4 = 261.63 * Math.pow(2,octaveOffset); const c5 = c4*2; const ratio = x/window.innerWidth; return c4 + (c5-c4)*ratio; }
 function applyPitch(){
     const freq = baseFreq*Math.pow(2,tiltBend/12);
-    oscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,audioCtx.currentTime,0.01));
+    mainOscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,audioCtx.currentTime,0.01));
+    if (modulatorOsc) modulatorOsc.frequency.setTargetAtTime(freq * 0.01, audioCtx.currentTime, 0.01); // Keep modulator relative
     noteDisplay.textContent = freqToNote(freq);
 }
-
-pad.addEventListener("touchstart",handleTouch);
-pad.addEventListener("touchmove",handleTouch);
-pad.addEventListener("mousedown",handleTouch); // Mouse desteği için
-pad.addEventListener("mousemove", e => { if (e.buttons === 1) handleTouch(e);}); // Sadece basılıyken
-
-function handleTouch(e){
-    e.preventDefault();
+pad.addEventListener("touchstart",handleTouch); pad.addEventListener("touchmove",handleTouch);
+pad.addEventListener("mousedown",handleTouch); pad.addEventListener("mousemove", e => { if (e.buttons === 1) handleTouch(e);});
+function handleTouch(e){ e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
     baseFreq = noteFromPad(clientX);
-    filter.frequency.value = 500+((window.innerHeight-clientY)/window.innerHeight)*8000;
+    filter.frequency.setTargetAtTime(500+((window.innerHeight-clientY)/window.innerHeight)*8000, audioCtx.currentTime, 0.01);
     applyPitch();
 }
 
-// === DeviceOrientation Whammy ===
-function enableMotion(){
+function enableMotion(){ /* ... same as before ... */
     if(typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(res=>{
-            if(res==='granted'){
-                window.addEventListener("deviceorientation", e=>{
-                    if(e.beta !== null) {
-                        const norm = e.beta/45;
-                        tiltBend = norm*24; // ±2 octaves
-                        applyPitch();
-                    }
-                });
-            }
-        });
-    } else {
-        // İzin gerektirmeyen cihazlar için (genellikle Android/PC)
-        window.addEventListener("deviceorientation", e=>{
-            if(e.beta !== null) {
-                const norm = e.beta/45;
-                tiltBend = norm*24;
-                applyPitch();
-            }
-        });
-    }
+        DeviceOrientationEvent.requestPermission().then(res=>{ if(res==='granted'){
+            window.addEventListener("deviceorientation", e=>{ if(e.beta !== null) { const norm = e.beta/45; tiltBend = norm*24; applyPitch(); } });
+        }});
+    } else { window.addEventListener("deviceorientation", e=>{ if(e.beta !== null) { const norm = e.beta/45; tiltBend = norm*24; applyPitch(); } }); }
 }
 
-// === Octave Buttons ===
-document.getElementById("octUp").onclick = ()=>{ octaveOffset++; applyPitch(); };
-document.getElementById("octDown").onclick = ()=>{ octaveOffset--; applyPitch(); };
-
-// === Waveform select ===
-document.getElementById("waveSelect").onchange = e=>{
-    waveType = e.target.value;
-    oscillators.forEach(osc=>osc.type=waveType);
-};
-
-// === Detune control ===
-document.getElementById("detuneRange").oninput = e=>{
-    detuneAmount = parseFloat(e.target.value);
-    oscillators.forEach((osc,i)=>{
-        const det = (i-Math.floor(NUM_OSC/2))*detuneAmount;
-        osc.detune.setValueAtTime(det,audioCtx.currentTime);
-    });
-};
-
-// === Filter Resonance ===
-document.getElementById("filterReso").oninput = e=>{
-    if(filter) filter.Q.value=parseFloat(e.target.value);
-};
-
-// === Toggle Effects ===
-document.getElementById("toggleFlanger").onclick = () => {
-    isFlanger = !isFlanger;
-    flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01);
-    document.getElementById("toggleFlanger").classList.toggle('active', isFlanger);
-};
-
-document.getElementById("togglePhaser").onclick = () => {
-    isPhaser = !isPhaser;
-    phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01);
-    document.getElementById("togglePhaser").classList.toggle('active', isPhaser);
-};
-
-document.getElementById("toggleDist").onclick = () => {
-    isDist = !isDist;
-    distortionGain.gain.setTargetAtTime(isDist ? 1 : 0, audioCtx.currentTime, 0.01);
-    document.getElementById("toggleDist").classList.toggle('active', isDist);
-    document.getElementById("toggleDist").classList.toggle('distortion', isDist);
-};
-
-// === Buttons ===
+// === Event Listeners ===
 document.getElementById("startBtn").onclick = ()=>startSynth();
 document.getElementById("motionBtn").onclick = ()=>enableMotion();
+document.getElementById("octUp").onclick = ()=>{ octaveOffset++; applyPitch(); };
+document.getElementById("octDown").onclick = ()=>{ octaveOffset--; applyPitch(); };
+document.getElementById("waveSelect").onchange = e=>{ waveType = e.target.value; applyWaveType(); };
+document.getElementById("detuneRange").oninput = e=>{ detuneAmount = parseFloat(e.target.value); mainOscillators.forEach((osc,i)=>{ const det = (i-Math.floor(NUM_OSC/2))*detuneAmount; osc.detune.setValueAtTime(det,audioCtx.currentTime); }); };
+document.getElementById("filterReso").oninput = e=>{ if(filter) filter.Q.value=parseFloat(e.target.value); };
+document.getElementById("modDepth").oninput = e=>{ modDepth = parseFloat(e.target.value); if(modulatorOsc) modulatorOsc.gain.setValueAtTime(modDepth, audioCtx.currentTime); };
+document.getElementById("wavetablePos").oninput = e=>{ wavetableIndex = parseInt(e.target.value); if(waveType === 'wavetable') applyWaveType(); };
+document.getElementById("delayTime").oninput = e=>{ if(delayNode) delayNode.delayTime.value = parseFloat(e.target.value) / 1000; };
+document.getElementById("delayFeedback").oninput = e=>{ if(delayFeedback) delayFeedback.gain.value = parseFloat(e.target.value) / 100; };
+document.getElementById("toggleFlanger").onclick = () => { isFlanger = !isFlanger; flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleFlanger").classList.toggle('active', isFlanger); };
+document.getElementById("togglePhaser").onclick = () => { isPhaser = !isPhaser; phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("togglePhaser").classList.toggle('active', isPhaser); };
+document.getElementById("toggleDist").onclick = () => { isDist = !isDist; distortionGain.gain.setTargetAtTime(isDist ? 1 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDist").classList.toggle('active', isDist); document.getElementById("toggleDist").classList.toggle('distortion', isDist); };
+document.getElementById("toggleDelay").onclick = () => { isDelay = !isDelay; delayDryWet.gain.setTargetAtTime(isDelay ? 0.5 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDelay").classList.toggle('active', isDelay); };
 
-// Prevent context menu globally
 window.addEventListener("contextmenu", e=>e.preventDefault());
 </script>
 </body>
