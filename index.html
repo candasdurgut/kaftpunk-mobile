@@ -28,6 +28,17 @@ html, body {
     position: relative;
 }
 
+#display {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 10;
+}
+
 #controls {
     height: 30vh; display: flex;
     flex-wrap: wrap; padding: 10px;
@@ -47,17 +58,51 @@ button, select, input[type=range] {
 }
 label { font-size: 14px; margin-right: 5px; }
 .control-group { display: flex; align-items: center; }
+
+.active {
+    background: #ff6b6b !important;
+    color: white !important;
+}
+
+.effect-controls {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    background: rgba(0,0,0,0.9);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+}
+
+.effect-group {
+    position: relative;
+}
+
+.effect-group:hover .effect-controls {
+    display: block;
+}
+
+.slider-group {
+    margin: 5px 0;
+}
 </style>
 </head>
 <body>
 
-<div id="pad"></div>
+<div id="pad">
+    <div id="display">
+        <div id="noteDisplay">Nota: --</div>
+        <div id="octaveDisplay">Oktav: 4</div>
+        <div id="freqDisplay">Frekans: 0 Hz</div>
+    </div>
+</div>
 
 <div id="controls">
     <button id="startBtn">Start Synth</button>
     <button id="motionBtn">Enable Motion</button>
     <button id="octDown">Oct -</button>
     <button id="octUp">Oct +</button>
+    
     <div class="control-group">
         <label for="waveSelect">Wave</label>
         <select id="waveSelect">
@@ -67,17 +112,54 @@ label { font-size: 14px; margin-right: 5px; }
             <option value="sine">Sine</option>
         </select>
     </div>
+    
     <div class="control-group">
         <label for="detuneRange">Detune</label>
         <input type="range" id="detuneRange" min="0" max="50" value="15">
     </div>
+    
     <div class="control-group">
         <label for="filterReso">Resonance</label>
         <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
     </div>
-    <button id="toggleFlanger">Flanger</button>
-    <button id="togglePhaser">Phaser</button>
-    <button id="toggleDist">Distortion</button>
+    
+    <div class="control-group effect-group">
+        <button id="toggleFlanger">Flanger</button>
+        <div class="effect-controls">
+            <div class="slider-group">
+                <label>Depth</label>
+                <input type="range" id="flangerDepth" min="0.001" max="0.01" value="0.005" step="0.001">
+            </div>
+            <div class="slider-group">
+                <label>Rate</label>
+                <input type="range" id="flangerRate" min="0.1" max="5" value="0.5" step="0.1">
+            </div>
+        </div>
+    </div>
+    
+    <div class="control-group effect-group">
+        <button id="togglePhaser">Phaser</button>
+        <div class="effect-controls">
+            <div class="slider-group">
+                <label>Freq</label>
+                <input type="range" id="phaserFreq" min="200" max="1500" value="350" step="50">
+            </div>
+            <div class="slider-group">
+                <label>Q</label>
+                <input type="range" id="phaserQ" min="1" max="20" value="10" step="1">
+            </div>
+        </div>
+    </div>
+    
+    <div class="control-group effect-group">
+        <button id="toggleDist">Distortion</button>
+        <div class="effect-controls">
+            <div class="slider-group">
+                <label>Amount</label>
+                <input type="range" id="distortionAmount" min="0" max="100" value="50" step="5">
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -86,9 +168,158 @@ let oscillators = [];
 let gainNode, filter, reverb;
 let baseFreq = 261.63, octaveOffset = 0, tiltBend = 0;
 let isFlanger=false, isPhaser=false, isDist=false;
+let flangerNode, phaserNodes = [], distortionNode;
 const NUM_OSC = 7;
 let detuneAmount = 15;
 let waveType = "sawtooth";
+
+// === Note Display ===
+function updateDisplay(freq) {
+    const noteInfo = getNoteFromFrequency(freq);
+    document.getElementById('noteDisplay').textContent = `Nota: ${noteInfo.note}`;
+    document.getElementById('octaveDisplay').textContent = `Oktav: ${noteInfo.octave}`;
+    document.getElementById('freqDisplay').textContent = `Frekans: ${freq.toFixed(1)} Hz`;
+}
+
+function getNoteFromFrequency(freq) {
+    const A4 = 440;
+    const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    
+    if (freq === 0) return { note: "--", octave: 4 };
+    
+    const noteNum = 12 * Math.log2(freq / A4) + 69;
+    const noteIndex = Math.round(noteNum) % 12;
+    const octave = Math.floor(noteNum / 12) - 1;
+    
+    return { note: noteNames[noteIndex], octave: octave };
+}
+
+// === Effects ===
+function createFlanger(ctx) {
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const delay = ctx.createDelay();
+    const inputGain = ctx.createGain();
+    const outputGain = ctx.createGain();
+    const feedback = ctx.createGain();
+    
+    delay.delayTime.value = 0.005;
+    gain.gain.value = 0.005;
+    oscillator.frequency.value = 0.5;
+    oscillator.type = 'sine';
+    feedback.gain.value = 0.5;
+    
+    // Flanger routing
+    inputGain.connect(delay);
+    inputGain.connect(outputGain);
+    delay.connect(outputGain);
+    delay.connect(feedback);
+    feedback.connect(delay);
+    
+    oscillator.connect(gain);
+    gain.connect(delay.delayTime);
+    oscillator.start();
+    
+    return {
+        input: inputGain,
+        output: outputGain,
+        setDepth: (val) => gain.gain.value = val,
+        setRate: (val) => oscillator.frequency.value = val,
+        setFeedback: (val) => feedback.gain.value = val
+    };
+}
+
+function createPhaser(ctx) {
+    const nodes = [];
+    const input = ctx.createGain();
+    const output = ctx.createGain();
+    
+    // Create 4 allpass filters
+    for(let i = 0; i < 4; i++) {
+        const allpass = ctx.createBiquadFilter();
+        allpass.type = "allpass";
+        allpass.frequency.value = 350;
+        allpass.Q.value = 10;
+        nodes.push(allpass);
+    }
+    
+    // Connect in series
+    input.connect(nodes[0]);
+    for(let i = 0; i < nodes.length - 1; i++) {
+        nodes[i].connect(nodes[i + 1]);
+    }
+    nodes[nodes.length - 1].connect(output);
+    
+    // Also connect dry signal
+    input.connect(output);
+    
+    return {
+        input: input,
+        output: output,
+        setFrequency: (freq) => nodes.forEach(node => node.frequency.value = freq),
+        setQ: (q) => nodes.forEach(node => node.Q.value = q)
+    };
+}
+
+function createDistortion(ctx) {
+    const distortion = ctx.createWaveShaper();
+    const input = ctx.createGain();
+    const output = ctx.createGain();
+    
+    input.connect(distortion);
+    distortion.connect(output);
+    
+    function makeDistortionCurve(amount) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const samples = 44100;
+        const curve = new Float32Array(samples);
+        const deg = Math.PI / 180;
+        
+        for (let i = 0; i < samples; i++) {
+            const x = i * 2 / samples - 1;
+            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    }
+    
+    distortion.curve = makeDistortionCurve(50);
+    distortion.oversample = '4x';
+    
+    return {
+        input: input,
+        output: output,
+        setAmount: (amount) => {
+            distortion.curve = makeDistortionCurve(amount);
+        }
+    };
+}
+
+// === Audio Routing ===
+function updateEffectsRouting() {
+    // Disconnect everything first
+    filter.disconnect();
+    
+    let currentNode = filter;
+    
+    // Connect effects in series based on activation
+    if (isFlanger && flangerNode) {
+        currentNode.connect(flangerNode.input);
+        currentNode = flangerNode.output;
+    }
+    
+    if (isPhaser && phaserNodes.input) {
+        currentNode.connect(phaserNodes.input);
+        currentNode = phaserNodes.output;
+    }
+    
+    if (isDist && distortionNode) {
+        currentNode.connect(distortionNode.input);
+        currentNode = distortionNode.output;
+    }
+    
+    // Always end with reverb
+    currentNode.connect(reverb);
+}
 
 // === Simple Pseudo Reverb ===
 function createReverb(ctx) {
@@ -106,6 +337,10 @@ function createReverb(ctx) {
 }
 
 function startSynth(){
+    if (audioCtx) {
+        audioCtx.close();
+    }
+    
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 
     gainNode = audioCtx.createGain();
@@ -117,6 +352,11 @@ function startSynth(){
     filter.Q.value=1;
 
     reverb = createReverb(audioCtx);
+    
+    // Create effects
+    flangerNode = createFlanger(audioCtx);
+    phaserNodes = createPhaser(audioCtx);
+    distortionNode = createDistortion(audioCtx);
 
     // OSCILLATORS
     oscillators=[];
@@ -130,9 +370,11 @@ function startSynth(){
         oscillators.push(osc);
     }
 
-    filter.connect(reverb);
-    reverb.connect(gainNode);
+    updateEffectsRouting();
     gainNode.connect(audioCtx.destination);
+    
+    // Initial display update
+    updateDisplay(baseFreq);
 }
 
 // === Pad X→Pitch Y→Filter ===
@@ -147,11 +389,13 @@ function noteFromPad(x){
 function applyPitch(){
     const freq = baseFreq*Math.pow(2,tiltBend/12);
     oscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,audioCtx.currentTime,0.01));
+    updateDisplay(freq);
 }
 
 pad.addEventListener("touchstart",handleTouch);
 pad.addEventListener("touchmove",handleTouch);
 function handleTouch(e){
+    if (!audioCtx) return;
     const touch = e.touches[0]||e.changedTouches[0];
     baseFreq = noteFromPad(touch.clientX);
     filter.frequency.value = 500+((window.innerHeight-touch.clientY)/window.innerHeight)*8000;
@@ -174,33 +418,79 @@ function enableMotion(){
 }
 
 // === Octave Buttons ===
-document.getElementById("octUp").onclick = ()=>{ octaveOffset++; };
-document.getElementById("octDown").onclick = ()=>{ octaveOffset--; };
+document.getElementById("octUp").onclick = ()=>{ 
+    octaveOffset++; 
+    applyPitch();
+    updateDisplay(baseFreq * Math.pow(2,tiltBend/12));
+};
+document.getElementById("octDown").onclick = ()=>{ 
+    octaveOffset--; 
+    applyPitch();
+    updateDisplay(baseFreq * Math.pow(2,tiltBend/12));
+};
 
 // === Waveform select ===
 document.getElementById("waveSelect").onchange = e=>{
     waveType = e.target.value;
-    oscillators.forEach(osc=>osc.type=waveType);
+    if (oscillators.length > 0) {
+        oscillators.forEach(osc=>osc.type=waveType);
+    }
 };
 
 // === Detune control ===
 document.getElementById("detuneRange").oninput = e=>{
     detuneAmount = parseFloat(e.target.value);
-    oscillators.forEach((osc,i)=>{
-        const det = (i-Math.floor(NUM_OSC/2))*detuneAmount;
-        osc.detune.setValueAtTime(det,audioCtx.currentTime);
-    });
+    if (oscillators.length > 0) {
+        oscillators.forEach((osc,i)=>{
+            const det = (i-Math.floor(NUM_OSC/2))*detuneAmount;
+            osc.detune.setValueAtTime(det,audioCtx.currentTime);
+        });
+    }
 };
 
 // === Filter Resonance ===
 document.getElementById("filterReso").oninput = e=>{
-    filter.Q.value=parseFloat(e.target.value);
+    if (filter) {
+        filter.Q.value=parseFloat(e.target.value);
+    }
+};
+
+// === Effect Controls ===
+document.getElementById("flangerDepth").oninput = e=>{
+    if (flangerNode) flangerNode.setDepth(parseFloat(e.target.value));
+};
+document.getElementById("flangerRate").oninput = e=>{
+    if (flangerNode) flangerNode.setRate(parseFloat(e.target.value));
+};
+document.getElementById("phaserFreq").oninput = e=>{
+    if (phaserNodes) phaserNodes.setFrequency(parseFloat(e.target.value));
+};
+document.getElementById("phaserQ").oninput = e=>{
+    if (phaserNodes) phaserNodes.setQ(parseFloat(e.target.value));
+};
+document.getElementById("distortionAmount").oninput = e=>{
+    if (distortionNode) distortionNode.setAmount(parseFloat(e.target.value));
 };
 
 // === Toggle Effects ===
-document.getElementById("toggleFlanger").onclick = ()=>{ isFlanger=!isFlanger; }
-document.getElementById("togglePhaser").onclick = ()=>{ isPhaser=!isPhaser; }
-document.getElementById("toggleDist").onclick = ()=>{ isDist=!isDist; }
+function toggleEffect(effect, buttonId) {
+    effect = !effect;
+    document.getElementById(buttonId).classList.toggle('active', effect);
+    if (audioCtx) {
+        updateEffectsRouting();
+    }
+    return effect;
+}
+
+document.getElementById("toggleFlanger").onclick = ()=>{ 
+    isFlanger = toggleEffect(isFlanger, "toggleFlanger");
+};
+document.getElementById("togglePhaser").onclick = ()=>{ 
+    isPhaser = toggleEffect(isPhaser, "togglePhaser");
+};
+document.getElementById("toggleDist").onclick = ()=>{ 
+    isDist = toggleEffect(isDist, "toggleDist");
+};
 
 // === Buttons ===
 document.getElementById("startBtn").onclick = ()=>startSynth();
