@@ -7,83 +7,177 @@
 html, body {
     margin: 0; padding: 0; height: 100%;
     background: #111; color: #fff;
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: rgba(0,0,0,0);
     touch-action: none;
     overscroll-behavior: none;
+    overflow: hidden;
 }
 
 #pad {
     width: 100vw;
-    height: 70vh;
+    height: 65vh;
     background: linear-gradient(135deg,#222,#333);
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-    touch-action: none;
     position: relative;
 }
 
 #display {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.7);
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 14px;
+    top: 15px;
+    left: 15px;
+    background: rgba(0,0,0,0.8);
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-size: 16px;
     z-index: 10;
+    border: 1px solid #444;
+}
+
+#display div {
+    margin: 3px 0;
+    font-weight: 500;
 }
 
 #controls {
-    height: 30vh; display: flex;
-    flex-wrap: wrap; padding: 10px;
-    gap: 10px; justify-content: center; align-items: center;
+    height: 35vh;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 8px;
+    gap: 8px;
+    justify-content: center;
+    align-content: flex-start;
+    overflow-y: auto;
 }
 
 button, select, input[type=range] {
-    padding: 8px 14px;
-    font-size: 16px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 10px;
     border: none;
     background: #444;
     color: white;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
+    min-height: 44px;
 }
-label { font-size: 14px; margin-right: 5px; }
-.control-group { display: flex; align-items: center; }
+
+button {
+    min-width: 80px;
+}
+
+select {
+    min-width: 100px;
+}
+
+input[type=range] {
+    min-width: 80px;
+    padding: 10px 5px;
+}
+
+label { 
+    font-size: 13px; 
+    margin-right: 5px; 
+    white-space: nowrap;
+}
+
+.control-group { 
+    display: flex; 
+    align-items: center; 
+    flex-shrink: 0;
+}
 
 .active {
     background: #ff6b6b !important;
     color: white !important;
+    box-shadow: 0 0 10px rgba(255,107,107,0.5);
 }
 
 .effect-controls {
     display: none;
     position: absolute;
     bottom: 100%;
-    background: rgba(0,0,0,0.9);
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 5px;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.95);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #555;
+    z-index: 20;
 }
 
 .effect-group {
     position: relative;
 }
 
-.effect-group:hover .effect-controls {
+.effect-group:active .effect-controls,
+.effect-group:focus-within .effect-controls {
     display: block;
 }
 
 .slider-group {
-    margin: 5px 0;
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.slider-group label {
+    font-size: 12px;
+    color: #ccc;
+}
+
+.control-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+#startBtn, #motionBtn {
+    background: #007AFF;
+    font-weight: 600;
+}
+
+#startBtn.active, #motionBtn.active {
+    background: #0056CC;
+}
+
+/* iPhone 12 specific optimizations */
+@media (max-width: 390px) {
+    #controls {
+        gap: 6px;
+        padding: 6px;
+    }
+    
+    button, select {
+        padding: 8px 10px;
+        font-size: 14px;
+        min-height: 42px;
+    }
+    
+    .control-group {
+        flex: 1;
+        min-width: calc(50% - 12px);
+        justify-content: center;
+    }
+}
+
+/* Scrollbar styling for controls */
+#controls::-webkit-scrollbar {
+    width: 3px;
+}
+
+#controls::-webkit-scrollbar-track {
+    background: #222;
+}
+
+#controls::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
 }
 </style>
 </head>
@@ -98,65 +192,71 @@ label { font-size: 14px; margin-right: 5px; }
 </div>
 
 <div id="controls">
-    <button id="startBtn">Start Synth</button>
-    <button id="motionBtn">Enable Motion</button>
-    <button id="octDown">Oct -</button>
-    <button id="octUp">Oct +</button>
-    
-    <div class="control-group">
-        <label for="waveSelect">Wave</label>
-        <select id="waveSelect">
-            <option value="sawtooth">Saw</option>
-            <option value="triangle">Triangle</option>
-            <option value="square">Square</option>
-            <option value="sine">Sine</option>
-        </select>
+    <div class="control-row">
+        <button id="startBtn">Start Synth</button>
+        <button id="motionBtn">Enable Motion</button>
+        <button id="octDown">Oct -</button>
+        <button id="octUp">Oct +</button>
     </div>
     
-    <div class="control-group">
-        <label for="detuneRange">Detune</label>
-        <input type="range" id="detuneRange" min="0" max="50" value="15">
-    </div>
-    
-    <div class="control-group">
-        <label for="filterReso">Resonance</label>
-        <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-    </div>
-    
-    <div class="control-group effect-group">
-        <button id="toggleFlanger">Flanger</button>
-        <div class="effect-controls">
-            <div class="slider-group">
-                <label>Depth</label>
-                <input type="range" id="flangerDepth" min="0.001" max="0.01" value="0.005" step="0.001">
-            </div>
-            <div class="slider-group">
-                <label>Rate</label>
-                <input type="range" id="flangerRate" min="0.1" max="5" value="0.5" step="0.1">
-            </div>
+    <div class="control-row">
+        <div class="control-group">
+            <label for="waveSelect">Wave</label>
+            <select id="waveSelect">
+                <option value="sawtooth">Saw</option>
+                <option value="triangle">Triangle</option>
+                <option value="square">Square</option>
+                <option value="sine">Sine</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label for="detuneRange">Detune</label>
+            <input type="range" id="detuneRange" min="0" max="50" value="15">
+        </div>
+        
+        <div class="control-group">
+            <label for="filterReso">Resonance</label>
+            <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
         </div>
     </div>
     
-    <div class="control-group effect-group">
-        <button id="togglePhaser">Phaser</button>
-        <div class="effect-controls">
-            <div class="slider-group">
-                <label>Freq</label>
-                <input type="range" id="phaserFreq" min="200" max="1500" value="350" step="50">
-            </div>
-            <div class="slider-group">
-                <label>Q</label>
-                <input type="range" id="phaserQ" min="1" max="20" value="10" step="1">
+    <div class="control-row">
+        <div class="control-group effect-group">
+            <button id="toggleFlanger">Flanger</button>
+            <div class="effect-controls">
+                <div class="slider-group">
+                    <label>Depth</label>
+                    <input type="range" id="flangerDepth" min="0.001" max="0.01" value="0.005" step="0.001">
+                </div>
+                <div class="slider-group">
+                    <label>Rate</label>
+                    <input type="range" id="flangerRate" min="0.1" max="5" value="0.5" step="0.1">
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="control-group effect-group">
-        <button id="toggleDist">Distortion</button>
-        <div class="effect-controls">
-            <div class="slider-group">
-                <label>Amount</label>
-                <input type="range" id="distortionAmount" min="0" max="100" value="50" step="5">
+        
+        <div class="control-group effect-group">
+            <button id="togglePhaser">Phaser</button>
+            <div class="effect-controls">
+                <div class="slider-group">
+                    <label>Freq</label>
+                    <input type="range" id="phaserFreq" min="200" max="1500" value="350" step="50">
+                </div>
+                <div class="slider-group">
+                    <label>Q</label>
+                    <input type="range" id="phaserQ" min="1" max="20" value="10" step="1">
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group effect-group">
+            <button id="toggleDist">Distortion</button>
+            <div class="effect-controls">
+                <div class="slider-group">
+                    <label>Amount</label>
+                    <input type="range" id="distortionAmount" min="0" max="100" value="50" step="5">
+                </div>
             </div>
         </div>
     </div>
@@ -296,6 +396,8 @@ function createDistortion(ctx) {
 
 // === Audio Routing ===
 function updateEffectsRouting() {
+    if (!filter || !reverb) return;
+    
     // Disconnect everything first
     filter.disconnect();
     
@@ -344,7 +446,7 @@ function startSynth(){
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 
     gainNode = audioCtx.createGain();
-    gainNode.gain.value=0.15;
+    gainNode.gain.value = 0.2; // Increased volume
 
     filter = audioCtx.createBiquadFilter();
     filter.type="lowpass";
@@ -371,10 +473,17 @@ function startSynth(){
     }
 
     updateEffectsRouting();
+    reverb.connect(gainNode);
     gainNode.connect(audioCtx.destination);
+    
+    // Update start button
+    document.getElementById('startBtn').classList.add('active');
+    document.getElementById('startBtn').textContent = 'Synth Active';
     
     // Initial display update
     updateDisplay(baseFreq);
+    
+    console.log('Synth started successfully');
 }
 
 // === Pad X→Pitch Y→Filter ===
@@ -387,6 +496,8 @@ function noteFromPad(x){
 }
 
 function applyPitch(){
+    if (!audioCtx || oscillators.length === 0) return;
+    
     const freq = baseFreq*Math.pow(2,tiltBend/12);
     oscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,audioCtx.currentTime,0.01));
     updateDisplay(freq);
@@ -395,7 +506,10 @@ function applyPitch(){
 pad.addEventListener("touchstart",handleTouch);
 pad.addEventListener("touchmove",handleTouch);
 function handleTouch(e){
-    if (!audioCtx) return;
+    e.preventDefault();
+    if (!audioCtx) {
+        startSynth(); // Auto-start on first touch
+    }
     const touch = e.touches[0]||e.changedTouches[0];
     baseFreq = noteFromPad(touch.clientX);
     filter.frequency.value = 500+((window.innerHeight-touch.clientY)/window.innerHeight)*8000;
@@ -412,8 +526,18 @@ function enableMotion(){
                     tiltBend = norm*24; // ±2 octaves
                     applyPitch();
                 });
+                document.getElementById('motionBtn').classList.add('active');
+                document.getElementById('motionBtn').textContent = 'Motion On';
             }
         });
+    } else {
+        window.addEventListener("deviceorientation", e=>{
+            const norm = e.beta/45;
+            tiltBend = norm*24;
+            applyPitch();
+        });
+        document.getElementById('motionBtn').classList.add('active');
+        document.getElementById('motionBtn').textContent = 'Motion On';
     }
 }
 
@@ -421,12 +545,10 @@ function enableMotion(){
 document.getElementById("octUp").onclick = ()=>{ 
     octaveOffset++; 
     applyPitch();
-    updateDisplay(baseFreq * Math.pow(2,tiltBend/12));
 };
 document.getElementById("octDown").onclick = ()=>{ 
     octaveOffset--; 
     applyPitch();
-    updateDisplay(baseFreq * Math.pow(2,tiltBend/12));
 };
 
 // === Waveform select ===
@@ -498,6 +620,14 @@ document.getElementById("motionBtn").onclick = ()=>enableMotion();
 
 // Prevent context menu globally
 window.addEventListener("contextmenu", e=>e.preventDefault());
+
+// Auto-start on first interaction for better UX
+document.addEventListener('touchstart', function() {
+    if (!audioCtx) {
+        // Start synth on first touch anywhere
+        startSynth();
+    }
+}, { once: true });
 </script>
 </body>
 </html>
