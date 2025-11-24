@@ -7,416 +7,160 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Premium Synth</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         
         :root {
             --r: 100; --g: 100; --b: 100;
             --bg-color: rgb(var(--r), var(--g), var(--b));
-            --control-bg: rgba(0, 0, 0, 0.3);
+            --control-bg: rgba(0, 0, 0, 0.2);
             --text-color: #f0f0f0;
-            --border-color: rgba(var(--r), var(--g), var(--b), 0.6);
+            --border-color: rgba(var(--r), var(--g), var(--b), 0.5);
             --safe-area-inset-top: env(safe-area-inset-top);
             --safe-area-inset-bottom: env(safe-area-inset-bottom);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
         }
 
-        * { 
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; }
 
         html, body {
-            height: 100%;
-            background-color: #111;
-            color: var(--text-color);
+            margin: 0; padding: 0; height: 100%;
+            background-color: #111; color: var(--text-color);
             font-family: 'Inter', -apple-system, sans-serif;
-            font-weight: 400;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none;
-            overscroll-behavior: none;
-            overflow: hidden;
+            font-weight: 400; -webkit-user-select: none; user-select: none;
+            -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+            touch-action: none; overscroll-behavior: none; overflow: hidden;
         }
 
         body {
             background-color: var(--bg-color);
             padding-top: var(--safe-area-inset-top);
             padding-bottom: var(--safe-area-inset-bottom);
-            transition: background-color 0.3s ease;
         }
 
-        #app-container { 
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
+        #app-container { height: 100%; display: flex; flex-direction: column; }
 
         #pad {
-            width: 100%;
-            flex: 1;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at center, var(--control-bg), rgba(0,0,0,0.6));
-            cursor: crosshair;
-            overflow: hidden;
-            transition: all 0.3s ease;
+            width: 100%; height: 60vh; position: relative;
+            display: flex; justify-content: center; align-items: center;
+            background: radial-gradient(circle at center, var(--control-bg), rgba(0,0,0,0.5));
+            cursor: crosshair; overflow: hidden;
         }
 
-        .info-display {
-            position: absolute;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            color: var(--text-color);
-            pointer-events: none;
-            z-index: 10;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        #noteDisplay, #octaveDisplay, #motionDisplay, #wahDisplay {
+            position: absolute; background-color: rgba(0, 0, 0, 0.7);
+            color: var(--text-color); pointer-events: none; z-index: 10;
+            border: 1px solid var(--border-color); backdrop-filter: blur(10px);
         }
 
         #noteDisplay {
-            top: 10%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 25px 40px;
-            font-size: min(8vw, 48px);
-            font-weight: 700;
-            text-shadow: 0 0 20px var(--bg-color);
-        }
-
-        #frequencyDisplay {
-            top: 25%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            font-size: min(4vw, 24px);
-            font-weight: 500;
-            opacity: 0.9;
+            top: max(20px, var(--safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+            padding: 12px 24px; border-radius: 25px; font-size: 28px; font-weight: 600;
+            text-shadow: 0 0 15px var(--bg-color);
         }
 
         #octaveDisplay {
-            top: 35%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 25px;
-            font-size: min(3.5vw, 20px);
-            font-weight: 500;
-            opacity: 0.8;
+            top: max(20px, var(--safe-area-inset-top)); right: 20px;
+            padding: 8px 16px; border-radius: 20px; font-size: 18px; font-weight: 500;
         }
 
         #motionDisplay, #wahDisplay {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            font-size: min(3vw, 16px);
-            font-weight: 500;
+            bottom: 20px; left: 50%; transform: translateX(-50%);
+            padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;
             display: none;
         }
 
-        #wahDisplay { 
-            bottom: 60px; 
-        }
-
-        #toggleControls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            color: var(--text-color);
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        #toggleControls:hover {
-            transform: scale(1.1);
-        }
+        #wahDisplay { bottom: 60px; }
 
         #controls {
-            height: 40vh;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            padding: 20px;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            transition: all 0.3s ease;
-            border-top: 1px solid var(--glass-border);
-        }
-
-        #controls.hidden {
-            height: 0;
-            padding: 0;
-            overflow: hidden;
-            border-top: none;
+            height: 40vh; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px; padding: 15px; background: rgba(0,0,0,0.4); box-sizing: border-box;
+            overflow-y: auto; backdrop-filter: blur(10px); -webkit-overflow-scrolling: touch;
         }
 
         button, select, input[type=range], label {
-            font-family: 'Inter', -apple-system, sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 15px;
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            color: var(--text-color);
-            -webkit-appearance: none;
-            appearance: none;
-            transition: all 0.3s ease;
-            outline: none;
-            backdrop-filter: blur(10px);
+            font-family: 'Inter', -apple-system, sans-serif; font-size: 14px; font-weight: 500;
+            border-radius: 12px; border: 1px solid var(--border-color); background: var(--control-bg);
+            color: var(--text-color); -webkit-appearance: none; appearance: none;
+            transition: all 0.2s ease; outline: none;
         }
 
-        button { 
-            padding: 16px;
-            cursor: pointer;
-            min-height: 52px;
-            font-weight: 600;
-        }
+        button { padding: 14px 16px; cursor: pointer; min-height: 48px; }
+        button.active { background: var(--bg-color); color: #111; font-weight: 600; box-shadow: 0 0 20px var(--bg-color); }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(var(--r), var(--g), var(--b), 0.3);
-        }
-
-        button.active { 
-            background: var(--bg-color);
-            color: #111;
-            font-weight: 700;
-            box-shadow: 0 0 30px var(--bg-color);
-        }
-
-        .control-group { 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        label { 
-            font-size: 12px;
-            margin-bottom: 8px;
-            display: block;
-            text-align: center;
-            color: var(--text-color);
-            opacity: 0.9;
-            font-weight: 600;
-        }
+        .control-group { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        label { font-size: 12px; margin-bottom: 5px; display: block; text-align: center; color: var(--border-color); }
 
         input[type=range] {
-            width: 100%;
-            height: 6px;
-            background: rgba(var(--r), var(--g), var(--b), 0.3);
-            outline: none;
-            border: none;
-            padding: 0;
-            margin: 10px 0;
-            border-radius: 10px;
+            width: 100%; height: 6px; background: rgba(var(--r), var(--g), var(--b), 0.2);
+            outline: none; border: none; padding: 0; margin: 8px 0;
         }
 
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 24px;
-            height: 24px;
-            background: var(--bg-color);
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 0 15px var(--bg-color);
-            border: 2px solid white;
+            -webkit-appearance: none; width: 22px; height: 22px; background: var(--bg-color);
+            cursor: pointer; border-radius: 50%; box-shadow: 0 0 10px var(--bg-color);
         }
 
-        select { 
-            padding: 15px;
-            cursor: pointer;
-            min-height: 52px;
-            width: 100%;
-            font-weight: 600;
-        }
+        select { padding: 12px; cursor: pointer; min-height: 48px; width: 100%; }
 
         #noteRuler {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 60px;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            border-right: 1px solid var(--glass-border);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 15px 0;
-            box-sizing: border-box;
-            pointer-events: none;
-            z-index: 5;
-            backdrop-filter: blur(10px);
+            position: absolute; top: 0; left: 0; width: 60px; height: 100%;
+            background: rgba(0, 0, 0, 0.3); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 10px 0; box-sizing: border-box; pointer-events: none; z-index: 5;
         }
 
-        .ruler-item { 
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding-right: 12px;
-            box-sizing: border-box;
-        }
-
-        .ruler-item .tick { 
-            width: 12px;
-            height: 1px;
-            background-color: var(--glass-border);
-            margin-right: 10px;
-        }
-
-        .ruler-item .note-label { 
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-color);
-            text-align: right;
-            width: 100%;
-            opacity: 0.8;
-        }
+        .ruler-item { display: flex; align-items: center; width: 100%; padding-right: 10px; box-sizing: border-box; }
+        .ruler-item .tick { width: 10px; height: 1px; background-color: var(--border-color); margin-right: 8px; }
+        .ruler-item .note-label { font-size: 11px; font-weight: 500; color: var(--border-color); text-align: right; width: 100%; }
 
         #statusMessage {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); color: white; padding: 12px 20px;
+            border-radius: 10px; font-size: 14px; z-index: 100; opacity: 0;
+            transition: opacity 0.3s; pointer-events: none;
         }
 
-        #statusMessage.show {
-            opacity: 1;
-        }
+        #statusMessage.show { opacity: 1; }
 
         .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite;
             margin-right: 10px;
         }
 
-        @keyframes spin { 
-            to { transform: rotate(360deg); } 
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
         }
 
+        .modal-content {
+            background: rgba(30,30,30,0.95); padding: 25px; border-radius: 20px; max-width: 80%;
+            text-align: center; backdrop-filter: blur(20px); border: 1px solid var(--border-color);
+        }
+
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
+        .modal-buttons button { flex: 1; }
+
         .effect-group {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
+            grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px; margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.2);
+            border-radius: 12px; border: 1px solid var(--border-color);
         }
 
         .effect-group-title {
-            grid-column: 1 / -1;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 8px;
-            opacity: 0.9;
-            letter-spacing: 0.5px;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            #controls {
-                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                gap: 10px;
-                padding: 15px;
-            }
-            
-            .effect-group {
-                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                gap: 10px;
-                padding: 12px;
-            }
-            
-            button, select {
-                min-height: 48px;
-                padding: 14px;
-                font-size: 13px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            #controls {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                padding: 12px;
-            }
-            
-            .effect-group {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                padding: 10px;
-            }
-            
-            #noteDisplay {
-                font-size: 36px;
-                padding: 20px 30px;
-            }
-            
-            #frequencyDisplay {
-                font-size: 18px;
-                padding: 12px 20px;
-            }
-            
-            #octaveDisplay {
-                font-size: 16px;
-                padding: 10px 18px;
-            }
+            grid-column: 1 / -1; text-align: center; font-size: 12px; font-weight: 600;
+            color: var(--border-color); margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
     <div id="app-container">
         <div id="pad">
-            <div id="noteDisplay" class="info-display">C4</div>
-            <div id="frequencyDisplay" class="info-display">261.63 Hz</div>
-            <div id="octaveDisplay" class="info-display">Octave 4</div>
-            <div id="motionDisplay" class="info-display">Motion: 0°</div>
-            <div id="wahDisplay" class="info-display">Wah: 0%</div>
-            <button id="toggleControls">⚙️</button>
+            <div id="noteDisplay">C4</div>
+            <div id="octaveDisplay">Octave: 0</div>
+            <div id="motionDisplay">Motion: 0°</div>
+            <div id="wahDisplay">Wah: 0%</div>
         </div>
         
         <div id="controls">
@@ -546,6 +290,17 @@
 
     <div id="statusMessage"></div>
 
+    <div id="permissionModal" class="modal">
+        <div class="modal-content">
+            <h3>Motion Access Required</h3>
+            <p>This feature requires access to your device's motion sensors.</p>
+            <div class="modal-buttons">
+                <button id="permissionAllow">Allow</button>
+                <button id="permissionDeny">Deny</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const AppState = {
             audioCtx: null, oscillators: [], masterGain: null, filter: null, reverb: null,
@@ -553,8 +308,7 @@
             tiltBend: 0, isFilter: false, isReverb: false, isFlanger: false, isPhaser: false,
             isDist: false, isDelay: false, isAutoWah: false, isManualWah: false, isChorus: false,
             isTremolo: false, isBitCrusher: false, NUM_OSC: 7, detuneAmount: 15, waveType: "sawtooth",
-            isPlaying: false, motionEnabled: false, manualWahPosition: 0.5,
-            controlsVisible: true
+            isPlaying: false, motionEnabled: false, manualWahPosition: 0.5
         };
 
         let reverbDryWet, flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
@@ -573,18 +327,11 @@
         };
 
         const elements = {
-            pad: document.getElementById("pad"), 
-            noteDisplay: document.getElementById("noteDisplay"),
-            frequencyDisplay: document.getElementById("frequencyDisplay"),
-            octaveDisplay: document.getElementById("octaveDisplay"), 
-            motionDisplay: document.getElementById("motionDisplay"),
-            wahDisplay: document.getElementById("wahDisplay"), 
-            startBtn: document.getElementById("startBtn"),
-            stopBtn: document.getElementById("stopBtn"), 
-            motionBtn: document.getElementById("motionBtn"),
-            statusMessage: document.getElementById("statusMessage"),
-            toggleControls: document.getElementById("toggleControls"),
-            controls: document.getElementById("controls")
+            pad: document.getElementById("pad"), noteDisplay: document.getElementById("noteDisplay"),
+            octaveDisplay: document.getElementById("octaveDisplay"), motionDisplay: document.getElementById("motionDisplay"),
+            wahDisplay: document.getElementById("wahDisplay"), startBtn: document.getElementById("startBtn"),
+            stopBtn: document.getElementById("stopBtn"), motionBtn: document.getElementById("motionBtn"),
+            statusMessage: document.getElementById("statusMessage"), permissionModal: document.getElementById("permissionModal")
         };
 
         const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -600,17 +347,6 @@
             elements.stopBtn.disabled = !AppState.isPlaying;
             const spinner = elements.startBtn.querySelector('.spinner');
             if (AppState.isPlaying) spinner.style.display = 'none';
-        }
-
-        function toggleControls() {
-            AppState.controlsVisible = !AppState.controlsVisible;
-            if (AppState.controlsVisible) {
-                elements.controls.classList.remove('hidden');
-                elements.toggleControls.textContent = '⚙️';
-            } else {
-                elements.controls.classList.add('hidden');
-                elements.toggleControls.textContent = '↑';
-            }
         }
 
         function startSynth() {
@@ -837,7 +573,7 @@
         }
 
         function noteFromPad(y) {
-            const padHeight = elements.pad.clientHeight, ratio = 1 - (y / padHeight);
+            const padHeight = window.innerHeight * 0.6, ratio = 1 - (y / padHeight);
             const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
             return baseFreq * Math.pow(2, (ratio * 12) / 12);
         }
@@ -848,8 +584,7 @@
             AppState.oscillators.forEach(osc => osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01));
             const centDisplay = noteInfo.cents !== 0 ? ` (${noteInfo.cents > 0 ? '+' : ''}${noteInfo.cents}¢)` : '';
             elements.noteDisplay.textContent = noteInfo.fullName + centDisplay;
-            elements.frequencyDisplay.textContent = `${freq.toFixed(2)} Hz`;
-            elements.octaveDisplay.textContent = `Octave ${noteInfo.octave}`;
+            elements.octaveDisplay.textContent = `Octave: ${AppState.octaveOffset}`;
             updateThemeColor(noteInfo.name);
         }
 
@@ -860,15 +595,11 @@
             }
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const rect = elements.pad.getBoundingClientRect();
-            const y = clientY - rect.top;
-            const x = clientX - rect.left;
-            
-            AppState.baseFreq = noteFromPad(y);
-            const volume = x / rect.width;
+            AppState.baseFreq = noteFromPad(clientY);
+            const volume = clientX / window.innerWidth;
             AppState.masterGain.gain.setTargetAtTime(volume * 0.4, AppState.audioCtx.currentTime, 0.01);
             if (AppState.isManualWah) {
-                AppState.manualWahPosition = x / rect.width;
+                AppState.manualWahPosition = clientX / window.innerWidth;
                 updateManualWah();
             }
             applyPitch();
@@ -885,12 +616,7 @@
 
         function enableMotion() {
             if (typeof DeviceOrientationEvent.requestPermission === "function") {
-                DeviceOrientationEvent.requestPermission().then(response => {
-                    if (response === 'granted') startMotionControl();
-                    else showStatus('Motion permission denied', 3000);
-                }).catch(() => {
-                    startMotionControl();
-                });
+                elements.permissionModal.style.display = 'flex';
             } else startMotionControl();
         }
 
@@ -945,10 +671,21 @@
             elements.startBtn.addEventListener("click", startSynth);
             elements.stopBtn.addEventListener("click", stopSynth);
             elements.motionBtn.addEventListener("click", enableMotion);
-            elements.toggleControls.addEventListener("click", toggleControls);
             
             document.getElementById("octUp").addEventListener("click", () => { AppState.octaveOffset++; applyPitch(); createNoteRuler(); });
             document.getElementById("octDown").addEventListener("click", () => { AppState.octaveOffset--; applyPitch(); createNoteRuler(); });
+
+            document.getElementById("permissionAllow").addEventListener("click", () => {
+                DeviceOrientationEvent.requestPermission().then(response => {
+                    elements.permissionModal.style.display = 'none';
+                    if (response === 'granted') startMotionControl();
+                    else showStatus('Motion permission denied', 3000);
+                });
+            });
+            
+            document.getElementById("permissionDeny").addEventListener("click", () => {
+                elements.permissionModal.style.display = 'none'; showStatus('Motion control not enabled', 3000);
+            });
 
             document.getElementById("waveSelect").addEventListener("change", e => {
                 AppState.waveType = e.target.value;
@@ -966,28 +703,21 @@
             });
 
             // Effect controls
-            const controls = {
-                "filterFreq": (val) => AppState.filter?.frequency.setTargetAtTime(val, AppState.audioCtx.currentTime, 0.01),
-                "filterReso": (val) => AppState.filter && (AppState.filter.Q.value = val),
-                "delayTime": (val) => AppState.delayNode && (AppState.delayNode.delayTime.value = val / 1000),
-                "delayFeedback": (val) => AppState.delayFeedback && (AppState.delayFeedback.gain.value = val / 100),
-                "reverbMix": (val) => reverbDryWet && (reverbDryWet.gain.value = val / 100),
-                "autoWahRate": (val) => autoWahLFO && (autoWahLFO.frequency.value = val),
-                "autoWahDepth": (val) => autoWahLFO && (autoWahLFO.gain.value = val),
-                "wahFreq": (val) => {
-                    autoWahFilter && (autoWahFilter.frequency.value = val);
-                    manualWahFilter && (manualWahFilter.frequency.value = val);
-                },
-                "wahReso": (val) => {
-                    autoWahFilter && (autoWahFilter.Q.value = val);
-                    manualWahFilter && (manualWahFilter.Q.value = val);
-                }
-            };
-
-            Object.entries(controls).forEach(([id, setter]) => {
-                document.getElementById(id).addEventListener("input", e => setter(parseFloat(e.target.value)));
+            document.getElementById("filterFreq").addEventListener("input", e => {
+                if (AppState.filter) AppState.filter.frequency.setTargetAtTime(parseFloat(e.target.value), AppState.audioCtx.currentTime, 0.01);
             });
-
+            document.getElementById("filterReso").addEventListener("input", e => {
+                if (AppState.filter) AppState.filter.Q.value = parseFloat(e.target.value);
+            });
+            document.getElementById("delayTime").addEventListener("input", e => {
+                if (AppState.delayNode) AppState.delayNode.delayTime.value = parseFloat(e.target.value) / 1000;
+            });
+            document.getElementById("delayFeedback").addEventListener("input", e => {
+                if (AppState.delayFeedback) AppState.delayFeedback.gain.value = parseFloat(e.target.value) / 100;
+            });
+            document.getElementById("reverbMix").addEventListener("input", e => {
+                if (reverbDryWet) reverbDryWet.gain.value = parseFloat(e.target.value) / 100;
+            });
             document.getElementById("distAmount").addEventListener("input", e => {
                 const amount = parseFloat(e.target.value);
                 if (distortionWaveShaper && AppState.audioCtx) {
@@ -995,6 +725,22 @@
                     distortionGain.disconnect(); distortionGain.connect(newWaveShaper); newWaveShaper.connect(AppState.audioCtx.destination);
                     distortionWaveShaper = newWaveShaper;
                 }
+            });
+            document.getElementById("autoWahRate").addEventListener("input", e => {
+                if (autoWahLFO) autoWahLFO.frequency.value = parseFloat(e.target.value);
+            });
+            document.getElementById("autoWahDepth").addEventListener("input", e => {
+                if (autoWahLFO) autoWahLFO.gain.value = parseFloat(e.target.value);
+            });
+            document.getElementById("wahFreq").addEventListener("input", e => {
+                const freq = parseFloat(e.target.value);
+                if (autoWahFilter) autoWahFilter.frequency.value = freq;
+                if (manualWahFilter) manualWahFilter.frequency.value = freq;
+            });
+            document.getElementById("wahReso").addEventListener("input", e => {
+                const reso = parseFloat(e.target.value);
+                if (autoWahFilter) autoWahFilter.Q.value = reso;
+                if (manualWahFilter) manualWahFilter.Q.value = reso;
             });
 
             // Effect toggles
@@ -1045,7 +791,6 @@
         });
 
         window.addEventListener("contextmenu", e => e.preventDefault());
-        window.addEventListener('resize', () => createNoteRuler());
     </script>
 </body>
 </html>
