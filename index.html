@@ -28,7 +28,8 @@ html, body {
     -webkit-tap-highlight-color: rgba(0,0,0,0);
     touch-action: none;
     overscroll-behavior: none;
-    transition: background-color 0.2s ease;
+    /* Renk geçişi daha hızlı ve dinamik */
+    transition: background-color 0.05s ease;
 }
 
 body {
@@ -44,23 +45,7 @@ body {
     align-items: center;
     background: radial-gradient(circle at center, var(--control-bg), rgba(0,0,0,0.5));
     cursor: crosshair;
-}
-
-.note-indicator {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid var(--border-color);
-    background: rgba(var(--r), var(--g), var(--b), 0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--border-color);
-    pointer-events: none;
-    transition: all 0.2s ease;
+    overflow: hidden;
 }
 
 #noteDisplay {
@@ -171,6 +156,47 @@ select {
     padding: 10px;
     cursor: pointer;
 }
+
+/* --- Cetvel Stilleri --- */
+#noteRuler {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.ruler-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-right: 10px;
+    box-sizing: border-box;
+}
+
+.ruler-item .tick {
+    width: 10px;
+    height: 1px;
+    background-color: var(--border-color);
+    margin-right: 8px;
+}
+
+.ruler-item .note-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--border-color);
+    text-align: right;
+    width: 100%;
+}
 </style>
 </head>
 <body>
@@ -181,6 +207,7 @@ select {
 
 <div id="controls">
     <button id="startBtn">Start Synth</button>
+    <button id="stopBtn">Stop Synth</button>
     <button id="motionBtn">Enable Motion</button>
     <button id="octDown">Octave -</button>
     <button id="octUp">Octave +</button>
@@ -290,16 +317,24 @@ function startSynth(){
         oscillators.push(osc);
     }
     
-    // --- CORRECTED SIGNAL CHAIN ---
+    // --- TAMAMEN YENİDEN DÜZENLENMİŞ SİNYAL YOLU ---
     masterGain.connect(filter);
-    filter.connect(audioCtx.destination); // Filter is always in the main path now
 
-    // Effect paths (connected but gain is 0)
-    filter.connect(reverb); reverb.connect(reverbDryWet); reverbDryWet.connect(audioCtx.destination);
+    // Ana (kuru) sinyal için bir kazanç düğümü
+    const dryGain = audioCtx.createGain();
+    dryGain.gain.value = 1.0;
+    filter.connect(dryGain);
+
+    // Efektleri paralel olarak bağla
+    filter.connect(reverb); reverb.connect(reverbDryWet);
     filter.connect(flanger.delay); flangerDryWet.connect(audioCtx.destination);
     filter.connect(phaser.filter); phaserDryWet.connect(audioCtx.destination);
     filter.connect(distortionGain); distortionGain.connect(distortionWaveShaper); distortionWaveShaper.connect(audioCtx.destination);
     filter.connect(delayNode); delayNode.connect(delayFeedback); delayFeedback.connect(delayNode); delayDryWet.connect(audioCtx.destination);
+    
+    // Tüm sinyalleri (kuru ve ıslak) birleştir
+    dryGain.connect(audioCtx.destination);
+    reverbDryWet.connect(audioCtx.destination);
 }
 
 // === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
@@ -311,21 +346,17 @@ function createReverb(ctx) {
     } convolver.buffer = impulse; return convolver;
 }
 
-// --- CORRECTED Flanger ---
 function createFlanger(ctx) {
     const delay = ctx.createDelay(0.005); delay.delayTime.value = 0.002;
-    const feedback = ctx.createGain(); feedback.gain.value = 0.8;
+    const feedback = ctx.createGain(); feedback.gain.value = 0.7;
     const dryWet = ctx.createGain(); dryWet.gain.value = 0;
-    // LFO for modulation
-    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.3;
-    const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.002;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.25;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.001;
     lfo.connect(lfoGain); lfoGain.connect(delay.delayTime); lfo.start();
-    // Feedback loop
     delay.connect(feedback); feedback.connect(delay);
     return { delay, feedback, dryWet, lfo, lfoGain };
 }
 
-// --- CORRECTED Phaser ---
 function createPhaser(ctx) {
     const stages = 8;
     const filters = [];
@@ -335,7 +366,6 @@ function createPhaser(ctx) {
         filters[i].frequency.value = 1000;
         filters[i].Q.value = 1;
     }
-    // LFO for modulation
     const lfo = ctx.createOscillator(); lfo.frequency.value = 0.5;
     const lfoGain = ctx.createGain(); lfoGain.gain.value = 800;
     lfo.connect(lfoGain);
@@ -345,7 +375,6 @@ function createPhaser(ctx) {
     }
     lfo.start();
     const dryWet = ctx.createGain(); dryWet.gain.value = 0;
-    // Connect filters in series
     for (let i = 0; i < stages - 1; i++) {
         filters[i].connect(filters[i + 1]);
     }
@@ -365,18 +394,30 @@ const pad = document.getElementById("pad"); const noteDisplay = document.getElem
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const root = document.documentElement;
 
-function createNoteIndicators() {
-    const padRect = pad.getBoundingClientRect();
-    const notesToShow = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C2'];
-    notesToShow.forEach((note, index) => {
-        const indicator = document.createElement('div');
-        indicator.className = 'note-indicator';
-        indicator.textContent = note;
-        const y = padRect.height * (1 - (index / (notesToShow.length - 1)));
-        indicator.style.top = `${y}px`;
-        indicator.style.left = '20px';
-        indicator.style.transform = 'translateY(-50%)';
-        pad.appendChild(indicator);
+function createNoteRuler() {
+    const ruler = document.createElement('div');
+    ruler.id = 'noteRuler';
+    pad.appendChild(ruler);
+
+    const notesToShow = [
+        { name: 'C', octave: 5 },
+        { name: 'A', octave: 4 },
+        { name: 'F', octave: 4 },
+        { name: 'D', octave: 4 },
+        { name: 'B', octave: 3 },
+        { name: 'G', octave: 3 },
+        { name: 'E', octave: 3 },
+        { name: 'C', octave: 3 }
+    ];
+
+    notesToShow.forEach(noteInfo => {
+        const item = document.createElement('div');
+        item.className = 'ruler-item';
+        const tick = document.createElement('div'); tick.className = 'tick';
+        const label = document.createElement('div'); label.className = 'note-label';
+        label.textContent = `${noteInfo.name}${noteInfo.octave}`;
+        item.appendChild(tick); item.appendChild(label);
+        ruler.appendChild(item);
     });
 }
 
@@ -396,12 +437,13 @@ function updateThemeColor(noteName) {
     root.style.setProperty('--b', color[2]);
 }
 
+// --- YENİ: 1 OKTAVLİK PAD ---
 function noteFromPad(y){
     const padHeight = window.innerHeight * 0.6;
     const ratio = 1 - (y / padHeight);
-    const c3 = 130.81 * Math.pow(2, octaveOffset);
-    const c5 = c3 * 4; // 2 oktav aralığı
-    return c3 + (c5 - c3) * ratio;
+    // 1 oktavlık aralık (C'ten C'ye)
+    const rootNoteFreq = 261.63 * Math.pow(2, octaveOffset); // C4 veya seçilen oktav
+    return rootNoteFreq * Math.pow(2, ratio);
 }
 
 function applyPitch(){
@@ -432,7 +474,7 @@ function handleTouch(e){
     applyPitch();
 }
 
-// --- CORRECTED Motion Function ---
+// --- YENİ: DİK EKSEN HAREKET KONTROLÜ ---
 function enableMotion(){
     if(typeof DeviceOrientationEvent.requestPermission==='function'){
         DeviceOrientationEvent.requestPermission().then(res=>{ if(res==='granted'){
@@ -454,17 +496,19 @@ function disableMotion() {
 }
 
 function handleOrientation(e) {
-    // Use gamma for left-right tilt (pitch bend)
-    if (e.gamma !== null) {
-        // Gamma is -90 to 90. Map it to -12 to +12 semitones.
-        tiltBend = (e.gamma / 90) * 12;
+    // Beta (dönme) eksenini kullanarak nota bükme
+    if (e.beta !== null) {
+        // Beta -180 ile 180 arasıdır. Bunu -12 ile +12 aralığına ölçeklendiriyoruz.
+        // -45 ila 45 arası daha kullanışlı bir aralıktır.
+        const normalizedBeta = Math.max(-45, Math.min(45, e.beta));
+        tiltBend = (normalizedBeta / 45) * 12;
         applyPitch();
     }
 }
 
-
 // === Event Listeners ===
 document.getElementById("startBtn").onclick = ()=>startSynth();
+document.getElementById("stopBtn").onclick = ()=>{ if(audioCtx){ audioCtx.close(); audioCtx = null; } };
 document.getElementById("motionBtn").onclick = ()=>enableMotion();
 document.getElementById("octUp").onclick = ()=>{ octaveOffset++; applyPitch(); };
 document.getElementById("octDown").onclick = ()=>{ octaveOffset--; applyPitch(); };
@@ -475,10 +519,11 @@ document.getElementById("filterReso").oninput = e=>{ if(filter) filter.Q.value=p
 document.getElementById("delayTime").oninput = e=>{ if(delayNode) delayNode.delayTime.value = parseFloat(e.target.value) / 1000; };
 document.getElementById("delayFeedback").oninput = e=>{ if(delayFeedback) delayFeedback.gain.value = parseFloat(e.target.value) / 100; };
 document.getElementById("reverbMix").oninput = e=>{ if(reverbDryWet) reverbDryWet.gain.value = parseFloat(e.target.value) / 100; };
+
+// --- DÜZELTİLMİŞ DISTORTION KONTROLÜ ---
 document.getElementById("distAmount").oninput = e=>{ 
     const amount = parseFloat(e.target.value);
-    if(distortionGain) {
-        const waveshaper = distortionGain.context.destination; // This is a bit hacky, but works to get the waveshaper
+    if(distortionGain && distortionGain.context) {
         const ws = distortionGain.context.createWaveShaper();
         const samples = 44100; const deg = Math.PI / 180;
         const curve = new Float32Array(samples);
@@ -486,18 +531,21 @@ document.getElementById("distAmount").oninput = e=>{
             curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
         }
         ws.curve = curve; ws.oversample = '4x';
-        // Reconnect
-        distortionGain.disconnect();
+        
+        // Eski waveshaper'ı değiştir
+        const oldNode = distortionGain.disconnect();
         distortionGain.connect(ws);
         ws.connect(audioCtx.destination);
     }
 };
 
-
-// --- CORRECTED Effect Toggles ---
+// --- DÜZELTİLMİŞ EFETK TOGGLE'LARI ---
 document.getElementById("toggleFilter").onclick = () => {
     isFilter = !isFilter;
-    filter.Q.setTargetAtTime(isFilter ? parseFloat(document.getElementById('filterReso').value) : 1, audioCtx.currentTime, 0.01);
+    const targetFreq = isFilter ? parseFloat(document.getElementById('filterFreq').value) : 20000;
+    const targetQ = isFilter ? parseFloat(document.getElementById('filterReso').value) : 1;
+    filter.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.01);
+    filter.Q.setTargetAtTime(targetQ, audioCtx.currentTime, 0.01);
     document.getElementById("toggleFilter").classList.toggle('active', isFilter);
 };
 document.getElementById("toggleReverb").onclick = () => { isReverb = !isReverb; reverbDryWet.gain.setTargetAtTime(isReverb ? parseFloat(document.getElementById('reverbMix').value)/100 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleReverb").classList.toggle('active', isReverb); };
@@ -508,7 +556,7 @@ document.getElementById("toggleDelay").onclick = () => { isDelay = !isDelay; del
 
 // Initialize
 window.addEventListener('load', () => {
-    createNoteIndicators();
+    createNoteRuler();
     updateThemeColor('C');
 });
 
