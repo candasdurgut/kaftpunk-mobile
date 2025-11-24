@@ -1,566 +1,1033 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Premium Synth</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Premium Synth</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        :root {
+            --r: 100;
+            --g: 100;
+            --b: 100;
+            --bg-color: rgb(var(--r), var(--g), var(--b));
+            --control-bg: rgba(0, 0, 0, 0.2);
+            --text-color: #f0f0f0;
+            --border-color: rgba(var(--r), var(--g), var(--b), 0.5);
+            --safe-area-inset-top: env(safe-area-inset-top);
+            --safe-area-inset-bottom: env(safe-area-inset-bottom);
+        }
 
-:root {
-    --r: 100;
-    --g: 100;
-    --b: 100;
-    --bg-color: rgb(var(--r), var(--g), var(--b));
-    --control-bg: rgba(0, 0, 0, 0.2);
-    --text-color: #f0f0f0;
-    --border-color: rgba(var(--r), var(--g), var(--b), 0.5);
-}
+        * {
+            box-sizing: border-box;
+        }
 
-html, body {
-    margin: 0; padding: 0; height: 100%;
-    background-color: #111;
-    color: var(--text-color);
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-    touch-action: none;
-    overscroll-behavior: none;
-    /* Renk geçişi daha hızlı ve dinamik */
-    transition: background-color 0.05s ease;
-}
+        html, body {
+            margin: 0; 
+            padding: 0; 
+            height: 100%;
+            background-color: #111;
+            color: var(--text-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 400;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            overscroll-behavior: none;
+            overflow: hidden;
+        }
 
-body {
-    background-color: var(--bg-color);
-}
+        body {
+            background-color: var(--bg-color);
+            padding-top: var(--safe-area-inset-top);
+            padding-bottom: var(--safe-area-inset-bottom);
+        }
 
-#pad {
-    width: 100vw;
-    height: 60vh;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(circle at center, var(--control-bg), rgba(0,0,0,0.5));
-    cursor: crosshair;
-    overflow: hidden;
-}
+        #app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
 
-#noteDisplay {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text-color);
-    pointer-events: none;
-    z-index: 10;
-    text-shadow: 0 0 15px var(--bg-color);
-    border: 1px solid var(--border-color);
-}
+        #pad {
+            width: 100%;
+            height: 60vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, var(--control-bg), rgba(0,0,0,0.5));
+            cursor: crosshair;
+            overflow: hidden;
+        }
 
-#controls {
-    height: 40vh;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    padding: 15px;
-    background: rgba(0,0,0,0.4);
-    box-sizing: border-box;
-    overflow-y: auto;
-    backdrop-filter: blur(10px);
-}
+        #noteDisplay {
+            position: absolute;
+            top: max(20px, var(--safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-color);
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 15px var(--bg-color);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
 
-button, select, input[type=range], label {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    background: var(--control-bg);
-    color: var(--text-color);
-    -webkit-appearance: none;
-    appearance: none;
-    transition: all 0.2s ease;
-}
+        #octaveDisplay {
+            position: absolute;
+            top: max(20px, var(--safe-area-inset-top));
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+            pointer-events: none;
+            z-index: 10;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
 
-button {
-    padding: 12px 20px;
-    cursor: pointer;
-}
+        #controls {
+            height: 40vh;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            box-sizing: border-box;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            -webkit-overflow-scrolling: touch;
+        }
 
-button:hover, select:hover {
-    background: rgba(var(--r), var(--g), var(--b), 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(var(--r), var(--g), var(--b), 0.3);
-}
+        button, select, input[type=range], label {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--control-bg);
+            color: var(--text-color);
+            -webkit-appearance: none;
+            appearance: none;
+            transition: all 0.2s ease;
+            outline: none;
+        }
 
-button.active {
-    background: var(--bg-color);
-    color: #111;
-    font-weight: 600;
-    box-shadow: 0 0 20px var(--bg-color);
-}
+        button {
+            padding: 14px 16px;
+            cursor: pointer;
+            min-height: 48px;
+        }
 
-label {
-    font-size: 12px;
-    margin-bottom: 5px;
-    display: block;
-    text-align: center;
-    color: var(--border-color);
-}
+        button:hover, select:hover {
+            background: rgba(var(--r), var(--g), var(--b), 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(var(--r), var(--g), var(--b), 0.3);
+        }
 
-.control-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+        button:active {
+            transform: translateY(0);
+        }
 
-input[type=range] {
-    width: 100%;
-    height: 6px;
-    background: rgba(var(--r), var(--g), var(--b), 0.2);
-    outline: none;
-    border: none;
-    padding: 0;
-}
+        button.active {
+            background: var(--bg-color);
+            color: #111;
+            font-weight: 600;
+            box-shadow: 0 0 20px var(--bg-color);
+        }
 
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background: var(--bg-color);
-    cursor: pointer;
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--bg-color);
-}
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
 
-input[type=range]::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: var(--bg-color);
-    cursor: pointer;
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--bg-color);
-}
+        label {
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: block;
+            text-align: center;
+            color: var(--border-color);
+        }
 
-select {
-    padding: 10px;
-    cursor: pointer;
-}
+        input[type=range] {
+            width: 100%;
+            height: 6px;
+            background: rgba(var(--r), var(--g), var(--b), 0.2);
+            outline: none;
+            border: none;
+            padding: 0;
+            margin: 8px 0;
+        }
 
-/* --- Cetvel Stilleri --- */
-#noteRuler {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 60px;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 10px 0;
-    box-sizing: border-box;
-    pointer-events: none;
-    z-index: 5;
-}
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--bg-color);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--bg-color);
+        }
 
-.ruler-item {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding-right: 10px;
-    box-sizing: border-box;
-}
+        input[type=range]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: var(--bg-color);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--bg-color);
+            border: none;
+        }
 
-.ruler-item .tick {
-    width: 10px;
-    height: 1px;
-    background-color: var(--border-color);
-    margin-right: 8px;
-}
+        select {
+            padding: 12px;
+            cursor: pointer;
+            min-height: 48px;
+            width: 100%;
+        }
 
-.ruler-item .note-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--border-color);
-    text-align: right;
-    width: 100%;
-}
-</style>
+        /* Cetvel Stilleri */
+        #noteRuler {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 0;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .ruler-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding-right: 10px;
+            box-sizing: border-box;
+        }
+
+        .ruler-item .tick {
+            width: 10px;
+            height: 1px;
+            background-color: var(--border-color);
+            margin-right: 8px;
+        }
+
+        .ruler-item .note-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--border-color);
+            text-align: right;
+            width: 100%;
+        }
+
+        /* Status Mesajı */
+        #statusMessage {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        #statusMessage.show {
+            opacity: 1;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(30,30,30,0.95);
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 80%;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
-
-<div id="pad">
-    <div id="noteDisplay">C4</div>
-</div>
-
-<div id="controls">
-    <button id="startBtn">Start Synth</button>
-    <button id="stopBtn">Stop Synth</button>
-    <button id="motionBtn">Enable Motion</button>
-    <button id="octDown">Octave -</button>
-    <button id="octUp">Octave +</button>
-    
-    <div class="control-group">
-        <label for="waveSelect">Wave Type</label>
-        <select id="waveSelect">
-            <option value="sawtooth">Sawtooth</option>
-            <option value="triangle">Triangle</option>
-            <option value="square">Square</option>
-            <option value="sine">Sine</option>
-        </select>
-    </div>
-
-    <div class="control-group">
-        <label for="detuneRange">Detune</label>
-        <input type="range" id="detuneRange" min="0" max="50" value="15">
-    </div>
-    
-    <div class="control-group">
-        <label for="filterFreq">Filter Frequency</label>
-        <input type="range" id="filterFreq" min="200" max="20000" value="20000">
-    </div>
-
-    <div class="control-group">
-        <label for="filterReso">Filter Resonance</label>
-        <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-    </div>
-    
-    <button id="toggleFilter">Enable Filter</button>
-    <button id="toggleReverb">Enable Reverb</button>
-    <button id="toggleFlanger">Enable Flanger</button>
-    <button id="togglePhaser">Enable Phaser</button>
-    <button id="toggleDist">Enable Distortion</button>
-    <button id="toggleDelay">Enable Delay</button>
-
-    <div class="control-group">
-        <label for="reverbMix">Reverb Mix</label>
-        <input type="range" id="reverbMix" min="0" max="100" value="70">
-    </div>
-
-    <div class="control-group">
-        <label for="distAmount">Distortion Amount</label>
-        <input type="range" id="distAmount" min="0" max="100" value="50">
-    </div>
-
-    <div class="control-group">
-        <label for="delayTime">Delay Time (ms)</label>
-        <input type="range" id="delayTime" min="50" max="1000" value="250">
-    </div>
-    <div class="control-group">
-        <label for="delayFeedback">Delay Feedback</label>
-        <input type="range" id="delayFeedback" min="0" max="90" value="40">
-    </div>
-</div>
-
-<script>
-let audioCtx;
-let oscillators = [];
-let masterGain, filter, reverb, delayNode, delayFeedback;
-let baseFreq = 261.63, octaveOffset = 0, tiltBend = 0;
-let isFilter=false, isReverb=false, isFlanger=false, isPhaser=false, isDist=false, isDelay=false;
-const NUM_OSC = 7;
-let detuneAmount = 15;
-let waveType = "sawtooth";
-
-// --- Effect Nodes ---
-let reverbDryWet, flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
-
-// --- Note to Color Mapping ---
-const noteColors = {
-    'C': [255, 100, 100], 'C#': [255, 150, 100], 'D': [255, 255, 100],
-    'D#': [150, 255, 100], 'E': [100, 255, 100], 'F': [100, 255, 150],
-    'F#': [100, 255, 255], 'G': [100, 150, 255], 'G#': [100, 100, 255],
-    'A': [150, 100, 255], 'A#': [255, 100, 255], 'B': [255, 100, 150]
-};
-
-function startSynth(){
-    if (audioCtx) {
-        audioCtx.close();
-    }
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const now = audioCtx.currentTime;
-
-    // --- Main Nodes ---
-    masterGain = audioCtx.createGain(); masterGain.gain.value = 0.2;
-    filter = audioCtx.createBiquadFilter(); filter.type="lowpass"; filter.frequency.value=20000; filter.Q.value=1;
-    reverb = createReverb(audioCtx);
-    
-    // --- Effects Creation ---
-    const flanger = createFlanger(audioCtx); flangerDryWet = flanger.dryWet;
-    const phaser = createPhaser(audioCtx); phaserDryWet = phaser.dryWet;
-    const distortionWaveShaper = createDistortion(audioCtx); distortionGain = audioCtx.createGain(); distortionGain.gain.value = 0;
-    
-    delayNode = audioCtx.createDelay(1.0); delayFeedback = audioCtx.createGain(); delayDryWet = audioCtx.createGain();
-    delayNode.delayTime.value = 0.25; delayFeedback.gain.value = 0.4; delayDryWet.gain.value = 0;
-
-    // --- Create Main Oscillators ---
-    oscillators = [];
-    for(let i=0;i<NUM_OSC;i++){
-        const osc = audioCtx.createOscillator();
-        osc.type = waveType;
-        const detune = (i-Math.floor(NUM_OSC/2))*detuneAmount;
-        osc.detune.value = detune;
-        osc.connect(masterGain);
-        osc.start(now);
-        oscillators.push(osc);
-    }
-    
-    // --- TAMAMEN YENİDEN DÜZENLENMİŞ SİNYAL YOLU ---
-    masterGain.connect(filter);
-
-    // Ana (kuru) sinyal için bir kazanç düğümü
-    const dryGain = audioCtx.createGain();
-    dryGain.gain.value = 1.0;
-    filter.connect(dryGain);
-
-    // Efektleri paralel olarak bağla
-    filter.connect(reverb); reverb.connect(reverbDryWet);
-    filter.connect(flanger.delay); flangerDryWet.connect(audioCtx.destination);
-    filter.connect(phaser.filter); phaserDryWet.connect(audioCtx.destination);
-    filter.connect(distortionGain); distortionGain.connect(distortionWaveShaper); distortionWaveShaper.connect(audioCtx.destination);
-    filter.connect(delayNode); delayNode.connect(delayFeedback); delayFeedback.connect(delayNode); delayDryWet.connect(audioCtx.destination);
-    
-    // Tüm sinyalleri (kuru ve ıslak) birleştir
-    dryGain.connect(audioCtx.destination);
-    reverbDryWet.connect(audioCtx.destination);
-}
-
-// === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
-function createReverb(ctx) {
-    const convolver = ctx.createConvolver(); const len = 3*ctx.sampleRate;
-    const impulse = ctx.createBuffer(2,len,ctx.sampleRate);
-    for(let c=0;c<2;c++){ const buf = impulse.getChannelData(c);
-        for(let i=0;i<len;i++){ buf[i]=(Math.random()*2-1)*(1-i/len); }
-    } convolver.buffer = impulse; return convolver;
-}
-
-function createFlanger(ctx) {
-    const delay = ctx.createDelay(0.005); delay.delayTime.value = 0.002;
-    const feedback = ctx.createGain(); feedback.gain.value = 0.7;
-    const dryWet = ctx.createGain(); dryWet.gain.value = 0;
-    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.25;
-    const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.001;
-    lfo.connect(lfoGain); lfoGain.connect(delay.delayTime); lfo.start();
-    delay.connect(feedback); feedback.connect(delay);
-    return { delay, feedback, dryWet, lfo, lfoGain };
-}
-
-function createPhaser(ctx) {
-    const stages = 8;
-    const filters = [];
-    for (let i = 0; i < stages; i++) {
-        filters.push(ctx.createBiquadFilter());
-        filters[i].type = "allpass";
-        filters[i].frequency.value = 1000;
-        filters[i].Q.value = 1;
-    }
-    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.5;
-    const lfoGain = ctx.createGain(); lfoGain.gain.value = 800;
-    lfo.connect(lfoGain);
-    lfoGain.connect(filters[0].frequency);
-    for (let i = 1; i < stages; i++) {
-        lfoGain.connect(filters[i].frequency);
-    }
-    lfo.start();
-    const dryWet = ctx.createGain(); dryWet.gain.value = 0;
-    for (let i = 0; i < stages - 1; i++) {
-        filters[i].connect(filters[i + 1]);
-    }
-    return { filter: filters[0], filters, lfo, dryWet };
-}
-
-function createDistortion(ctx) {
-    const waveshaper = ctx.createWaveShaper(); const amount = 50; const samples = 44100;
-    const curve = new Float32Array(samples); const deg = Math.PI / 180;
-    for (let i = 0; i < samples; i++) { const x = (i * 2) / samples - 1;
-        curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-    } waveshaper.curve = curve; waveshaper.oversample = '4x'; return waveshaper;
-}
-
-// === UI Logic ===
-const pad = document.getElementById("pad"); const noteDisplay = document.getElementById("noteDisplay");
-const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const root = document.documentElement;
-
-function createNoteRuler() {
-    const ruler = document.createElement('div');
-    ruler.id = 'noteRuler';
-    pad.appendChild(ruler);
-
-    const notesToShow = [
-        { name: 'C', octave: 5 },
-        { name: 'A', octave: 4 },
-        { name: 'F', octave: 4 },
-        { name: 'D', octave: 4 },
-        { name: 'B', octave: 3 },
-        { name: 'G', octave: 3 },
-        { name: 'E', octave: 3 },
-        { name: 'C', octave: 3 }
-    ];
-
-    notesToShow.forEach(noteInfo => {
-        const item = document.createElement('div');
-        item.className = 'ruler-item';
-        const tick = document.createElement('div'); tick.className = 'tick';
-        const label = document.createElement('div'); label.className = 'note-label';
-        label.textContent = `${noteInfo.name}${noteInfo.octave}`;
-        item.appendChild(tick); item.appendChild(label);
-        ruler.appendChild(item);
-    });
-}
-
-function freqToNote(freq) {
-    const A4 = 440;
-    const semitonesFromA4 = 12 * Math.log2(freq / A4);
-    const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
-    const octave = Math.floor((semitonesFromA4 + 9) / 12);
-    const noteName = noteNames[(noteIndex + 12) % 12];
-    return { name: noteName, octave: octave, fullName: `${noteName}${octave}` };
-}
-
-function updateThemeColor(noteName) {
-    const color = noteColors[noteName];
-    root.style.setProperty('--r', color[0]);
-    root.style.setProperty('--g', color[1]);
-    root.style.setProperty('--b', color[2]);
-}
-
-// --- YENİ: 1 OKTAVLİK PAD ---
-function noteFromPad(y){
-    const padHeight = window.innerHeight * 0.6;
-    const ratio = 1 - (y / padHeight);
-    // 1 oktavlık aralık (C'ten C'ye)
-    const rootNoteFreq = 261.63 * Math.pow(2, octaveOffset); // C4 veya seçilen oktav
-    return rootNoteFreq * Math.pow(2, ratio);
-}
-
-function applyPitch(){
-    const freq = baseFreq * Math.pow(2, tiltBend / 12);
-    const noteInfo = freqToNote(freq);
-    
-    oscillators.forEach(osc => osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01));
-    
-    noteDisplay.textContent = noteInfo.fullName;
-    updateThemeColor(noteInfo.name);
-}
-
-pad.addEventListener("touchstart", handleTouch, { passive: false });
-pad.addEventListener("touchmove", handleTouch, { passive: false });
-pad.addEventListener("mousedown", handleTouch);
-pad.addEventListener("mousemove", e => { if (e.buttons === 1) handleTouch(e);});
-
-function handleTouch(e){
-    e.preventDefault();
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    
-    baseFreq = noteFromPad(clientY);
-    
-    const volume = clientX / window.innerWidth;
-    masterGain.gain.setTargetAtTime(volume * 0.4, audioCtx.currentTime, 0.01);
-
-    applyPitch();
-}
-
-// --- YENİ: DİK EKSEN HAREKET KONTROLÜ ---
-function enableMotion(){
-    if(typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(res=>{ if(res==='granted'){
-            window.addEventListener("deviceorientation", handleOrientation);
-        }});
-    } else { 
-        window.addEventListener("deviceorientation", handleOrientation);
-    }
-    document.getElementById("motionBtn").textContent = "Disable Motion";
-    document.getElementById("motionBtn").onclick = disableMotion;
-}
-
-function disableMotion() {
-    window.removeEventListener("deviceorientation", handleOrientation);
-    tiltBend = 0;
-    applyPitch();
-    document.getElementById("motionBtn").textContent = "Enable Motion";
-    document.getElementById("motionBtn").onclick = enableMotion;
-}
-
-function handleOrientation(e) {
-    // Beta (dönme) eksenini kullanarak nota bükme
-    if (e.beta !== null) {
-        // Beta -180 ile 180 arasıdır. Bunu -12 ile +12 aralığına ölçeklendiriyoruz.
-        // -45 ila 45 arası daha kullanışlı bir aralıktır.
-        const normalizedBeta = Math.max(-45, Math.min(45, e.beta));
-        tiltBend = (normalizedBeta / 45) * 12;
-        applyPitch();
-    }
-}
-
-// === Event Listeners ===
-document.getElementById("startBtn").onclick = ()=>startSynth();
-document.getElementById("stopBtn").onclick = ()=>{ if(audioCtx){ audioCtx.close(); audioCtx = null; } };
-document.getElementById("motionBtn").onclick = ()=>enableMotion();
-document.getElementById("octUp").onclick = ()=>{ octaveOffset++; applyPitch(); };
-document.getElementById("octDown").onclick = ()=>{ octaveOffset--; applyPitch(); };
-document.getElementById("waveSelect").onchange = e=>{ waveType = e.target.value; oscillators.forEach(osc=>osc.type=waveType); };
-document.getElementById("detuneRange").oninput = e=>{ detuneAmount = parseFloat(e.target.value); oscillators.forEach((osc,i)=>{ const det = (i-Math.floor(NUM_OSC/2))*detuneAmount; osc.detune.setValueAtTime(det,audioCtx.currentTime); }); };
-document.getElementById("filterFreq").oninput = e=>{ if(filter) filter.frequency.setTargetAtTime(parseFloat(e.target.value), audioCtx.currentTime, 0.01); };
-document.getElementById("filterReso").oninput = e=>{ if(filter) filter.Q.value=parseFloat(e.target.value); };
-document.getElementById("delayTime").oninput = e=>{ if(delayNode) delayNode.delayTime.value = parseFloat(e.target.value) / 1000; };
-document.getElementById("delayFeedback").oninput = e=>{ if(delayFeedback) delayFeedback.gain.value = parseFloat(e.target.value) / 100; };
-document.getElementById("reverbMix").oninput = e=>{ if(reverbDryWet) reverbDryWet.gain.value = parseFloat(e.target.value) / 100; };
-
-// --- DÜZELTİLMİŞ DISTORTION KONTROLÜ ---
-document.getElementById("distAmount").oninput = e=>{ 
-    const amount = parseFloat(e.target.value);
-    if(distortionGain && distortionGain.context) {
-        const ws = distortionGain.context.createWaveShaper();
-        const samples = 44100; const deg = Math.PI / 180;
-        const curve = new Float32Array(samples);
-        for (let i = 0; i < samples; i++) { const x = (i * 2) / samples - 1;
-            curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-        }
-        ws.curve = curve; ws.oversample = '4x';
+    <div id="app-container">
+        <div id="pad">
+            <div id="noteDisplay">C4</div>
+            <div id="octaveDisplay">Octave: 0</div>
+        </div>
         
-        // Eski waveshaper'ı değiştir
-        const oldNode = distortionGain.disconnect();
-        distortionGain.connect(ws);
-        ws.connect(audioCtx.destination);
-    }
-};
+        <div id="controls">
+            <button id="startBtn">
+                <span class="spinner" style="display:none;"></span>
+                Start Synth
+            </button>
+            <button id="stopBtn" disabled>Stop Synth</button>
+            <button id="motionBtn">Enable Motion</button>
+            <button id="octDown">Octave -</button>
+            <button id="octUp">Octave +</button>
+            
+            <div class="control-group">
+                <label for="waveSelect">Wave Type</label>
+                <select id="waveSelect">
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="square">Square</option>
+                    <option value="sine">Sine</option>
+                </select>
+            </div>
 
-// --- DÜZELTİLMİŞ EFETK TOGGLE'LARI ---
-document.getElementById("toggleFilter").onclick = () => {
-    isFilter = !isFilter;
-    const targetFreq = isFilter ? parseFloat(document.getElementById('filterFreq').value) : 20000;
-    const targetQ = isFilter ? parseFloat(document.getElementById('filterReso').value) : 1;
-    filter.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.01);
-    filter.Q.setTargetAtTime(targetQ, audioCtx.currentTime, 0.01);
-    document.getElementById("toggleFilter").classList.toggle('active', isFilter);
-};
-document.getElementById("toggleReverb").onclick = () => { isReverb = !isReverb; reverbDryWet.gain.setTargetAtTime(isReverb ? parseFloat(document.getElementById('reverbMix').value)/100 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleReverb").classList.toggle('active', isReverb); };
-document.getElementById("toggleFlanger").onclick = () => { isFlanger = !isFlanger; flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleFlanger").classList.toggle('active', isFlanger); };
-document.getElementById("togglePhaser").onclick = () => { isPhaser = !isPhaser; phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("togglePhaser").classList.toggle('active', isPhaser); };
-document.getElementById("toggleDist").onclick = () => { isDist = !isDist; distortionGain.gain.setTargetAtTime(isDist ? 1 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDist").classList.toggle('active', isDist); };
-document.getElementById("toggleDelay").onclick = () => { isDelay = !isDelay; delayDryWet.gain.setTargetAtTime(isDelay ? 0.5 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDelay").classList.toggle('active', isDelay); };
+            <div class="control-group">
+                <label for="detuneRange">Detune</label>
+                <input type="range" id="detuneRange" min="0" max="50" value="15">
+            </div>
+            
+            <div class="control-group">
+                <label for="filterFreq">Filter Frequency</label>
+                <input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
+            </div>
 
-// Initialize
-window.addEventListener('load', () => {
-    createNoteRuler();
-    updateThemeColor('C');
-});
+            <div class="control-group">
+                <label for="filterReso">Filter Resonance</label>
+                <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
+            </div>
+            
+            <button id="toggleFilter">Enable Filter</button>
+            <button id="toggleReverb">Enable Reverb</button>
+            <button id="toggleFlanger">Enable Flanger</button>
+            <button id="togglePhaser">Enable Phaser</button>
+            <button id="toggleDist">Enable Distortion</button>
+            <button id="toggleDelay">Enable Delay</button>
 
-window.addEventListener("contextmenu", e=>e.preventDefault());
-</script>
+            <div class="control-group">
+                <label for="reverbMix">Reverb Mix</label>
+                <input type="range" id="reverbMix" min="0" max="100" value="70">
+            </div>
+
+            <div class="control-group">
+                <label for="distAmount">Distortion Amount</label>
+                <input type="range" id="distAmount" min="0" max="100" value="50">
+            </div>
+
+            <div class="control-group">
+                <label for="delayTime">Delay Time (ms)</label>
+                <input type="range" id="delayTime" min="50" max="1000" value="250">
+            </div>
+            <div class="control-group">
+                <label for="delayFeedback">Delay Feedback</label>
+                <input type="range" id="delayFeedback" min="0" max="90" value="40">
+            </div>
+        </div>
+    </div>
+
+    <div id="statusMessage"></div>
+
+    <div id="permissionModal" class="modal">
+        <div class="modal-content">
+            <h3>Motion Access Required</h3>
+            <p>This feature requires access to your device's motion sensors. Would you like to enable this?</p>
+            <div class="modal-buttons">
+                <button id="permissionAllow">Allow</button>
+                <button id="permissionDeny">Deny</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        const AppState = {
+            audioCtx: null,
+            oscillators: [],
+            masterGain: null,
+            filter: null,
+            reverb: null,
+            delayNode: null,
+            delayFeedback: null,
+            baseFreq: 261.63,
+            octaveOffset: 0,
+            tiltBend: 0,
+            isFilter: false,
+            isReverb: false,
+            isFlanger: false,
+            isPhaser: false,
+            isDist: false,
+            isDelay: false,
+            NUM_OSC: 7,
+            detuneAmount: 15,
+            waveType: "sawtooth",
+            isPlaying: false,
+            motionEnabled: false
+        };
+
+        // Effect Nodes
+        let reverbDryWet, flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
+        let flanger, phaser, distortionWaveShaper;
+
+        // Note to Color Mapping
+        const noteColors = {
+            'C': [255, 100, 100], 'C#': [255, 150, 100], 'D': [255, 255, 100],
+            'D#': [150, 255, 100], 'E': [100, 255, 100], 'F': [100, 255, 150],
+            'F#': [100, 255, 255], 'G': [100, 150, 255], 'G#': [100, 100, 255],
+            'A': [150, 100, 255], 'A#': [255, 100, 255], 'B': [255, 100, 150]
+        };
+
+        // DOM Elements
+        const elements = {
+            pad: document.getElementById("pad"),
+            noteDisplay: document.getElementById("noteDisplay"),
+            octaveDisplay: document.getElementById("octaveDisplay"),
+            startBtn: document.getElementById("startBtn"),
+            stopBtn: document.getElementById("stopBtn"),
+            motionBtn: document.getElementById("motionBtn"),
+            statusMessage: document.getElementById("statusMessage"),
+            permissionModal: document.getElementById("permissionModal")
+        };
+
+        // Utility Functions
+        function showStatus(message, duration = 2000) {
+            elements.statusMessage.textContent = message;
+            elements.statusMessage.classList.add('show');
+            setTimeout(() => {
+                elements.statusMessage.classList.remove('show');
+            }, duration);
+        }
+
+        function updateButtonStates() {
+            elements.startBtn.disabled = AppState.isPlaying;
+            elements.stopBtn.disabled = !AppState.isPlaying;
+            
+            const spinner = elements.startBtn.querySelector('.spinner');
+            if (AppState.isPlaying) {
+                spinner.style.display = 'none';
+            }
+        }
+
+        // Audio Functions
+        function startSynth() {
+            if (AppState.audioCtx && AppState.audioCtx.state === 'running') {
+                showStatus('Synth is already running');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const spinner = elements.startBtn.querySelector('.spinner');
+                spinner.style.display = 'inline-block';
+                
+                // Create audio context on user gesture
+                AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = AppState.audioCtx.currentTime;
+
+                // Create audio nodes
+                createAudioNodes(now);
+                
+                // Set initial state
+                AppState.isPlaying = true;
+                updateButtonStates();
+                showStatus('Synth started');
+                
+            } catch (error) {
+                console.error('Error starting synth:', error);
+                showStatus('Error starting synth: ' + error.message, 4000);
+                const spinner = elements.startBtn.querySelector('.spinner');
+                spinner.style.display = 'none';
+            }
+        }
+
+        function createAudioNodes(now) {
+            // Main Nodes
+            AppState.masterGain = AppState.audioCtx.createGain();
+            AppState.masterGain.gain.value = 0.2;
+            
+            AppState.filter = AppState.audioCtx.createBiquadFilter();
+            AppState.filter.type = "lowpass";
+            AppState.filter.frequency.value = 20000;
+            AppState.filter.Q.value = 1;
+
+            // Create Effects
+            createEffects();
+            
+            // Create Oscillators
+            createOscillators(now);
+            
+            // Connect Audio Graph
+            connectAudioGraph();
+        }
+
+        function createEffects() {
+            // Reverb
+            AppState.reverb = createReverb(AppState.audioCtx);
+            reverbDryWet = AppState.audioCtx.createGain();
+            reverbDryWet.gain.value = 0;
+
+            // Flanger
+            flanger = createFlanger(AppState.audioCtx);
+            flangerDryWet = AppState.audioCtx.createGain();
+            flangerDryWet.gain.value = 0;
+
+            // Phaser
+            phaser = createPhaser(AppState.audioCtx);
+            phaserDryWet = AppState.audioCtx.createGain();
+            phaserDryWet.gain.value = 0;
+
+            // Distortion
+            distortionWaveShaper = createDistortion(AppState.audioCtx, 50);
+            distortionGain = AppState.audioCtx.createGain();
+            distortionGain.gain.value = 0;
+
+            // Delay
+            AppState.delayNode = AppState.audioCtx.createDelay(1.0);
+            AppState.delayFeedback = AppState.audioCtx.createGain();
+            delayDryWet = AppState.audioCtx.createGain();
+            
+            AppState.delayNode.delayTime.value = 0.25;
+            AppState.delayFeedback.gain.value = 0.4;
+            delayDryWet.gain.value = 0;
+        }
+
+        function createOscillators(now) {
+            AppState.oscillators = [];
+            for(let i = 0; i < AppState.NUM_OSC; i++) {
+                const osc = AppState.audioCtx.createOscillator();
+                osc.type = AppState.waveType;
+                const detune = (i - Math.floor(AppState.NUM_OSC / 2)) * AppState.detuneAmount;
+                osc.detune.value = detune;
+                osc.connect(AppState.masterGain);
+                osc.start(now);
+                AppState.oscillators.push(osc);
+            }
+        }
+
+        function connectAudioGraph() {
+            // Main signal chain
+            AppState.masterGain.connect(AppState.filter);
+            
+            // Dry signal
+            const dryGain = AppState.audioCtx.createGain();
+            dryGain.gain.value = 1.0;
+            AppState.filter.connect(dryGain);
+            dryGain.connect(AppState.audioCtx.destination);
+            
+            // Effects in parallel
+            AppState.filter.connect(AppState.reverb);
+            AppState.reverb.connect(reverbDryWet);
+            reverbDryWet.connect(AppState.audioCtx.destination);
+            
+            AppState.filter.connect(flanger.delay);
+            flanger.delay.connect(flangerDryWet);
+            flangerDryWet.connect(AppState.audioCtx.destination);
+            
+            AppState.filter.connect(phaser.filter);
+            phaser.filter.connect(phaserDryWet);
+            phaserDryWet.connect(AppState.audioCtx.destination);
+            
+            AppState.filter.connect(distortionGain);
+            distortionGain.connect(distortionWaveShaper);
+            distortionWaveShaper.connect(AppState.audioCtx.destination);
+            
+            AppState.filter.connect(AppState.delayNode);
+            AppState.delayNode.connect(AppState.delayFeedback);
+            AppState.delayFeedback.connect(AppState.delayNode);
+            AppState.delayNode.connect(delayDryWet);
+            delayDryWet.connect(AppState.audioCtx.destination);
+        }
+
+        function stopSynth() {
+            if (!AppState.audioCtx) {
+                showStatus('No synth is running');
+                return;
+            }
+
+            try {
+                AppState.audioCtx.close().then(() => {
+                    AppState.audioCtx = null;
+                    AppState.oscillators = [];
+                    AppState.isPlaying = false;
+                    updateButtonStates();
+                    showStatus('Synth stopped');
+                }).catch(error => {
+                    console.error('Error closing audio context:', error);
+                    showStatus('Error stopping synth', 4000);
+                });
+            } catch (error) {
+                console.error('Error in stopSynth:', error);
+                showStatus('Error stopping synth', 4000);
+            }
+        }
+
+        // Effect Creation Functions
+        function createReverb(ctx) {
+            const convolver = ctx.createConvolver();
+            const len = 3 * ctx.sampleRate;
+            const impulse = ctx.createBuffer(2, len, ctx.sampleRate);
+            
+            for(let c = 0; c < 2; c++) {
+                const buf = impulse.getChannelData(c);
+                for(let i = 0; i < len; i++) {
+                    buf[i] = (Math.random() * 2 - 1) * (1 - i / len);
+                }
+            }
+            convolver.buffer = impulse;
+            return convolver;
+        }
+
+        function createFlanger(ctx) {
+            const delay = ctx.createDelay(0.005);
+            delay.delayTime.value = 0.002;
+            
+            const feedback = ctx.createGain();
+            feedback.gain.value = 0.7;
+            
+            const lfo = ctx.createOscillator();
+            lfo.frequency.value = 0.25;
+            
+            const lfoGain = ctx.createGain();
+            lfoGain.gain.value = 0.001;
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(delay.delayTime);
+            lfo.start();
+            
+            delay.connect(feedback);
+            feedback.connect(delay);
+            
+            return { delay, feedback, lfo, lfoGain };
+        }
+
+        function createPhaser(ctx) {
+            const stages = 8;
+            const filters = [];
+            
+            for (let i = 0; i < stages; i++) {
+                filters.push(ctx.createBiquadFilter());
+                filters[i].type = "allpass";
+                filters[i].frequency.value = 1000;
+                filters[i].Q.value = 1;
+            }
+            
+            const lfo = ctx.createOscillator();
+            lfo.frequency.value = 0.5;
+            
+            const lfoGain = ctx.createGain();
+            lfoGain.gain.value = 800;
+            
+            lfo.connect(lfoGain);
+            
+            for (let i = 0; i < stages; i++) {
+                lfoGain.connect(filters[i].frequency);
+            }
+            
+            lfo.start();
+            
+            for (let i = 0; i < stages - 1; i++) {
+                filters[i].connect(filters[i + 1]);
+            }
+            
+            return { filter: filters[0], filters, lfo };
+        }
+
+        function createDistortion(ctx, amount) {
+            const waveshaper = ctx.createWaveShaper();
+            const samples = 44100;
+            const curve = new Float32Array(samples);
+            const deg = Math.PI / 180;
+            
+            for (let i = 0; i < samples; i++) {
+                const x = (i * 2) / samples - 1;
+                curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+            }
+            
+            waveshaper.curve = curve;
+            waveshaper.oversample = '4x';
+            return waveshaper;
+        }
+
+        // UI Functions
+        function createNoteRuler() {
+            const ruler = document.createElement('div');
+            ruler.id = 'noteRuler';
+            elements.pad.appendChild(ruler);
+
+            const notesToShow = [
+                { name: 'C', octave: 5 },
+                { name: 'A', octave: 4 },
+                { name: 'F', octave: 4 },
+                { name: 'D', octave: 4 },
+                { name: 'B', octave: 3 },
+                { name: 'G', octave: 3 },
+                { name: 'E', octave: 3 },
+                { name: 'C', octave: 3 }
+            ];
+
+            notesToShow.forEach(noteInfo => {
+                const item = document.createElement('div');
+                item.className = 'ruler-item';
+                
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                
+                const label = document.createElement('div');
+                label.className = 'note-label';
+                label.textContent = `${noteInfo.name}${noteInfo.octave}`;
+                
+                item.appendChild(tick);
+                item.appendChild(label);
+                ruler.appendChild(item);
+            });
+        }
+
+        function freqToNote(freq) {
+            const A4 = 440;
+            const semitonesFromA4 = 12 * Math.log2(freq / A4);
+            const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
+            const octave = Math.floor((semitonesFromA4 + 9) / 12);
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const noteName = noteNames[(noteIndex + 12) % 12];
+            
+            return { 
+                name: noteName, 
+                octave: octave, 
+                fullName: `${noteName}${octave}` 
+            };
+        }
+
+        function updateThemeColor(noteName) {
+            const color = noteColors[noteName] || [100, 100, 100];
+            document.documentElement.style.setProperty('--r', color[0]);
+            document.documentElement.style.setProperty('--g', color[1]);
+            document.documentElement.style.setProperty('--b', color[2]);
+        }
+
+        function noteFromPad(y) {
+            const padHeight = window.innerHeight * 0.6;
+            const ratio = 1 - (y / padHeight);
+            const rootNoteFreq = 261.63 * Math.pow(2, AppState.octaveOffset);
+            return rootNoteFreq * Math.pow(2, ratio);
+        }
+
+        function applyPitch() {
+            if (!AppState.audioCtx || AppState.audioCtx.state !== 'running') return;
+            
+            const freq = AppState.baseFreq * Math.pow(2, AppState.tiltBend / 12);
+            const noteInfo = freqToNote(freq);
+            
+            AppState.oscillators.forEach(osc => {
+                osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
+            });
+            
+            elements.noteDisplay.textContent = noteInfo.fullName;
+            elements.octaveDisplay.textContent = `Octave: ${AppState.octaveOffset}`;
+            updateThemeColor(noteInfo.name);
+        }
+
+        // Touch/Mouse Handlers
+        function handleTouch(e) {
+            e.preventDefault();
+            
+            if (!AppState.audioCtx || AppState.audioCtx.state !== 'running') {
+                showStatus('Start the synth first', 2000);
+                return;
+            }
+            
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            
+            AppState.baseFreq = noteFromPad(clientY);
+            
+            const volume = clientX / window.innerWidth;
+            AppState.masterGain.gain.setTargetAtTime(volume * 0.4, AppState.audioCtx.currentTime, 0.01);
+
+            applyPitch();
+        }
+
+        // Motion Control
+        function enableMotion() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                elements.permissionModal.style.display = 'flex';
+            } else {
+                startMotionControl();
+            }
+        }
+
+        function startMotionControl() {
+            window.addEventListener("deviceorientation", handleOrientation);
+            AppState.motionEnabled = true;
+            elements.motionBtn.textContent = "Disable Motion";
+            elements.motionBtn.classList.add('active');
+            showStatus('Motion control enabled');
+        }
+
+        function disableMotion() {
+            window.removeEventListener("deviceorientation", handleOrientation);
+            AppState.motionEnabled = false;
+            AppState.tiltBend = 0;
+            applyPitch();
+            elements.motionBtn.textContent = "Enable Motion";
+            elements.motionBtn.classList.remove('active');
+            showStatus('Motion control disabled');
+        }
+
+        function handleOrientation(e) {
+            if (e.beta !== null) {
+                const normalizedBeta = Math.max(-45, Math.min(45, e.beta));
+                AppState.tiltBend = (normalizedBeta / 45) * 12;
+                applyPitch();
+            }
+        }
+
+        // Event Listeners
+        function initializeEventListeners() {
+            // Touch/Mouse events
+            elements.pad.addEventListener("touchstart", handleTouch, { passive: false });
+            elements.pad.addEventListener("touchmove", handleTouch, { passive: false });
+            elements.pad.addEventListener("mousedown", handleTouch);
+            elements.pad.addEventListener("mousemove", e => {
+                if (e.buttons === 1) handleTouch(e);
+            });
+
+            // Control buttons
+            elements.startBtn.addEventListener("click", startSynth);
+            elements.stopBtn.addEventListener("click", stopSynth);
+            elements.motionBtn.addEventListener("click", enableMotion);
+            
+            document.getElementById("octUp").addEventListener("click", () => {
+                AppState.octaveOffset++;
+                applyPitch();
+            });
+            
+            document.getElementById("octDown").addEventListener("click", () => {
+                AppState.octaveOffset--;
+                applyPitch();
+            });
+
+            // Permission modal
+            document.getElementById("permissionAllow").addEventListener("click", () => {
+                DeviceOrientationEvent.requestPermission().then(response => {
+                    elements.permissionModal.style.display = 'none';
+                    if (response === 'granted') {
+                        startMotionControl();
+                    } else {
+                        showStatus('Motion permission denied', 3000);
+                    }
+                });
+            });
+            
+            document.getElementById("permissionDeny").addEventListener("click", () => {
+                elements.permissionModal.style.display = 'none';
+                showStatus('Motion control not enabled', 3000);
+            });
+
+            // Real-time controls
+            document.getElementById("waveSelect").addEventListener("change", e => {
+                AppState.waveType = e.target.value;
+                if (AppState.oscillators.length > 0) {
+                    AppState.oscillators.forEach(osc => osc.type = AppState.waveType);
+                }
+            });
+            
+            document.getElementById("detuneRange").addEventListener("input", e => {
+                AppState.detuneAmount = parseFloat(e.target.value);
+                if (AppState.oscillators.length > 0) {
+                    AppState.oscillators.forEach((osc, i) => {
+                        const det = (i - Math.floor(AppState.NUM_OSC / 2)) * AppState.detuneAmount;
+                        osc.detune.setValueAtTime(det, AppState.audioCtx.currentTime);
+                    });
+                }
+            });
+            
+            // Effect controls
+            initializeEffectControls();
+        }
+
+        function initializeEffectControls() {
+            // Filter controls
+            document.getElementById("filterFreq").addEventListener("input", e => {
+                if (AppState.filter) {
+                    AppState.filter.frequency.setTargetAtTime(
+                        parseFloat(e.target.value), 
+                        AppState.audioCtx.currentTime, 
+                        0.01
+                    );
+                }
+            });
+            
+            document.getElementById("filterReso").addEventListener("input", e => {
+                if (AppState.filter) {
+                    AppState.filter.Q.value = parseFloat(e.target.value);
+                }
+            });
+
+            // Delay controls
+            document.getElementById("delayTime").addEventListener("input", e => {
+                if (AppState.delayNode) {
+                    AppState.delayNode.delayTime.value = parseFloat(e.target.value) / 1000;
+                }
+            });
+            
+            document.getElementById("delayFeedback").addEventListener("input", e => {
+                if (AppState.delayFeedback) {
+                    AppState.delayFeedback.gain.value = parseFloat(e.target.value) / 100;
+                }
+            });
+
+            // Reverb control
+            document.getElementById("reverbMix").addEventListener("input", e => {
+                if (reverbDryWet) {
+                    reverbDryWet.gain.value = parseFloat(e.target.value) / 100;
+                }
+            });
+
+            // Distortion control
+            document.getElementById("distAmount").addEventListener("input", e => {
+                const amount = parseFloat(e.target.value);
+                if (distortionWaveShaper && AppState.audioCtx) {
+                    const newWaveShaper = createDistortion(AppState.audioCtx, amount);
+                    
+                    // Reconnect the distortion chain
+                    distortionGain.disconnect();
+                    distortionGain.connect(newWaveShaper);
+                    newWaveShaper.connect(AppState.audioCtx.destination);
+                    
+                    distortionWaveShaper = newWaveShaper;
+                }
+            });
+
+            // Effect toggles
+            document.getElementById("toggleFilter").addEventListener("click", () => {
+                AppState.isFilter = !AppState.isFilter;
+                const targetFreq = AppState.isFilter ? 
+                    parseFloat(document.getElementById('filterFreq').value) : 20000;
+                const targetQ = AppState.isFilter ? 
+                    parseFloat(document.getElementById('filterReso').value) : 1;
+                    
+                if (AppState.filter) {
+                    AppState.filter.frequency.setTargetAtTime(targetFreq, AppState.audioCtx.currentTime, 0.01);
+                    AppState.filter.Q.setTargetAtTime(targetQ, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleFilter").classList.toggle('active', AppState.isFilter);
+            });
+            
+            document.getElementById("toggleReverb").addEventListener("click", () => {
+                AppState.isReverb = !AppState.isReverb;
+                if (reverbDryWet) {
+                    const targetValue = AppState.isReverb ? 
+                        parseFloat(document.getElementById('reverbMix').value) / 100 : 0;
+                    reverbDryWet.gain.setTargetAtTime(targetValue, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleReverb").classList.toggle('active', AppState.isReverb);
+            });
+            
+            document.getElementById("toggleFlanger").addEventListener("click", () => {
+                AppState.isFlanger = !AppState.isFlanger;
+                if (flangerDryWet) {
+                    flangerDryWet.gain.setTargetAtTime(AppState.isFlanger ? 0.7 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleFlanger").classList.toggle('active', AppState.isFlanger);
+            });
+            
+            document.getElementById("togglePhaser").addEventListener("click", () => {
+                AppState.isPhaser = !AppState.isPhaser;
+                if (phaserDryWet) {
+                    phaserDryWet.gain.setTargetAtTime(AppState.isPhaser ? 0.7 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("togglePhaser").classList.toggle('active', AppState.isPhaser);
+            });
+            
+            document.getElementById("toggleDist").addEventListener("click", () => {
+                AppState.isDist = !AppState.isDist;
+                if (distortionGain) {
+                    distortionGain.gain.setTargetAtTime(AppState.isDist ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleDist").classList.toggle('active', AppState.isDist);
+            });
+            
+            document.getElementById("toggleDelay").addEventListener("click", () => {
+                AppState.isDelay = !AppState.isDelay;
+                if (delayDryWet) {
+                    delayDryWet.gain.setTargetAtTime(AppState.isDelay ? 0.5 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleDelay").classList.toggle('active', AppState.isDelay);
+            });
+        }
+
+        // Initialize App
+        window.addEventListener('load', () => {
+            createNoteRuler();
+            updateThemeColor('C');
+            initializeEventListeners();
+            updateButtonStates();
+            showStatus('Ready to play');
+        });
+
+        // Prevent context menu on long press
+        window.addEventListener("contextmenu", e => e.preventDefault());
+    </script>
 </body>
 </html>
