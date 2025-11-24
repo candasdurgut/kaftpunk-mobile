@@ -125,227 +125,70 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 <script>
 const AppState={audioCtx:null,oscillators:[],masterGain:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,NUM_OSC:7};
-const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:false,delay:false,reverb:false};
+const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:true,delay:false,reverb:false};
 let audioNodes={};
 const noteColors={'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]};
-const elements={
-pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),
-octaveDisplay:document.getElementById("octaveDisplay"),motionDisplay:document.getElementById("motionDisplay"),
-wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),
-startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),
-motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),
-statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),
-controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls"),
-noteRuler:document.getElementById("noteRuler")
-};
+const elements={pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),octaveDisplay:document.getElementById("octaveDisplay"),motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls"),noteRuler:document.getElementById("noteRuler")};
 const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
-function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Audio not ready');return false;}try{op();return true}catch(e){console.error(e);showStatus('Audio error');return false;}}
+function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Start synth first');return false;}try{op();return true}catch(e){console.error(e);showStatus('Audio error');return false;}}
 function showStatus(msg,dur=1500){elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');setTimeout(()=>elements.statusMessage.classList.remove('show'),dur);}
 function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;}
 function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscillators.forEach(o=>{try{o.stop();o.disconnect();}catch(e){}});AppState.oscillators=[];}}
 function startSynth(){if(isAudioContextValid()){showStatus('Already running');return;}
-try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started');}catch(e){console.error(e);showStatus('Start failed');}}
+try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started - Try effects!');}catch(e){console.error(e);showStatus('Start failed');}}
 function createAudioNodes(){
-    cleanupOscillators();
-    AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
-    
-    // --- Efekt Düğümlerini Oluştur ---
-    audioNodes.panner=AppState.audioCtx.createStereoPanner();
-    audioNodes.distortion=createWaveShaper(3);
-    audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";
-    audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);
-    audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.7;
-    audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);
-    audioNodes.tremoloGain=AppState.audioCtx.createGain();
-    audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";
-    audioNodes.delay=AppState.audioCtx.createDelay(2);
-    audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;
-    audioNodes.reverb=AppState.audioCtx.createConvolver();
-    const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);
-    for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}
-    audioNodes.reverb.buffer=buffer;
-
-    // --- LFO'ları ve Gain'leri Oluştur ---
-    audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.start();
-    audioNodes.autoWahLFOGain=AppState.audioCtx.createGain();
-    audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.start();
-    audioNodes.flangerLFOGain=AppState.audioCtx.createGain();
-    audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.start();
-    audioNodes.chorusLFOGain=AppState.audioCtx.createGain();
-    audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.start();
-    
-    createOscillators();
-    connectAudioGraph();
-}
-function createWaveShaper(amount){
-const ws=AppState.audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=Math.tanh(x*amount)*0.8;}ws.curve=curve;return ws;}
-function createOscillators(){const now=AppState.audioCtx.currentTime;for(let i=0;i<AppState.NUM_OSC;i++){const osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;osc.start(now);osc.connect(AppState.masterGain);AppState.oscillators.push(osc);}}
-
-function connectAudioGraph(){
-    // Önceki tüm bağlantıları temizle
-    Object.values(audioNodes).forEach(node => {
-        if (node && typeof node.disconnect === 'function') {
-            try { node.disconnect(); } catch(e) {}
-        }
-    });
-    AppState.masterGain.disconnect();
-
-    // Sinyal yolunu başlat
-    let currentNode = AppState.masterGain;
-
-    // Efektleri sırayla bağla
-    // Panner her zaman aktif
-    currentNode.connect(audioNodes.panner);
-    currentNode = audioNodes.panner;
-
-    // Distortion
-    if(effects.dist){ currentNode.connect(audioNodes.distortion); currentNode = audioNodes.distortion; }
-
-    // Auto Wah
-    if(effects.autoWah){ currentNode.connect(audioNodes.autoWah); currentNode = audioNodes.autoWah; }
-
-    // Flanger
-    if(effects.flanger){ currentNode.connect(audioNodes.flangerDelay); currentNode = audioNodes.flangerDelay; }
-    
-    // Chorus
-    if(effects.chorus){ currentNode.connect(audioNodes.chorusDelay); currentNode = audioNodes.chorusDelay; }
-
-    // Filter (her zaman aktif ama frekansı ile kontrol ediliyor)
-    currentNode.connect(audioNodes.filter);
-    currentNode = audioNodes.filter;
-
-    // Delay
-    if(effects.delay){ currentNode.connect(audioNodes.delay); currentNode = audioNodes.delay; }
-    
-    // Reverb
-    if(effects.reverb){ currentNode.connect(audioNodes.reverb); currentNode = audioNodes.reverb; }
-
-    // Son node'u destination'a bağla
-    currentNode.connect(AppState.audioCtx.destination);
-
-    // --- Geri besleme (Feedback) ve LFO bağlantıları (her zaman bağlı kalır) ---
-    audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);
-    audioNodes.delayFeedback.connect(audioNodes.delay);
-
-    audioNodes.autoWahLFO.connect(audioNodes.autoWahLFOGain);
-    audioNodes.autoWahLFOGain.connect(audioNodes.autoWah.frequency);
-
-    audioNodes.flangerLFO.connect(audioNodes.flangerLFOGain);
-    audioNodes.flangerLFOGain.connect(audioNodes.flangerDelay.delayTime);
-
-    audioNodes.chorusLFO.connect(audioNodes.chorusLFOGain);
-    audioNodes.chorusLFOGain.connect(audioNodes.chorusDelay.delayTime);
-    
-    audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);
-    audioNodes.tremoloGain.connect(AppState.masterGain.gain);
-}
-
-function stopSynth(){
 cleanupOscillators();
-if(AppState.audioCtx){
-AppState.audioCtx.close();
-AppState.audioCtx=null;
+AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
+audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;
+audioNodes.distortion=createWaveShaper(50);audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;
+audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";audioNodes.autoWah.frequency.value=800;audioNodes.autoWah.Q.value=5;
+audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1;audioNodes.autoWahGain=AppState.audioCtx.createGain();audioNodes.autoWahGain.gain.value=600;
+audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);audioNodes.autoWahLFO.start();
+audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);audioNodes.flangerDelay.delayTime.value=0.005;audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.frequency.value=0.2;
+audioNodes.flangerGain=AppState.audioCtx.createGain();audioNodes.flangerGain.gain.value=0.005;audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.5;
+audioNodes.flangerLFO.connect(audioNodes.flangerGain);audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);audioNodes.flangerLFO.start();
+audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);audioNodes.chorusDelay.delayTime.value=0.025;audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.frequency.value=0.5;
+audioNodes.chorusGain=AppState.audioCtx.createGain();audioNodes.chorusGain.gain.value=0.01;audioNodes.chorusLFO.connect(audioNodes.chorusGain);audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);audioNodes.chorusLFO.start();
+audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5;audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=0;
+audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);audioNodes.tremoloLFO.start();
+audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";audioNodes.filter.frequency.value=20000;audioNodes.filter.Q.value=1;
+audioNodes.delay=AppState.audioCtx.createDelay(2);audioNodes.delay.delayTime.value=0.3;audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;
+audioNodes.reverb=AppState.audioCtx.createConvolver();const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}audioNodes.reverb.buffer=buffer;
+createOscillators();connectAudioGraph();}
+function createWaveShaper(amount){const ws=AppState.audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=(3+amount)*x*20*0.0174533/(Math.PI+amount*Math.abs(x));}ws.curve=curve;ws.oversample='4x';return ws;}
+function createOscillators(){const now=AppState.audioCtx.currentTime;for(let i=0;i<AppState.NUM_OSC;i++){const osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;osc.start(now);osc.connect(AppState.masterGain);AppState.oscillators.push(osc);}}
+function connectAudioGraph(){
+AppState.masterGain.disconnect();audioNodes.distortion.disconnect();audioNodes.autoWah.disconnect();audioNodes.flangerDelay.disconnect();audioNodes.chorusDelay.disconnect();audioNodes.filter.disconnect();audioNodes.delay.disconnect();audioNodes.reverb.disconnect();audioNodes.panner.disconnect();
+let signal=AppState.masterGain;
+if(effects.dist){signal.connect(audioNodes.distortion);signal=audioNodes.distortion;}
+if(effects.autoWah){signal.connect(audioNodes.autoWah);signal=audioNodes.autoWah;}
+if(effects.flanger){signal.connect(audioNodes.flangerDelay);audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);signal=audioNodes.flangerDelay;}
+if(effects.chorus){signal.connect(audioNodes.chorusDelay);signal=audioNodes.chorusDelay;}
+signal.connect(audioNodes.filter);
+if(effects.delay){audioNodes.filter.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delay);signal=audioNodes.delay;}
+if(effects.reverb){signal.connect(audioNodes.reverb);signal=audioNodes.reverb;}
+if(effects.tremolo){audioNodes.tremoloGain.connect(signal.gain);}
+signal.connect(audioNodes.panner);audioNodes.panner.connect(AppState.audioCtx.destination);
+audioNodes.distortionGain.gain.value=effects.dist?1:0;audioNodes.autoWahGain.gain.value=effects.autoWah?1:0;audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:0;
 }
-AppState.isPlaying=false;
-updateButtonStates();
-showStatus('Stopped');
-}
-
-// Event listeners
-elements.startBtn.addEventListener('click',()=>{startSynth();});
-elements.stopBtn.addEventListener('click',()=>{stopSynth();});
-
-// Waveform change
-document.getElementById('waveSelect').addEventListener('change',(e)=>{
-AppState.waveType=e.target.value;
-AppState.oscillators.forEach(o=>{o.type=AppState.waveType;});
-showStatus('Wave: '+AppState.waveType);
-});
-
-// Detune
-document.getElementById('detuneRange').addEventListener('input',(e)=>{
-AppState.detuneAmount=parseFloat(e.target.value);
-AppState.oscillators.forEach((o,i)=>{
-o.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;
-});
-});
-
-// Octave
-document.getElementById('octDown').addEventListener('click',()=>{
-AppState.octaveOffset--;elements.octaveDisplay.textContent='Oct:'+AppState.octaveOffset;
-});
-document.getElementById('octUp').addEventListener('click',()=>{
-AppState.octaveOffset++;elements.octaveDisplay.textContent='Oct:'+AppState.octaveOffset;
-});
-
-// Effect toggles
-function toggleEffect(name,buttonId){
-const btn=document.getElementById(buttonId);
-btn.addEventListener('click',()=>{
-effects[name]=!effects[name];
-btn.classList.toggle('active',effects[name]);
-// Sinyal yolunu yeniden kur
-connectAudioGraph();
-showStatus(name+' '+(effects[name]?'ON':'OFF'));
-});
-}
-toggleEffect('dist','toggleDist');
-toggleEffect('autoWah','toggleAutoWah');
-toggleEffect('flanger','toggleFlanger');
-toggleEffect('chorus','toggleChorus');
-toggleEffect('tremolo','toggleTremolo');
-toggleEffect('filter','toggleFilter');
-toggleEffect('delay','toggleDelay');
-toggleEffect('reverb','toggleReverb');
-
-// Filter controls
-document.getElementById('filterFreq').addEventListener('input',e=>{
-audioNodes.filter.frequency.value=parseFloat(e.target.value);
-});
-document.getElementById('filterReso').addEventListener('input',e=>{
-audioNodes.filter.Q.value=parseFloat(e.target.value);
-});
-document.getElementById('autoWahRate').addEventListener('input',e=>{
-audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);
-});
-document.getElementById('autoWahDepth').addEventListener('input',e=>{
-audioNodes.autoWahLFOGain.gain.value=parseFloat(e.target.value);
-});
-
-// Toggle controls panel
-elements.toggleControls.addEventListener('click',()=>{
-elements.controls.classList.toggle('expanded');
-});
-
-// Motion / Pan toggles (placeholder, can expand with DeviceOrientation)
-elements.motionBtn.addEventListener('click',()=>{
-AppState.motionEnabled=!AppState.motionEnabled;
-elements.motionDisplay.style.display=AppState.motionEnabled?'block':'none';
-});
-elements.panBtn.addEventListener('click',()=>{
-AppState.panEnabled=!AppState.panEnabled;
-elements.panDisplay.style.display=AppState.panEnabled?'block':'none';
-});
-
-// Populate note ruler
-noteNames.forEach(note=>{
-const div=document.createElement('div');
-div.className='ruler-note';
-div.textContent=note;
-elements.noteRuler.appendChild(div);
-});
-
-// Helper: show permission modal (for motion, etc.)
-document.getElementById('permissionAllow').addEventListener('click',()=>{
-elements.permissionModal.style.display='none';
-showStatus('Motion allowed');
-});
-document.getElementById('permissionDeny').addEventListener('click',()=>{
-elements.permissionModal.style.display='none';
-showStatus('Motion denied');
-});
-
+function createNoteRuler(){const notes=['C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C3'];elements.noteRuler.innerHTML='';notes.forEach(note=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=note;elements.noteRuler.appendChild(div);});}
+function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4);const noteIndex=Math.round(semitonesFromA4+9)%12;const octave=Math.floor((semitonesFromA4+9)/12);const noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};}
+function updateThemeColor(noteName){const color=noteColors[noteName]||[100,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);}
+function noteFromPad(y){const padHeight=window.innerHeight;const ratio=1-(y/padHeight);const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);return baseFreq*Math.pow(2,(ratio*12)/12);}
+function applyPitch(){if(!safeAudioOperation(()=>{const freq=AppState.baseFreq;const noteInfo=freqToNote(freq);AppState.oscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.005));elements.noteDisplay.textContent=noteInfo.fullName;elements.octaveDisplay.textContent=`Oct:${AppState.octaveOffset}`;updateThemeColor(noteInfo.name);}))return;}
+let lastTouchTime=0;
+function handleTouch(e){const now=performance.now();if(now-lastTouchTime<4)return;lastTouchTime=now;if(!isAudioContextValid()){showStatus('Start synth first');return;}
+const clientY=e.touches?e.touches[0].clientY:e.clientY;const clientX=e.touches?e.touches[0].clientX:e.clientX;AppState.baseFreq=noteFromPad(clientY);const volume=clientX/window.innerWidth;safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.005);});applyPitch();}
+function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.005);elements.panDisplay.textContent=`Pan:${Math.round(position*100)}%`;elements.panDisplay.style.display='block';});}
+function stopSynth(){if(!AppState.audioCtx){showStatus('No synth running');return;}
+try{cleanupOscillators();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.isPlaying=false;updateButtonStates();showStatus('Stopped');}).catch(e=>{console.error(e);showStatus('Stop error');});}catch(e){console.error(e);showStatus('Stop error');}}
+function toggleControls(){elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
+function initializeEventListeners(){elements.pad.addEventListener("touchstart",handleTouch,{passive:false});elements.pad.addEventListener("touchmove",handleTouch,{passive:false});elements.pad.addEventListener("mousedown",handleTouch);elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});elements.startBtn.addEventListener("click",startSynth);elements.stopBtn.addEventListener("click",stopSynth);elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled=!AppState.motionEnabled;elements.motionBtn.textContent=AppState.motionEnabled?"Motion ON":"Motion OFF";elements.motionBtn.classList.toggle('active',AppState.motionEnabled);elements.motionDisplay.style.display=AppState.motionEnabled?'block':'none';showStatus(AppState.motionEnabled?'Motion enabled':'Motion disabled');});elements.panBtn.addEventListener("click",()=>{AppState.panEnabled=!AppState.panEnabled;elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.panDisplay.style.display=AppState.panEnabled?'block':'none';if(!AppState.panEnabled)updatePan(0);showStatus(AppState.panEnabled?'Pan enabled':'Pan disabled');});elements.toggleControls.addEventListener("click",toggleControls);document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();});document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();});document.getElementById("permissionAllow").addEventListener("click",()=>{DeviceOrientationEvent.requestPermission().then(r=>{elements.permissionModal.style.display='none';if(r==='granted'){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;elements.motionBtn.textContent="Motion ON";elements.motionBtn.classList.add('active');elements.motionDisplay.style.display='block';showStatus('Motion enabled');}else showStatus('Motion denied');});});document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;if(AppState.oscillators.length>0)AppState.oscillators.forEach(osc=>osc.type=AppState.waveType);});document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0)AppState.oscillators.forEach((osc,i)=>{osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;});});document.getElementById("filterFreq").addEventListener("input",e=>{audioNodes.filter.frequency.value=parseFloat(e.target.value);});document.getElementById("filterReso").addEventListener("input",e=>{audioNodes.filter.Q.value=parseFloat(e.target.value);});document.getElementById("autoWahRate").addEventListener("input",e=>{audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);});document.getElementById("autoWahDepth").addEventListener("input",e=>{audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);});const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleFilter:'filter',toggleDelay:'delay',toggleReverb:'reverb'};Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener("click",()=>{effects[effect]=!effects[effect];document.getElementById(id).classList.toggle('active',effects[effect]);connectAudioGraph();showStatus(effect+' '+(effects[effect]?'ON':'OFF'));if(effect==='autoWah'){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'ON':'OFF');}});});}
+let lastOrientationTime=0;
+function handleOrientation(e){const now=performance.now();if(now-lastOrientationTime<16)return;lastOrientationTime=now;if(e.beta===null)return;AppState.tiltBend=e.beta/45*12;const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);if(AppState.panEnabled&&e.gamma!==null)updatePan(Math.max(-1,Math.min(1,e.gamma/90)));applyPitch();elements.motionDisplay.textContent=`Tilt:${Math.round(e.beta)}°`;}
+window.addEventListener('load',()=>{updateThemeColor('C');initializeEventListeners();updateButtonStates();createNoteRuler();showStatus('Ready - Click Start then try effects!');});
+window.addEventListener("contextmenu",e=>e.preventDefault());
 </script>
 </body>
 </html>
