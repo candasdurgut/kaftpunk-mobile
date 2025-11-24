@@ -247,19 +247,27 @@ const noteColors = {
 function startSynth(){
     const startBtn = document.getElementById("startBtn");
 
-    if (isSynthRunning) {
-        // Stop the synth
-        if (audioCtx) {
-            audioCtx.close();
-            audioCtx = null;
-        }
-        isSynthRunning = false;
-        startBtn.textContent = "Start Synth";
-        startBtn.classList.remove('active');
+    if (isSynthRunning && audioCtx && audioCtx.state === 'running') {
+        // Synth is running, so suspend it
+        audioCtx.suspend().then(() => {
+            isSynthRunning = false;
+            startBtn.textContent = "Resume Synth";
+            startBtn.classList.remove('active');
+        });
         return;
     }
 
-    // Start the synth
+    if (isSynthRunning && audioCtx && audioCtx.state === 'suspended') {
+        // Synth is suspended, so resume it
+        audioCtx.resume().then(() => {
+            isSynthRunning = true;
+            startBtn.textContent = "Stop Synth";
+            startBtn.classList.add('active');
+        });
+        return;
+    }
+
+    // Synth has not been created yet, create it from scratch
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     const now = audioCtx.currentTime;
 
@@ -290,7 +298,7 @@ function startSynth(){
     
     // --- CORRECTED SIGNAL CHAIN ---
     masterGain.connect(filter);
-    filter.connect(audioCtx.destination); // Filter is always in the main path now
+    filter.connect(audioCtx.destination);
 
     // Effect paths (connected but gain is 0)
     filter.connect(reverb); reverb.connect(reverbDryWet); reverbDryWet.connect(audioCtx.destination);
@@ -349,7 +357,6 @@ function createNoteIndicators() {
         indicator.className = 'note-indicator';
         indicator.textContent = note;
         
-        // Y eksenini pad genişliğine göre hesapla
         const y = padRect.height * (1 - (index / (totalNotes - 1)));
         
         indicator.style.top = `${y}px`;
@@ -379,7 +386,7 @@ function noteFromPad(y){
     const padHeight = window.innerHeight * 0.6;
     const ratio = 1 - (y / padHeight);
     const c3 = 130.81 * Math.pow(2, octaveOffset);
-    const c5 = c3 * 4; // 2 oktav aralığı
+    const c5 = c3 * 4;
     return c3 + (c5 - c3) * ratio;
 }
 
@@ -416,15 +423,12 @@ function handleTouch(e){
 
 function enableMotion(){
     if (isMotionEnabled) {
-        // Motion is already enabled, so disable it
         isMotionEnabled = false;
         document.getElementById("motionBtn").textContent = "Enable Motion";
         document.getElementById("motionBtn").classList.remove('active');
-        // Note: The event listener itself remains, but its effect is nullified by the flag.
         return;
     }
 
-    // Try to enable motion
     if(typeof DeviceOrientationEvent.requestPermission==='function'){
         DeviceOrientationEvent.requestPermission().then(res=>{
             if(res==='granted'){
@@ -435,7 +439,6 @@ function enableMotion(){
             }
         });
     } else {
-        // For non-iOS devices
         isMotionEnabled = true;
         document.getElementById("motionBtn").textContent = "Disable Motion";
         document.getElementById("motionBtn").classList.add('active');
