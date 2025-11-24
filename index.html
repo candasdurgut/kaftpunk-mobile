@@ -147,47 +147,98 @@ function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscilla
 function startSynth(){if(isAudioContextValid()){showStatus('Already running');return;}
 try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started');}catch(e){console.error(e);showStatus('Start failed');}}
 function createAudioNodes(){
-cleanupOscillators();AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
-audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;
-audioNodes.distortion=createWaveShaper(3);audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;
-audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";audioNodes.autoWah.frequency.value=800;audioNodes.autoWah.Q.value=5;
-audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1;
-audioNodes.autoWahGain=AppState.audioCtx.createGain();audioNodes.autoWahGain.gain.value=600;
-audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);audioNodes.autoWahLFO.start();
-audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);audioNodes.flangerDelay.delayTime.value=0.005;
-audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.frequency.value=0.2;
-audioNodes.flangerGain=AppState.audioCtx.createGain();audioNodes.flangerGain.gain.value=0.005;
-audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.5;
-audioNodes.flangerLFO.connect(audioNodes.flangerGain);audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);audioNodes.flangerLFO.start();
-audioNodes.flangerDry=AppState.audioCtx.createGain();audioNodes.flangerDry.gain.value=0;
-audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);audioNodes.chorusDelay.delayTime.value=0.025;
-audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.frequency.value=0.5;
-audioNodes.chorusGain=AppState.audioCtx.createGain();audioNodes.chorusGain.gain.value=0.01;
-audioNodes.chorusDry=AppState.audioCtx.createGain();audioNodes.chorusDry.gain.value=0;
-audioNodes.chorusLFO.connect(audioNodes.chorusGain);audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);audioNodes.chorusLFO.start();
-audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=0;
-audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5;
-audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);audioNodes.tremoloLFO.start();
-audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";audioNodes.filter.frequency.value=20000;audioNodes.filter.Q.value=1;
-audioNodes.delay=AppState.audioCtx.createDelay(2);audioNodes.delay.delayTime.value=0.3;audioNodes.delayGain=AppState.audioCtx.createGain();audioNodes.delayGain.gain.value=0;
-audioNodes.reverb=AppState.audioCtx.createConvolver();const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}audioNodes.reverb.buffer=buffer;audioNodes.reverbGain=AppState.audioCtx.createGain();audioNodes.reverbGain.gain.value=0;
-createOscillators();connectAudioGraph();}
+    cleanupOscillators();
+    AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
+    
+    // --- Efekt Düğümlerini Oluştur ---
+    audioNodes.panner=AppState.audioCtx.createStereoPanner();
+    audioNodes.distortion=createWaveShaper(3);
+    audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";
+    audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);
+    audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.7;
+    audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);
+    audioNodes.tremoloGain=AppState.audioCtx.createGain();
+    audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";
+    audioNodes.delay=AppState.audioCtx.createDelay(2);
+    audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;
+    audioNodes.reverb=AppState.audioCtx.createConvolver();
+    const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);
+    for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}
+    audioNodes.reverb.buffer=buffer;
+
+    // --- LFO'ları ve Gain'leri Oluştur ---
+    audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.start();
+    audioNodes.autoWahLFOGain=AppState.audioCtx.createGain();
+    audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.start();
+    audioNodes.flangerLFOGain=AppState.audioCtx.createGain();
+    audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.start();
+    audioNodes.chorusLFOGain=AppState.audioCtx.createGain();
+    audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.start();
+    
+    createOscillators();
+    connectAudioGraph();
+}
 function createWaveShaper(amount){
 const ws=AppState.audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=Math.tanh(x*amount)*0.8;}ws.curve=curve;return ws;}
 function createOscillators(){const now=AppState.audioCtx.currentTime;for(let i=0;i<AppState.NUM_OSC;i++){const osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;osc.start(now);osc.connect(AppState.masterGain);AppState.oscillators.push(osc);}}
+
 function connectAudioGraph(){
-let input=AppState.masterGain;
-function bypassable(node,gainNode,key){gainNode.gain.value=effects[key]?1:0;input.connect(node);node.connect(gainNode);gainNode.connect(audioNodes.filter);input=node;}
-bypassable(audioNodes.distortion,audioNodes.distortionGain,'dist');
-bypassable(audioNodes.autoWah,audioNodes.autoWahGain,'autoWah');
-bypassable(audioNodes.flangerDelay,audioNodes.flangerDry,'flanger');
-bypassable(audioNodes.chorusDelay,audioNodes.chorusDry,'chorus');
-bypassable(audioNodes.tremoloGain,audioNodes.tremoloGain,'tremolo');
-audioNodes.filter.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayGain);audioNodes.delayGain.connect(audioNodes
-audioNodes.delayGain.connect(audioNodes.reverb); // delay -> reverb
-audioNodes.reverb.connect(audioNodes.reverbGain);
-audioNodes.reverbGain.connect(audioNodes.panner);
-audioNodes.panner.connect(AppState.audioCtx.destination);
+    // Önceki tüm bağlantıları temizle
+    Object.values(audioNodes).forEach(node => {
+        if (node && typeof node.disconnect === 'function') {
+            try { node.disconnect(); } catch(e) {}
+        }
+    });
+    AppState.masterGain.disconnect();
+
+    // Sinyal yolunu başlat
+    let currentNode = AppState.masterGain;
+
+    // Efektleri sırayla bağla
+    // Panner her zaman aktif
+    currentNode.connect(audioNodes.panner);
+    currentNode = audioNodes.panner;
+
+    // Distortion
+    if(effects.dist){ currentNode.connect(audioNodes.distortion); currentNode = audioNodes.distortion; }
+
+    // Auto Wah
+    if(effects.autoWah){ currentNode.connect(audioNodes.autoWah); currentNode = audioNodes.autoWah; }
+
+    // Flanger
+    if(effects.flanger){ currentNode.connect(audioNodes.flangerDelay); currentNode = audioNodes.flangerDelay; }
+    
+    // Chorus
+    if(effects.chorus){ currentNode.connect(audioNodes.chorusDelay); currentNode = audioNodes.chorusDelay; }
+
+    // Filter (her zaman aktif ama frekansı ile kontrol ediliyor)
+    currentNode.connect(audioNodes.filter);
+    currentNode = audioNodes.filter;
+
+    // Delay
+    if(effects.delay){ currentNode.connect(audioNodes.delay); currentNode = audioNodes.delay; }
+    
+    // Reverb
+    if(effects.reverb){ currentNode.connect(audioNodes.reverb); currentNode = audioNodes.reverb; }
+
+    // Son node'u destination'a bağla
+    currentNode.connect(AppState.audioCtx.destination);
+
+    // --- Geri besleme (Feedback) ve LFO bağlantıları (her zaman bağlı kalır) ---
+    audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);
+    audioNodes.delayFeedback.connect(audioNodes.delay);
+
+    audioNodes.autoWahLFO.connect(audioNodes.autoWahLFOGain);
+    audioNodes.autoWahLFOGain.connect(audioNodes.autoWah.frequency);
+
+    audioNodes.flangerLFO.connect(audioNodes.flangerLFOGain);
+    audioNodes.flangerLFOGain.connect(audioNodes.flangerDelay.delayTime);
+
+    audioNodes.chorusLFO.connect(audioNodes.chorusLFOGain);
+    audioNodes.chorusLFOGain.connect(audioNodes.chorusDelay.delayTime);
+    
+    audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);
+    audioNodes.tremoloGain.connect(AppState.masterGain.gain);
 }
 
 function stopSynth(){
@@ -234,6 +285,7 @@ const btn=document.getElementById(buttonId);
 btn.addEventListener('click',()=>{
 effects[name]=!effects[name];
 btn.classList.toggle('active',effects[name]);
+// Sinyal yolunu yeniden kur
 connectAudioGraph();
 showStatus(name+' '+(effects[name]?'ON':'OFF'));
 });
@@ -258,7 +310,7 @@ document.getElementById('autoWahRate').addEventListener('input',e=>{
 audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);
 });
 document.getElementById('autoWahDepth').addEventListener('input',e=>{
-audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);
+audioNodes.autoWahLFOGain.gain.value=parseFloat(e.target.value);
 });
 
 // Toggle controls panel
