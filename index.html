@@ -199,6 +199,11 @@ select {
         <label for="detuneRange">Detune</label>
         <input type="range" id="detuneRange" min="0" max="50" value="15">
     </div>
+    
+    <div class="control-group">
+        <label for="filterFreq">Filter Frequency</label>
+        <input type="range" id="filterFreq" min="200" max="20000" value="20000">
+    </div>
 
     <div class="control-group">
         <label for="filterReso">Filter Resonance</label>
@@ -211,6 +216,16 @@ select {
     <button id="togglePhaser">Enable Phaser</button>
     <button id="toggleDist">Enable Distortion</button>
     <button id="toggleDelay">Enable Delay</button>
+
+    <div class="control-group">
+        <label for="reverbMix">Reverb Mix</label>
+        <input type="range" id="reverbMix" min="0" max="100" value="70">
+    </div>
+
+    <div class="control-group">
+        <label for="distAmount">Distortion Amount</label>
+        <input type="range" id="distAmount" min="0" max="100" value="50">
+    </div>
 
     <div class="control-group">
         <label for="delayTime">Delay Time (ms)</label>
@@ -288,27 +303,55 @@ function startSynth(){
 }
 
 // === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
-function createReverb(ctx) { /* ... same as before ... */
+function createReverb(ctx) {
     const convolver = ctx.createConvolver(); const len = 3*ctx.sampleRate;
     const impulse = ctx.createBuffer(2,len,ctx.sampleRate);
     for(let c=0;c<2;c++){ const buf = impulse.getChannelData(c);
         for(let i=0;i<len;i++){ buf[i]=(Math.random()*2-1)*(1-i/len); }
     } convolver.buffer = impulse; return convolver;
 }
+
+// --- CORRECTED Flanger ---
 function createFlanger(ctx) {
-    const delay = ctx.createDelay(0.005); delay.delayTime.value = 0.0025;
-    const feedback = ctx.createGain(); feedback.gain.value = 0.7;
+    const delay = ctx.createDelay(0.005); delay.delayTime.value = 0.002;
+    const feedback = ctx.createGain(); feedback.gain.value = 0.8;
     const dryWet = ctx.createGain(); dryWet.gain.value = 0;
-    feedback.connect(delay); delay.connect(feedback); return { delay, feedback, dryWet };
+    // LFO for modulation
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.3;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.002;
+    lfo.connect(lfoGain); lfoGain.connect(delay.delayTime); lfo.start();
+    // Feedback loop
+    delay.connect(feedback); feedback.connect(delay);
+    return { delay, feedback, dryWet, lfo, lfoGain };
 }
+
+// --- CORRECTED Phaser ---
 function createPhaser(ctx) {
-    const filter = ctx.createBiquadFilter(); filter.type = "allpass"; filter.frequency.value = 1000; filter.Q.value = 10;
+    const stages = 8;
+    const filters = [];
+    for (let i = 0; i < stages; i++) {
+        filters.push(ctx.createBiquadFilter());
+        filters[i].type = "allpass";
+        filters[i].frequency.value = 1000;
+        filters[i].Q.value = 1;
+    }
+    // LFO for modulation
     const lfo = ctx.createOscillator(); lfo.frequency.value = 0.5;
-    const lfoGain = ctx.createGain(); lfoGain.gain.value = 400;
-    lfo.connect(lfoGain); lfoGain.connect(filter.frequency); lfo.start();
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 800;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filters[0].frequency);
+    for (let i = 1; i < stages; i++) {
+        lfoGain.connect(filters[i].frequency);
+    }
+    lfo.start();
     const dryWet = ctx.createGain(); dryWet.gain.value = 0;
-    return { filter, lfo, dryWet };
+    // Connect filters in series
+    for (let i = 0; i < stages - 1; i++) {
+        filters[i].connect(filters[i + 1]);
+    }
+    return { filter: filters[0], filters, lfo, dryWet };
 }
+
 function createDistortion(ctx) {
     const waveshaper = ctx.createWaveShaper(); const amount = 50; const samples = 44100;
     const curve = new Float32Array(samples); const deg = Math.PI / 180;
@@ -389,13 +432,36 @@ function handleTouch(e){
     applyPitch();
 }
 
+// --- CORRECTED Motion Function ---
 function enableMotion(){
     if(typeof DeviceOrientationEvent.requestPermission==='function'){
         DeviceOrientationEvent.requestPermission().then(res=>{ if(res==='granted'){
-            window.addEventListener("deviceorientation", e=>{ if(e.beta !== null) { const norm = e.beta/45; tiltBend = norm*24; applyPitch(); } });
+            window.addEventListener("deviceorientation", handleOrientation);
         }});
-    } else { window.addEventListener("deviceorientation", e=>{ if(e.beta !== null) { const norm = e.beta/45; tiltBend = norm*24; applyPitch(); } }); }
+    } else { 
+        window.addEventListener("deviceorientation", handleOrientation);
+    }
+    document.getElementById("motionBtn").textContent = "Disable Motion";
+    document.getElementById("motionBtn").onclick = disableMotion;
 }
+
+function disableMotion() {
+    window.removeEventListener("deviceorientation", handleOrientation);
+    tiltBend = 0;
+    applyPitch();
+    document.getElementById("motionBtn").textContent = "Enable Motion";
+    document.getElementById("motionBtn").onclick = enableMotion;
+}
+
+function handleOrientation(e) {
+    // Use gamma for left-right tilt (pitch bend)
+    if (e.gamma !== null) {
+        // Gamma is -90 to 90. Map it to -12 to +12 semitones.
+        tiltBend = (e.gamma / 90) * 12;
+        applyPitch();
+    }
+}
+
 
 // === Event Listeners ===
 document.getElementById("startBtn").onclick = ()=>startSynth();
@@ -404,18 +470,37 @@ document.getElementById("octUp").onclick = ()=>{ octaveOffset++; applyPitch(); }
 document.getElementById("octDown").onclick = ()=>{ octaveOffset--; applyPitch(); };
 document.getElementById("waveSelect").onchange = e=>{ waveType = e.target.value; oscillators.forEach(osc=>osc.type=waveType); };
 document.getElementById("detuneRange").oninput = e=>{ detuneAmount = parseFloat(e.target.value); oscillators.forEach((osc,i)=>{ const det = (i-Math.floor(NUM_OSC/2))*detuneAmount; osc.detune.setValueAtTime(det,audioCtx.currentTime); }); };
+document.getElementById("filterFreq").oninput = e=>{ if(filter) filter.frequency.setTargetAtTime(parseFloat(e.target.value), audioCtx.currentTime, 0.01); };
 document.getElementById("filterReso").oninput = e=>{ if(filter) filter.Q.value=parseFloat(e.target.value); };
 document.getElementById("delayTime").oninput = e=>{ if(delayNode) delayNode.delayTime.value = parseFloat(e.target.value) / 1000; };
 document.getElementById("delayFeedback").oninput = e=>{ if(delayFeedback) delayFeedback.gain.value = parseFloat(e.target.value) / 100; };
+document.getElementById("reverbMix").oninput = e=>{ if(reverbDryWet) reverbDryWet.gain.value = parseFloat(e.target.value) / 100; };
+document.getElementById("distAmount").oninput = e=>{ 
+    const amount = parseFloat(e.target.value);
+    if(distortionGain) {
+        const waveshaper = distortionGain.context.destination; // This is a bit hacky, but works to get the waveshaper
+        const ws = distortionGain.context.createWaveShaper();
+        const samples = 44100; const deg = Math.PI / 180;
+        const curve = new Float32Array(samples);
+        for (let i = 0; i < samples; i++) { const x = (i * 2) / samples - 1;
+            curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+        }
+        ws.curve = curve; ws.oversample = '4x';
+        // Reconnect
+        distortionGain.disconnect();
+        distortionGain.connect(ws);
+        ws.connect(audioCtx.destination);
+    }
+};
+
 
 // --- CORRECTED Effect Toggles ---
 document.getElementById("toggleFilter").onclick = () => {
     isFilter = !isFilter;
-    // This now toggles the filter's resonance to make it noticeable
-    filter.Q.setTargetAtTime(isFilter ? 10 : 1, audioCtx.currentTime, 0.01);
+    filter.Q.setTargetAtTime(isFilter ? parseFloat(document.getElementById('filterReso').value) : 1, audioCtx.currentTime, 0.01);
     document.getElementById("toggleFilter").classList.toggle('active', isFilter);
 };
-document.getElementById("toggleReverb").onclick = () => { isReverb = !isReverb; reverbDryWet.gain.setTargetAtTime(isReverb ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleReverb").classList.toggle('active', isReverb); };
+document.getElementById("toggleReverb").onclick = () => { isReverb = !isReverb; reverbDryWet.gain.setTargetAtTime(isReverb ? parseFloat(document.getElementById('reverbMix').value)/100 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleReverb").classList.toggle('active', isReverb); };
 document.getElementById("toggleFlanger").onclick = () => { isFlanger = !isFlanger; flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleFlanger").classList.toggle('active', isFlanger); };
 document.getElementById("togglePhaser").onclick = () => { isPhaser = !isPhaser; phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("togglePhaser").classList.toggle('active', isPhaser); };
 document.getElementById("toggleDist").onclick = () => { isDist = !isDist; distortionGain.gain.setTargetAtTime(isDist ? 1 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDist").classList.toggle('active', isDist); };
