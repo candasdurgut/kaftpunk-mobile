@@ -1,782 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Synth</title>
-    <style>
-        :root {
-            --r: 100; --g: 100; --b: 100;
-            --bg-color: rgb(var(--r), var(--g), var(--b));
-            --control-bg: rgba(0, 0, 0, 0.2);
-            --text-color: #f0f0f0;
-            --border-color: rgba(var(--r), var(--g), var(--b), 0.5);
-            --safe-area-inset-top: env(safe-area-inset-top);
-            --safe-area-inset-bottom: env(safe-area-inset-bottom);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html, body {
-            height: 100%; background-color: #111; color: var(--text-color);
-            font-family: -apple-system, sans-serif; font-weight: 400;
-            -webkit-user-select: none; user-select: none;
-            -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
-            touch-action: none; overscroll-behavior: none; overflow: hidden;
-        }
-
-        body { background-color: var(--bg-color); }
-
-        #app-container { height: 100%; display: flex; flex-direction: column; }
-
-        #pad {
-            width: 100%; height: 100vh; position: relative;
-            display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at center, var(--control-bg), rgba(0,0,0,0.5));
-            cursor: crosshair;
-        }
-
-        #noteDisplay, #octaveDisplay, #motionDisplay, #wahDisplay {
-            position: absolute; background-color: rgba(0, 0, 0, 0.7);
-            color: var(--text-color); pointer-events: none; z-index: 10;
-            border: 1px solid var(--border-color); backdrop-filter: blur(10px);
-            padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;
-        }
-
-        #noteDisplay {
-            top: max(20px, var(--safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-            font-size: 24px; text-shadow: 0 0 15px var(--bg-color);
-        }
-
-        #octaveDisplay { top: max(20px, var(--safe-area-inset-top)); right: 20px; }
-        #motionDisplay, #wahDisplay { bottom: 20px; left: 50%; transform: translateX(-50%); display: none; }
-        #wahDisplay { bottom: 60px; }
-
-        #controls {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            max-height: 70vh; background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(20px); border-top: 1px solid var(--border-color);
-            transform: translateY(calc(100% - 50px)); transition: transform 0.3s ease;
-            overflow-y: auto; padding: 15px; display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;
-        }
-
-        #controls.expanded { transform: translateY(0); }
-        
-        #toggleControls {
-            position: fixed; bottom: 10px; right: 20px; 
-            width: 50px; height: 50px; border-radius: 50%;
-            background: var(--bg-color); border: 2px solid var(--border-color);
-            color: #111; font-size: 20px; font-weight: bold;
-            cursor: pointer; z-index: 1000; display: flex;
-            align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        button, select, input[type=range], label {
-            font-family: inherit; font-size: 12px; font-weight: 500; border-radius: 8px;
-            border: 1px solid var(--border-color); background: var(--control-bg);
-            color: var(--text-color); -webkit-appearance: none; appearance: none;
-            transition: all 0.2s ease; outline: none;
-        }
-
-        button { padding: 10px 12px; cursor: pointer; min-height: 40px; }
-        button.active { background: var(--bg-color); color: #111; font-weight: 600; }
-
-        .control-group { display: flex; flex-direction: column; align-items: center; }
-        label { font-size: 10px; margin-bottom: 3px; text-align: center; }
-
-        input[type=range] {
-            width: 100%; height: 4px; background: rgba(var(--r), var(--g), var(--b), 0.2);
-            border: none; margin: 5px 0;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 16px; height: 16px; background: var(--bg-color);
-            cursor: pointer; border-radius: 50%; box-shadow: 0 0 10px var(--bg-color);
-        }
-
-        select { padding: 8px; cursor: pointer; min-height: 40px; width: 100%; }
-
-        #statusMessage {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8); color: white; padding: 8px 16px;
-            border-radius: 8px; font-size: 12px; z-index: 100; opacity: 0;
-            transition: opacity 0.3s; pointer-events: none;
-        }
-
-        #statusMessage.show { opacity: 1; }
-
-        .effect-group {
-            grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 8px; margin: 8px 0; padding: 8px; background: rgba(0,0,0,0.3);
-            border-radius: 8px; border: 1px solid var(--border-color);
-        }
-
-        .effect-group-title {
-            grid-column: 1 / -1; text-align: center; font-size: 11px; font-weight: 600;
-            color: var(--border-color); margin-bottom: 3px;
-        }
-
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
-        }
-
-        .modal-content {
-            background: rgba(30,30,30,0.95); padding: 20px; border-radius: 15px; max-width: 80%;
-            text-align: center; backdrop-filter: blur(20px); border: 1px solid var(--border-color);
-        }
-
-        .modal-buttons { display: flex; gap: 8px; margin-top: 15px; }
-        .modal-buttons button { flex: 1; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Synth</title>
+<style>
+:root {
+--r:100;--g:100;--b:100;
+--bg-color:rgb(var(--r),var(--g),var(--b));
+--control-bg:rgba(0,0,0,0.2);
+--text-color:#f0f0f0;
+--border-color:rgba(var(--r),var(--g),var(--b),0.5);
+--safe-area-inset-top:env(safe-area-inset-top);
+--safe-area-inset-bottom:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background-color:#111;color:var(--text-color);font-family:-apple-system,sans-serif;font-weight:400;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;overflow:hidden;}
+body{background-color:var(--bg-color);}
+#app-container{height:100%;display:flex;flex-direction:column;}
+#pad{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.5));cursor:crosshair;}
+#noteDisplay,#octaveDisplay,#motionDisplay,#wahDisplay,#panDisplay{position:absolute;background-color:rgba(0,0,0,0.7);color:var(--text-color);pointer-events:none;z-index:10;border:1px solid var(--border-color);backdrop-filter:blur(10px);padding:8px 16px;border-radius:20px;font-size:14px;font-weight:500;}
+#noteDisplay{top:max(20px,var(--safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:24px;text-shadow:0 0 15px var(--bg-color);}
+#octaveDisplay{top:max(20px,var(--safe-area-inset-top));right:20px;}
+#motionDisplay,#wahDisplay,#panDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}
+#wahDisplay{bottom:60px;}#panDisplay{bottom:100px;}
+#controls{position:fixed;bottom:0;left:0;right:0;max-height:70vh;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);border-top:1px solid var(--border-color);transform:translateY(calc(100% - 50px));transition:transform 0.3s ease;overflow-y:auto;padding:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;}
+#controls.expanded{transform:translateY(0);}
+#toggleControls{position:fixed;bottom:10px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--bg-color);border:2px solid var(--border-color);color:#111;font-size:20px;font-weight:bold;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,0,0,0.5);}
+button,select,input[type=range],label{font-family:inherit;font-size:12px;font-weight:500;border-radius:8px;border:1px solid var(--border-color);background:var(--control-bg);color:var(--text-color);-webkit-appearance:none;appearance:none;transition:all 0.2s ease;outline:none;}
+button{padding:10px 12px;cursor:pointer;min-height:40px;}
+button.active{background:var(--bg-color);color:#111;font-weight:600;}
+.control-group{display:flex;flex-direction:column;align-items:center;}
+label{font-size:10px;margin-bottom:3px;text-align:center;}
+input[type=range]{width:100%;height:4px;background:rgba(var(--r),var(--g),var(--b),0.2);border:none;margin:5px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--bg-color);cursor:pointer;border-radius:50%;box-shadow:0 0 10px var(--bg-color);}
+select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
+#statusMessage{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:8px 16px;border-radius:8px;font-size:12px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+#statusMessage.show{opacity:1;}
+.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0;padding:8px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid var(--border-color);}
+.effect-group-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--border-color);margin-bottom:3px;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
+.modal-content{background:rgba(30,30,30,0.95);padding:20px;border-radius:15px;max-width:80%;text-align:center;backdrop-filter:blur(20px);border:1px solid var(--border-color);}
+.modal-buttons{display:flex;gap:8px;margin-top:15px;}
+.modal-buttons button{flex:1;}
+</style>
 </head>
 <body>
-    <div id="app-container">
-        <div id="pad">
-            <div id="noteDisplay">C4</div>
-            <div id="octaveDisplay">Oct:0</div>
-            <div id="motionDisplay">Motion:0°</div>
-            <div id="wahDisplay">Wah:0%</div>
-        </div>
-        
-        <button id="toggleControls">⚙️</button>
-        
-        <div id="controls">
-            <button id="startBtn">Start</button>
-            <button id="stopBtn" disabled>Stop</button>
-            <button id="motionBtn">Motion</button>
-            <button id="octDown">Oct-</button>
-            <button id="octUp">Oct+</button>
-            
-            <div class="control-group">
-                <label>Wave</label>
-                <select id="waveSelect">
-                    <option value="sawtooth">Saw</option>
-                    <option value="triangle">Tri</option>
-                    <option value="square">Sqr</option>
-                    <option value="sine">Sine</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label>Detune</label>
-                <input type="range" id="detuneRange" min="0" max="50" value="15">
-            </div>
-
-            <div class="effect-group">
-                <div class="effect-group-title">WAH</div>
-                <button id="toggleAutoWah">Auto Wah</button>
-                <button id="toggleManualWah">Manual Wah</button>
-                
-                <div class="control-group">
-                    <label>Wah Rate</label>
-                    <input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
-                </div>
-
-                <div class="control-group">
-                    <label>Wah Depth</label>
-                    <input type="range" id="autoWahDepth" min="100" max="1500" value="800">
-                </div>
-            </div>
-
-            <div class="effect-group">
-                <div class="effect-group-title">FILTER</div>
-                <button id="toggleFilter">Filter</button>
-                
-                <div class="control-group">
-                    <label>Freq</label>
-                    <input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
-                </div>
-
-                <div class="control-group">
-                    <label>Reso</label>
-                    <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-                </div>
-            </div>
-
-            <div class="effect-group">
-                <div class="effect-group-title">MOD</div>
-                <button id="toggleFlanger">Flanger</button>
-                <button id="togglePhaser">Phaser</button>
-                <button id="toggleChorus">Chorus</button>
-                <button id="toggleTremolo">Tremolo</button>
-            </div>
-
-            <div class="effect-group">
-                <div class="effect-group-title">FX</div>
-                <button id="toggleReverb">Reverb</button>
-                <button id="toggleDelay">Delay</button>
-                <button id="toggleDist">Dist</button>
-                <button id="toggleBitCrusher">BitCrush</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="statusMessage"></div>
-
-    <div id="permissionModal" class="modal">
-        <div class="modal-content">
-            <h3>Motion Access</h3>
-            <p>Need motion sensor access</p>
-            <div class="modal-buttons">
-                <button id="permissionAllow">Allow</button>
-                <button id="permissionDeny">Deny</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const AppState = {
-            audioCtx: null, oscillators: [], masterGain: null, filter: null,
-            baseFreq: 261.63, octaveOffset: 0, tiltBend: 0, detuneAmount: 15,
-            waveType: "sawtooth", isPlaying: false, motionEnabled: false,
-            manualWahPosition: 0.5, NUM_OSC: 7
-        };
-
-        const effects = {
-            isFilter: false, isReverb: false, isFlanger: false, isPhaser: false,
-            isDist: false, isDelay: false, isAutoWah: false, isManualWah: false,
-            isChorus: false, isTremolo: false, isBitCrusher: false
-        };
-
-        let audioNodes = {};
-
-        const noteColors = {
-            'C': [255, 100, 100], 'C#': [255, 150, 100], 'D': [255, 255, 100],
-            'D#': [150, 255, 100], 'E': [100, 255, 100], 'F': [100, 255, 150],
-            'F#': [100, 255, 255], 'G': [100, 150, 255], 'G#': [100, 100, 255],
-            'A': [150, 100, 255], 'A#': [255, 100, 255], 'B': [255, 100, 150]
-        };
-
-        const elements = {
-            pad: document.getElementById("pad"), noteDisplay: document.getElementById("noteDisplay"),
-            octaveDisplay: document.getElementById("octaveDisplay"), motionDisplay: document.getElementById("motionDisplay"),
-            wahDisplay: document.getElementById("wahDisplay"), startBtn: document.getElementById("startBtn"),
-            stopBtn: document.getElementById("stopBtn"), motionBtn: document.getElementById("motionBtn"),
-            statusMessage: document.getElementById("statusMessage"), permissionModal: document.getElementById("permissionModal"),
-            controls: document.getElementById("controls"), toggleControls: document.getElementById("toggleControls")
-        };
-
-        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-        function isAudioContextValid() {
-            return AppState.audioCtx && AppState.audioCtx.state === 'running';
-        }
-
-        function safeAudioOperation(operation) {
-            if (!isAudioContextValid()) {
-                showStatus('Audio not ready');
-                return false;
-            }
-            try {
-                operation();
-                return true;
-            } catch (error) {
-                console.error('Audio error:', error);
-                showStatus('Audio error');
-                return false;
-            }
-        }
-
-        function showStatus(message, duration = 1500) {
-            elements.statusMessage.textContent = message;
-            elements.statusMessage.classList.add('show');
-            setTimeout(() => elements.statusMessage.classList.remove('show'), duration);
-        }
-
-        function updateButtonStates() {
-            elements.startBtn.disabled = AppState.isPlaying;
-            elements.stopBtn.disabled = !AppState.isPlaying;
-        }
-
-        function cleanupOscillators() {
-            if (AppState.oscillators.length > 0) {
-                AppState.oscillators.forEach(osc => {
-                    try {
-                        osc.stop();
-                        osc.disconnect();
-                    } catch (e) {
-                        console.warn('Osc cleanup:', e);
-                    }
-                });
-                AppState.oscillators = [];
-            }
-        }
-
-        function startSynth() {
-            if (isAudioContextValid()) {
-                showStatus('Already running');
-                return;
-            }
-
-            try {
-                AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                createAudioNodes();
-                AppState.isPlaying = true;
-                updateButtonStates();
-                showStatus('Started');
-            } catch (error) {
-                console.error('Start error:', error);
-                showStatus('Start failed');
-            }
-        }
-
-        function createAudioNodes() {
-            cleanupOscillators();
-            
-            AppState.masterGain = AppState.audioCtx.createGain();
-            AppState.masterGain.gain.value = 0.2;
-            
-            AppState.filter = AppState.audioCtx.createBiquadFilter();
-            AppState.filter.type = "lowpass";
-            AppState.filter.frequency.value = 20000;
-            AppState.filter.Q.value = 1;
-
-            createEffects();
-            createOscillators();
-            connectAudioGraph();
-        }
-
-        function createEffects() {
-            // Reverb
-            const convolver = AppState.audioCtx.createConvolver();
-            const len = 3 * AppState.audioCtx.sampleRate;
-            const impulse = AppState.audioCtx.createBuffer(2, len, AppState.audioCtx.sampleRate);
-            for(let c = 0; c < 2; c++) {
-                const buf = impulse.getChannelData(c);
-                for(let i = 0; i < len; i++) buf[i] = (Math.random() * 2 - 1) * (1 - i / len);
-            }
-            convolver.buffer = impulse;
-            audioNodes.reverbDryWet = AppState.audioCtx.createGain();
-            audioNodes.reverbDryWet.gain.value = 0;
-
-            // Flanger
-            const flangerDelay = AppState.audioCtx.createDelay(0.005);
-            flangerDelay.delayTime.value = 0.002;
-            const flangerFeedback = AppState.audioCtx.createGain();
-            flangerFeedback.gain.value = 0.7;
-            const flangerLFO = AppState.audioCtx.createOscillator();
-            flangerLFO.frequency.value = 0.25;
-            const flangerLFOGain = AppState.audioCtx.createGain();
-            flangerLFOGain.gain.value = 0.001;
-            flangerLFO.connect(flangerLFOGain);
-            flangerLFOGain.connect(flangerDelay.delayTime);
-            flangerLFO.start();
-            flangerDelay.connect(flangerFeedback);
-            flangerFeedback.connect(flangerDelay);
-            audioNodes.flangerDryWet = AppState.audioCtx.createGain();
-            audioNodes.flangerDryWet.gain.value = 0;
-
-            // Auto Wah
-            audioNodes.autoWahFilter = AppState.audioCtx.createBiquadFilter();
-            audioNodes.autoWahFilter.type = "bandpass";
-            audioNodes.autoWahFilter.frequency.value = 800;
-            audioNodes.autoWahFilter.Q.value = 5;
-            audioNodes.autoWahLFO = AppState.audioCtx.createOscillator();
-            audioNodes.autoWahLFO.frequency.value = 1.0;
-            audioNodes.autoWahLFOGain = AppState.audioCtx.createGain();
-            audioNodes.autoWahLFOGain.gain.value = 600;
-            audioNodes.autoWahDryWet = AppState.audioCtx.createGain();
-            audioNodes.autoWahDryWet.gain.value = 0;
-            audioNodes.autoWahLFO.connect(audioNodes.autoWahLFOGain);
-            audioNodes.autoWahLFOGain.connect(audioNodes.autoWahFilter.frequency);
-            audioNodes.autoWahLFO.start();
-
-            // Manual Wah
-            audioNodes.manualWahFilter = AppState.audioCtx.createBiquadFilter();
-            audioNodes.manualWahFilter.type = "bandpass";
-            audioNodes.manualWahFilter.frequency.value = 800;
-            audioNodes.manualWahFilter.Q.value = 5;
-            audioNodes.manualWahDryWet = AppState.audioCtx.createGain();
-            audioNodes.manualWahDryWet.gain.value = 0;
-
-            // Delay
-            audioNodes.delayNode = AppState.audioCtx.createDelay(1.0);
-            audioNodes.delayFeedback = AppState.audioCtx.createGain();
-            audioNodes.delayDryWet = AppState.audioCtx.createGain();
-            audioNodes.delayNode.delayTime.value = 0.25;
-            audioNodes.delayFeedback.gain.value = 0.4;
-            audioNodes.delayDryWet.gain.value = 0;
-
-            // Distortion
-            audioNodes.distortionGain = AppState.audioCtx.createGain();
-            audioNodes.distortionGain.gain.value = 0;
-
-            // Chorus
-            audioNodes.chorusDryWet = AppState.audioCtx.createGain();
-            audioNodes.chorusDryWet.gain.value = 0;
-
-            // Tremolo
-            audioNodes.tremoloGain = AppState.audioCtx.createGain();
-            audioNodes.tremoloGain.gain.value = 1.0;
-            audioNodes.tremoloLFO = AppState.audioCtx.createOscillator();
-            audioNodes.tremoloLFO.frequency.value = 5.0;
-            audioNodes.tremoloLFOGain = AppState.audioCtx.createGain();
-            audioNodes.tremoloLFOGain.gain.value = 0.5;
-            audioNodes.tremoloDryWet = AppState.audioCtx.createGain();
-            audioNodes.tremoloDryWet.gain.value = 0;
-            audioNodes.tremoloLFO.connect(audioNodes.tremoloLFOGain);
-            audioNodes.tremoloLFOGain.connect(audioNodes.tremoloGain.gain);
-            audioNodes.tremoloLFO.start();
-
-            // Bit Crusher
-            audioNodes.bitCrusherDryWet = AppState.audioCtx.createGain();
-            audioNodes.bitCrusherDryWet.gain.value = 0;
-        }
-
-        function createOscillators() {
-            const now = AppState.audioCtx.currentTime;
-            for(let i = 0; i < AppState.NUM_OSC; i++) {
-                const osc = AppState.audioCtx.createOscillator();
-                osc.type = AppState.waveType;
-                const detune = (i - Math.floor(AppState.NUM_OSC / 2)) * AppState.detuneAmount;
-                osc.detune.value = detune;
-                osc.connect(AppState.masterGain);
-                osc.start(now);
-                AppState.oscillators.push(osc);
-            }
-        }
-
-        function connectAudioGraph() {
-            AppState.masterGain.connect(AppState.filter);
-            
-            const dryGain = AppState.audioCtx.createGain();
-            dryGain.gain.value = 1.0;
-            AppState.filter.connect(dryGain);
-            dryGain.connect(AppState.audioCtx.destination);
-            
-            // Effects routing
-            AppState.filter.connect(audioNodes.autoWahFilter);
-            audioNodes.autoWahFilter.connect(audioNodes.autoWahDryWet);
-            audioNodes.autoWahDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(audioNodes.manualWahFilter);
-            audioNodes.manualWahFilter.connect(audioNodes.manualWahDryWet);
-            audioNodes.manualWahDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(convolver);
-            convolver.connect(audioNodes.reverbDryWet);
-            audioNodes.reverbDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(flangerDelay);
-            flangerDelay.connect(audioNodes.flangerDryWet);
-            audioNodes.flangerDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(audioNodes.distortionGain);
-            audioNodes.distortionGain.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(audioNodes.delayNode);
-            audioNodes.delayNode.connect(audioNodes.delayFeedback);
-            audioNodes.delayFeedback.connect(audioNodes.delayNode);
-            audioNodes.delayNode.connect(audioNodes.delayDryWet);
-            audioNodes.delayDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(audioNodes.chorusDryWet);
-            audioNodes.chorusDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(audioNodes.tremoloGain);
-            audioNodes.tremoloGain.connect(audioNodes.tremoloDryWet);
-            audioNodes.tremoloDryWet.connect(AppState.audioCtx.destination);
-            
-            AppState.filter.connect(audioNodes.bitCrusherDryWet);
-            audioNodes.bitCrusherDryWet.connect(AppState.audioCtx.destination);
-        }
-
-        function freqToNote(freq) {
-            const A4 = 440, semitonesFromA4 = 12 * Math.log2(freq / A4);
-            const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
-            const octave = Math.floor((semitonesFromA4 + 9) / 12);
-            const noteName = noteNames[(noteIndex + 12) % 12];
-            return { name: noteName, octave: octave, fullName: `${noteName}${octave}` };
-        }
-
-        function updateThemeColor(noteName) {
-            const color = noteColors[noteName] || [100, 100, 100];
-            document.documentElement.style.setProperty('--r', color[0]);
-            document.documentElement.style.setProperty('--g', color[1]);
-            document.documentElement.style.setProperty('--b', color[2]);
-        }
-
-        function noteFromPad(y) {
-            const padHeight = window.innerHeight;
-            const ratio = 1 - (y / padHeight);
-            const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
-            return baseFreq * Math.pow(2, (ratio * 12) / 12);
-        }
-
-        function applyPitch() {
-            if (!safeAudioOperation(() => {
-                const freq = AppState.baseFreq;
-                const noteInfo = freqToNote(freq);
-                AppState.oscillators.forEach(osc => 
-                    osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01)
-                );
-                elements.noteDisplay.textContent = noteInfo.fullName;
-                elements.octaveDisplay.textContent = `Oct:${AppState.octaveOffset}`;
-                updateThemeColor(noteInfo.name);
-            })) return;
-        }
-
-        let touchThrottle = false;
-        function handleTouch(e) {
-            if (touchThrottle) return;
-            touchThrottle = true;
-            setTimeout(() => touchThrottle = false, 16);
-
-            if (!isAudioContextValid()) {
-                showStatus('Start synth first');
-                return;
-            }
-
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            
-            AppState.baseFreq = noteFromPad(clientY);
-            
-            const volume = clientX / window.innerWidth;
-            safeAudioOperation(() => {
-                AppState.masterGain.gain.setTargetAtTime(volume * 0.4, AppState.audioCtx.currentTime, 0.01);
-            });
-
-            if (effects.isManualWah) {
-                AppState.manualWahPosition = clientX / window.innerWidth;
-                updateManualWah();
-            }
-            
-            applyPitch();
-        }
-
-        function updateManualWah() {
-            if (!audioNodes.manualWahFilter) return;
-            safeAudioOperation(() => {
-                const freq = 200 + (AppState.manualWahPosition * 1800);
-                audioNodes.manualWahFilter.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
-                elements.wahDisplay.textContent = `Wah: ${Math.round(AppState.manualWahPosition * 100)}%`;
-                elements.wahDisplay.style.display = 'block';
-            });
-        }
-
-        function enableMotion() {
-            if (typeof DeviceOrientationEvent.requestPermission === "function") {
-                elements.permissionModal.style.display = 'flex';
-            } else {
-                startMotionControl();
-            }
-        }
-
-        function startMotionControl() {
-            window.addEventListener("deviceorientation", handleOrientation);
-            AppState.motionEnabled = true;
-            elements.motionBtn.textContent = "Disable Motion";
-            elements.motionBtn.classList.add('active');
-            elements.motionDisplay.style.display = 'block';
-            showStatus('Motion enabled');
-        }
-
-        function disableMotion() {
-            window.removeEventListener("deviceorientation", handleOrientation);
-            AppState.motionEnabled = false;
-            AppState.tiltBend = 0;
-            applyPitch();
-            elements.motionBtn.textContent = "Enable Motion";
-            elements.motionBtn.classList.remove('active');
-            elements.motionDisplay.style.display = 'none';
-            showStatus('Motion disabled');
-        }
-
-        let orientationThrottle = false;
-        function handleOrientation(e) {
-            if (orientationThrottle || e.beta === null) return;
-            orientationThrottle = true;
-            setTimeout(() => orientationThrottle = false, 50);
-
-            const norm = e.beta / 45;
-            AppState.tiltBend = norm * 12;
-            const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
-            AppState.baseFreq = baseFreq * Math.pow(2, AppState.tiltBend / 12);
-            applyPitch();
-            elements.motionDisplay.textContent = `Tilt:${Math.round(e.beta)}°`;
-        }
-
-        function stopSynth() {
-            if (!AppState.audioCtx) {
-                showStatus('No synth running');
-                return;
-            }
-            
-            try {
-                cleanupOscillators();
-                AppState.audioCtx.close().then(() => {
-                    AppState.audioCtx = null;
-                    AppState.isPlaying = false;
-                    updateButtonStates();
-                    showStatus('Stopped');
-                }).catch(error => {
-                    console.error('Close error:', error);
-                    showStatus('Stop error');
-                });
-            } catch (error) {
-                console.error('Stop error:', error);
-                showStatus('Stop error');
-            }
-        }
-
-        function toggleControls() {
-            elements.controls.classList.toggle('expanded');
-            elements.toggleControls.textContent = 
-                elements.controls.classList.contains('expanded') ? '✕' : '⚙️';
-        }
-
-        function initializeEventListeners() {
-            // Pad events
-            elements.pad.addEventListener("touchstart", handleTouch, { passive: false });
-            elements.pad.addEventListener("touchmove", handleTouch, { passive: false });
-            elements.pad.addEventListener("mousedown", handleTouch);
-            elements.pad.addEventListener("mousemove", e => { if (e.buttons === 1) handleTouch(e); });
-
-            // Control buttons
-            elements.startBtn.addEventListener("click", startSynth);
-            elements.stopBtn.addEventListener("click", stopSynth);
-            elements.motionBtn.addEventListener("click", () => {
-                AppState.motionEnabled ? disableMotion() : enableMotion();
-            });
-            
-            // Toggle controls button
-            elements.toggleControls.addEventListener("click", toggleControls);
-
-            document.getElementById("octUp").addEventListener("click", () => { 
-                AppState.octaveOffset++; 
-                applyPitch(); 
-            });
-            document.getElementById("octDown").addEventListener("click", () => { 
-                AppState.octaveOffset--; 
-                applyPitch(); 
-            });
-
-            // Permission modal
-            document.getElementById("permissionAllow").addEventListener("click", () => {
-                DeviceOrientationEvent.requestPermission().then(response => {
-                    elements.permissionModal.style.display = 'none';
-                    if (response === 'granted') startMotionControl();
-                    else showStatus('Motion denied');
-                });
-            });
-            
-            document.getElementById("permissionDeny").addEventListener("click", () => {
-                elements.permissionModal.style.display = 'none';
-                showStatus('Motion disabled');
-            });
-
-            // Synth controls
-            document.getElementById("waveSelect").addEventListener("change", e => {
-                AppState.waveType = e.target.value;
-                if (AppState.oscillators.length > 0) {
-                    AppState.oscillators.forEach(osc => osc.type = AppState.waveType);
-                }
-            });
-            
-            document.getElementById("detuneRange").addEventListener("input", e => {
-                AppState.detuneAmount = parseFloat(e.target.value);
-                if (AppState.oscillators.length > 0) {
-                    AppState.oscillators.forEach((osc, i) => {
-                        const det = (i - Math.floor(AppState.NUM_OSC / 2)) * AppState.detuneAmount;
-                        osc.detune.setValueAtTime(det, AppState.audioCtx.currentTime);
-                    });
-                }
-            });
-
-            // Effect controls
-            document.getElementById("filterFreq").addEventListener("input", e => {
-                const value = Math.max(200, Math.min(20000, parseFloat(e.target.value)));
-                if (AppState.filter) {
-                    AppState.filter.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.01);
-                }
-            });
-
-            document.getElementById("filterReso").addEventListener("input", e => {
-                const value = Math.max(0.5, Math.min(20, parseFloat(e.target.value)));
-                if (AppState.filter) AppState.filter.Q.value = value;
-            });
-
-            document.getElementById("autoWahRate").addEventListener("input", e => {
-                const value = Math.max(0.1, Math.min(5, parseFloat(e.target.value)));
-                if (audioNodes.autoWahLFO) audioNodes.autoWahLFO.frequency.value = value;
-            });
-
-            document.getElementById("autoWahDepth").addEventListener("input", e => {
-                const value = Math.max(100, Math.min(1500, parseFloat(e.target.value)));
-                if (audioNodes.autoWahLFOGain) audioNodes.autoWahLFOGain.gain.value = value;
-            });
-
-            // Effect toggles
-            const toggleMap = {
-                toggleFilter: ['isFilter', () => AppState.filter ? AppState.filter.connect(AppState.audioCtx.destination) : null],
-                toggleReverb: ['isReverb', audioNodes.reverbDryWet],
-                toggleFlanger: ['isFlanger', audioNodes.flangerDryWet],
-                toggleDist: ['isDist', audioNodes.distortionGain],
-                toggleDelay: ['isDelay', audioNodes.delayDryWet],
-                toggleChorus: ['isChorus', audioNodes.chorusDryWet],
-                toggleTremolo: ['isTremolo', audioNodes.tremoloDryWet],
-                toggleBitCrusher: ['isBitCrusher', audioNodes.bitCrusherDryWet]
-            };
-
-            Object.entries(toggleMap).forEach(([id, [stateKey, node]]) => {
-                document.getElementById(id).addEventListener("click", () => {
-                    effects[stateKey] = !effects[stateKey];
-                    if (node && typeof node.gain !== 'undefined') {
-                        node.gain.setTargetAtTime(effects[stateKey] ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
-                    }
-                    document.getElementById(id).classList.toggle('active', effects[stateKey]);
-                });
-            });
-
-            document.getElementById("toggleAutoWah").addEventListener("click", () => {
-                effects.isAutoWah = !effects.isAutoWah;
-                effects.isManualWah = false;
-                if (audioNodes.autoWahDryWet) {
-                    audioNodes.autoWahDryWet.gain.setTargetAtTime(effects.isAutoWah ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
-                }
-                if (audioNodes.manualWahDryWet) {
-                    audioNodes.manualWahDryWet.gain.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.01);
-                }
-                document.getElementById("toggleAutoWah").classList.toggle('active', effects.isAutoWah);
-                document.getElementById("toggleManualWah").classList.toggle('active', false);
-                elements.wahDisplay.style.display = effects.isAutoWah ? 'block' : 'none';
-            });
-            
-            document.getElementById("toggleManualWah").addEventListener("click", () => {
-                effects.isManualWah = !effects.isManualWah;
-                effects.isAutoWah = false;
-                if (audioNodes.manualWahDryWet) {
-                    audioNodes.manualWahDryWet.gain.setTargetAtTime(effects.isManualWah ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
-                }
-                if (audioNodes.autoWahDryWet) {
-                    audioNodes.autoWahDryWet.gain.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.01);
-                }
-                document.getElementById("toggleManualWah").classList.toggle('active', effects.isManualWah);
-                document.getElementById("toggleAutoWah").classList.toggle('active', false);
-                elements.wahDisplay.style.display = effects.isManualWah ? 'block' : 'none';
-                if (effects.isManualWah) updateManualWah();
-            });
-        }
-
-        window.addEventListener('load', () => {
-            updateThemeColor('C');
-            initializeEventListeners();
-            updateButtonStates();
-            showStatus('Ready');
-        });
-
-        window.addEventListener("contextmenu", e => e.preventDefault());
-        window.addEventListener('resize', () => {
-            // Dynamic layout adjustments
-            const isPortrait = window.innerHeight > window.innerWidth;
-            elements.pad.style.height = isPortrait ? '100vh' : '100vh';
-        });
-    </script>
+<div id="app-container">
+<div id="pad">
+<div id="noteDisplay">C4</div>
+<div id="octaveDisplay">Oct:0</div>
+<div id="motionDisplay">Tilt:0°</div>
+<div id="wahDisplay">Wah:0%</div>
+<div id="panDisplay">Pan:0%</div>
+</div>
+<button id="toggleControls">⚙️</button>
+<div id="controls">
+<button id="startBtn">Start</button>
+<button id="stopBtn" disabled>Stop</button>
+<button id="motionBtn">Motion</button>
+<button id="panBtn">Pan</button>
+<button id="octDown">Oct-</button>
+<button id="octUp">Oct+</button>
+<div class="control-group">
+<label>Wave</label>
+<select id="waveSelect">
+<option value="sawtooth">Saw</option>
+<option value="triangle">Tri</option>
+<option value="square">Sqr</option>
+<option value="sine">Sine</option>
+</select>
+</div>
+<div class="control-group">
+<label>Detune</label>
+<input type="range" id="detuneRange" min="0" max="50" value="15">
+</div>
+<div class="effect-group">
+<div class="effect-group-title">WAH</div>
+<button id="toggleAutoWah">Auto Wah</button>
+<button id="toggleManualWah">Manual Wah</button>
+<div class="control-group">
+<label>Wah Rate</label>
+<input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
+</div>
+<div class="control-group">
+<label>Wah Depth</label>
+<input type="range" id="autoWahDepth" min="100" max="1500" value="800">
+</div>
+</div>
+<div class="effect-group">
+<div class="effect-group-title">FILTER</div>
+<button id="toggleFilter">Filter</button>
+<div class="control-group">
+<label>Freq</label>
+<input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
+</div>
+<div class="control-group">
+<label>Reso</label>
+<input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
+</div>
+</div>
+<div class="effect-group">
+<div class="effect-group-title">MOD</div>
+<button id="toggleFlanger">Flanger</button>
+<button id="togglePhaser">Phaser</button>
+<button id="toggleChorus">Chorus</button>
+<button id="toggleTremolo">Tremolo</button>
+</div>
+<div class="effect-group">
+<div class="effect-group-title">FX</div>
+<button id="toggleReverb">Reverb</button>
+<button id="toggleDelay">Delay</button>
+<button id="toggleDist">Dist</button>
+<button id="toggleBitCrusher">BitCrush</button>
+</div>
+</div>
+</div>
+<div id="statusMessage"></div>
+<div id="permissionModal" class="modal">
+<div class="modal-content">
+<h3>Motion Access</h3>
+<p>Need motion sensor access</p>
+<div class="modal-buttons">
+<button id="permissionAllow">Allow</button>
+<button id="permissionDeny">Deny</button>
+</div>
+</div>
+</div>
+<script>
+const AppState={audioCtx:null,oscillators:[],masterGain:null,filter:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,manualWahPosition:0.5,NUM_OSC:7};
+const effects={isFilter:false,isReverb:false,isFlanger:false,isPhaser:false,isDist:false,isDelay:false,isAutoWah:false,isManualWah:false,isChorus:false,isTremolo:false,isBitCrusher:false};
+let audioNodes={};
+const noteColors={'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]};
+const elements={pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),octaveDisplay:document.getElementById("octaveDisplay"),motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls")};
+const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
+function safeAudioOperation(operation){if(!isAudioContextValid()){showStatus('Audio not ready');return false;}try{operation();return true;}catch(error){console.error('Audio error:',error);showStatus('Audio error');return false;}}
+function showStatus(message,duration=1500){elements.statusMessage.textContent=message;elements.statusMessage.classList.add('show');setTimeout(()=>elements.statusMessage.classList.remove('show'),duration);}
+function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;}
+function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscillators.forEach(osc=>{try{osc.stop();osc.disconnect();}catch(e){console.warn('Osc cleanup:',e);}});AppState.oscillators=[];}}
+function startSynth(){if(isAudioContextValid()){showStatus('Already running');return;}
+try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started');}catch(error){console.error('Start error:',error);showStatus('Start failed');}}
+function createAudioNodes(){cleanupOscillators();AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;AppState.filter=AppState.audioCtx.createBiquadFilter();AppState.filter.type="lowpass";AppState.filter.frequency.value=20000;AppState.filter.Q.value=1;createEffects();createOscillators();connectAudioGraph();}
+function createEffects(){const convolver=AppState.audioCtx.createConvolver();const len=3*AppState.audioCtx.sampleRate;const impulse=AppState.audioCtx.createBuffer(2,len,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const buf=impulse.getChannelData(c);for(let i=0;i<len;i++)buf[i]=(Math.random()*2-1)*(1-i/len);}convolver.buffer=impulse;audioNodes.reverbDryWet=AppState.audioCtx.createGain();audioNodes.reverbDryWet.gain.value=0;const flangerDelay=AppState.audioCtx.createDelay(0.005);flangerDelay.delayTime.value=0.002;const flangerFeedback=AppState.audioCtx.createGain();flangerFeedback.gain.value=0.7;const flangerLFO=AppState.audioCtx.createOscillator();flangerLFO.frequency.value=0.25;const flangerLFOGain=AppState.audioCtx.createGain();flangerLFOGain.gain.value=0.001;flangerLFO.connect(flangerLFOGain);flangerLFOGain.connect(flangerDelay.delayTime);flangerLFO.start();flangerDelay.connect(flangerFeedback);flangerFeedback.connect(flangerDelay);audioNodes.flangerDryWet=AppState.audioCtx.createGain();audioNodes.flangerDryWet.gain.value=0;audioNodes.autoWahFilter=AppState.audioCtx.createBiquadFilter();audioNodes.autoWahFilter.type="bandpass";audioNodes.autoWahFilter.frequency.value=800;audioNodes.autoWahFilter.Q.value=5;audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1.0;audioNodes.autoWahLFOGain=AppState.audioCtx.createGain();audioNodes.autoWahLFOGain.gain.value=600;audioNodes.autoWahDryWet=AppState.audioCtx.createGain();audioNodes.autoWahDryWet.gain.value=0;audioNodes.autoWahLFO.connect(audioNodes.autoWahLFOGain);audioNodes.autoWahLFOGain.connect(audioNodes.autoWahFilter.frequency);audioNodes.autoWahLFO.start();audioNodes.manualWahFilter=AppState.audioCtx.createBiquadFilter();audioNodes.manualWahFilter.type="bandpass";audioNodes.manualWahFilter.frequency.value=800;audioNodes.manualWahFilter.Q.value=5;audioNodes.manualWahDryWet=AppState.audioCtx.createGain();audioNodes.manualWahDryWet.gain.value=0;audioNodes.delayNode=AppState.audioCtx.createDelay(1.0);audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayDryWet=AppState.audioCtx.createGain();audioNodes.delayNode.delayTime.value=0.25;audioNodes.delayFeedback.gain.value=0.4;audioNodes.delayDryWet.gain.value=0;audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;audioNodes.chorusDryWet=AppState.audioCtx.createGain();audioNodes.chorusDryWet.gain.value=0;audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=1.0;audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5.0;audioNodes.tremoloLFOGain=AppState.audioCtx.createGain();audioNodes.tremoloLFOGain.gain.value=0.5;audioNodes.tremoloDryWet=AppState.audioCtx.createGain();audioNodes.tremoloDryWet.gain.value=0;audioNodes.tremoloLFO.connect(audioNodes.tremoloLFOGain);audioNodes.tremoloLFOGain.connect(audioNodes.tremoloGain.gain);audioNodes.tremoloLFO.start();audioNodes.bitCrusherDryWet=AppState.audioCtx.createGain();audioNodes.bitCrusherDryWet.gain.value=0;audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;}
+function createOscillators(){const now=AppState.audioCtx.currentTime;for(let i=0;i<AppState.NUM_OSC;i++){const osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;const detune=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;osc.detune.value=detune;osc.connect(AppState.masterGain);osc.start(now);AppState.oscillators.push(osc);}}
+function connectAudioGraph(){AppState.masterGain.connect(audioNodes.panner);audioNodes.panner.connect(AppState.filter);const dryGain=AppState.audioCtx.createGain();dryGain.gain.value=1.0;AppState.filter.connect(dryGain);dryGain.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.autoWahFilter);audioNodes.autoWahFilter.connect(audioNodes.autoWahDryWet);audioNodes.autoWahDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.manualWahFilter);audioNodes.manualWahFilter.connect(audioNodes.manualWahDryWet);audioNodes.manualWahDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(convolver);convolver.connect(audioNodes.reverbDryWet);audioNodes.reverbDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(flangerDelay);flangerDelay.connect(audioNodes.flangerDryWet);audioNodes.flangerDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.distortionGain);audioNodes.distortionGain.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.delayNode);audioNodes.delayNode.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delayNode);audioNodes.delayNode.connect(audioNodes.delayDryWet);audioNodes.delayDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.chorusDryWet);audioNodes.chorusDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.tremoloGain);audioNodes.tremoloGain.connect(audioNodes.tremoloDryWet);audioNodes.tremoloDryWet.connect(AppState.audioCtx.destination);AppState.filter.connect(audioNodes.bitCrusherDryWet);audioNodes.bitCrusherDryWet.connect(AppState.audioCtx.destination);}
+function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4);const noteIndex=Math.round(semitonesFromA4+9)%12;const octave=Math.floor((semitonesFromA4+9)/12);const noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};}
+function updateThemeColor(noteName){const color=noteColors[noteName]||[100,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);}
+function noteFromPad(y){const padHeight=window.innerHeight;const ratio=1-(y/padHeight);const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);return baseFreq*Math.pow(2,(ratio*12)/12);}
+function applyPitch(){if(!safeAudioOperation(()=>{const freq=AppState.baseFreq;const noteInfo=freqToNote(freq);AppState.oscillators.forEach(osc=>osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.005));elements.noteDisplay.textContent=noteInfo.fullName;elements.octaveDisplay.textContent=`Oct:${AppState.octaveOffset}`;updateThemeColor(noteInfo.name);}))return;}
+let touchThrottle=false;let lastTouchTime=0;
+function handleTouch(e){const now=performance.now();if(now-lastTouchTime<4)return;lastTouchTime=now;if(!isAudioContextValid()){showStatus('Start synth first');return;}
+const clientY=e.touches?e.touches[0].clientY:e.clientY;const clientX=e.touches?e.touches[0].clientX:e.clientX;AppState.baseFreq=noteFromPad(clientY);const volume=clientX/window.innerWidth;safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.005);});if(effects.isManualWah){AppState.manualWahPosition=clientX/window.innerWidth;updateManualWah();}
+applyPitch();}
+function updateManualWah(){if(!audioNodes.manualWahFilter)return;safeAudioOperation(()=>{const freq=200+(AppState.manualWahPosition*1800);audioNodes.manualWahFilter.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.005);elements.wahDisplay.textContent=`Wah:${Math.round(AppState.manualWahPosition*100)}%`;elements.wahDisplay.style.display='block';});}
+function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.005);elements.panDisplay.textContent=`Pan:${Math.round(position*100)}%`;elements.panDisplay.style.display='block';});}
+function enableMotion(){if(typeof DeviceOrientationEvent.requestPermission==="function"){elements.permissionModal.style.display='flex';}else{startMotionControl();}}
+function startMotionControl(){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;elements.motionBtn.textContent="Motion ON";elements.motionBtn.classList.add('active');elements.motionDisplay.style.display='block';showStatus('Motion enabled');}
+function disableMotion(){window.removeEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=false;AppState.tiltBend=0;applyPitch();elements.motionBtn.textContent="Motion OFF";elements.motionBtn.classList.remove('active');elements.motionDisplay.style.display='none';showStatus('Motion disabled');}
+function togglePan(){AppState.panEnabled=!AppState.panEnabled;elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.panDisplay.style.display=AppState.panEnabled?'block':'none';if(!AppState.panEnabled){updatePan(0);}showStatus(AppState.panEnabled?'Pan enabled':'Pan disabled');}
+let orientationThrottle=false;let lastOrientationTime=0;
+function handleOrientation(e){const now=performance.now();if(now-lastOrientationTime<16)return;lastOrientationTime=now;if(e.beta===null)return;const norm=e.beta/45;AppState.tiltBend=norm*12;const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);if(AppState.panEnabled&&e.gamma!==null){const panValue=Math.max(-1,Math.min(1,e.gamma/90));updatePan(panValue);}
+applyPitch();elements.motionDisplay.textContent=`Tilt:${Math.round(e.beta)}°`;}
+function stopSynth(){if(!AppState.audioCtx){showStatus('No synth running');return;}
+try{cleanupOscillators();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.isPlaying=false;updateButtonStates();showStatus('Stopped');}).catch(error=>{console.error('Close error:',error);showStatus('Stop error');});}catch(error){console.error('Stop error:',error);showStatus('Stop error');}}
+function toggleControls(){elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
+function initializeEventListeners(){elements.pad.addEventListener("touchstart",handleTouch,{passive:false});elements.pad.addEventListener("touchmove",handleTouch,{passive:false});elements.pad.addEventListener("mousedown",handleTouch);elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});elements.startBtn.addEventListener("click",startSynth);elements.stopBtn.addEventListener("click",stopSynth);elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():enableMotion();});elements.panBtn.addEventListener("click",togglePan);elements.toggleControls.addEventListener("click",toggleControls);document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();});document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();});document.getElementById("permissionAllow").addEventListener("click",()=>{DeviceOrientationEvent.requestPermission().then(response=>{elements.permissionModal.style.display='none';if(response==='granted')startMotionControl();else showStatus('Motion denied');});});document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;if(AppState.oscillators.length>0){AppState.oscillators.forEach(osc=>osc.type=AppState.waveType);}});document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{const det=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;osc.detune.setValueAtTime(det,AppState.audioCtx.currentTime);});}});document.getElementById("filterFreq").addEventListener("input",e=>{const value=Math.max(200,Math.min(20000,parseFloat(e.target.value)));if(AppState.filter){AppState.filter.frequency.setTargetAtTime(value,AppState.audioCtx.currentTime,0.005);}});document.getElementById("filterReso").addEventListener("input",e=>{const value=Math.max(0.5,Math.min(20,parseFloat(e.target.value)));if(AppState.filter)AppState.filter.Q.value=value;});document.getElementById("autoWahRate").addEventListener("input",e=>{const value=Math.max(0.1,Math.min(5,parseFloat(e.target.value)));if(audioNodes.autoWahLFO)audioNodes.autoWahLFO.frequency.value=value;});document.getElementById("autoWahDepth").addEventListener("input",e=>{const value=Math.max(100,Math.min(1500,parseFloat(e.target.value)));if(audioNodes.autoWahLFOGain)audioNodes.autoWahLFOGain.gain.value=value;});const toggleMap={toggleFilter:['isFilter',()=>AppState.filter?AppState.filter.connect(AppState.audioCtx.destination):null],toggleReverb:['isReverb',audioNodes.reverbDryWet],toggleFlanger:['isFlanger',audioNodes.flangerDryWet],toggleDist:['isDist',audioNodes.distortionGain],toggleDelay:['isDelay',audioNodes.delayDryWet],toggleChorus:['isChorus',audioNodes.chorusDryWet],toggleTremolo:['isTremolo',audioNodes.tremoloDryWet],toggleBitCrusher:['isBitCrusher',audioNodes.bitCrusherDryWet]};Object.entries(toggleMap).forEach(([id,[stateKey,node]])=>{document.getElementById(id).addEventListener("click",()=>{effects[stateKey]=!effects[stateKey];if(node&&typeof node.gain!=='undefined'){node.gain.setTargetAtTime(effects[stateKey]?1:0,AppState.audioCtx.currentTime,0.005);}document.getElementById(id).classList.toggle('active',effects[stateKey]);});});document.getElementById("toggleAutoWah").addEventListener("click",()=>{effects.isAutoWah=!effects.isAutoWah;effects.isManualWah=false;if(audioNodes.autoWahDryWet){audioNodes.autoWahDryWet.gain.setTargetAtTime(effects.isAutoWah?1:0,AppState.audioCtx.currentTime,0.005);}if(audioNodes.manualWahDryWet){audioNodes.manualWahDryWet.gain.setTargetAtTime(0,AppState.audioCtx.currentTime,0.005);}document.getElementById("toggleAutoWah").classList.toggle('active',effects.isAutoWah);document.getElementById("toggleManualWah").classList.toggle('active',false);elements.wahDisplay.style.display=effects.isAutoWah?'block':'none';});document.getElementById("toggleManualWah").addEventListener("click",()=>{effects.isManualWah=!effects.isManualWah;effects.isAutoWah=false;if(audioNodes.manualWahDryWet){audioNodes.manualWahDryWet.gain.setTargetAtTime(effects.isManualWah?1:0,AppState.audioCtx.currentTime,0.005);}if(audioNodes.autoWahDryWet){audioNodes.autoWahDryWet.gain.setTargetAtTime(0,AppState.audioCtx.currentTime,0.005);}document.getElementById("toggleManualWah").classList.toggle('active',effects.isManualWah);document.getElementById("toggleAutoWah").classList.toggle('active',false);elements.wahDisplay.style.display=effects.isManualWah?'block':'none';if(effects.isManualWah)updateManualWah();});}
+window.addEventListener('load',()=>{updateThemeColor('C');initializeEventListeners();updateButtonStates();showStatus('Ready');});
+window.addEventListener("contextmenu",e=>e.preventDefault());
+window.addEventListener('resize',()=>{const isPortrait=window.innerHeight>window.innerWidth;elements.pad.style.height=isPortrait?'100vh':'100vh';});
+</script>
 </body>
 </html>
