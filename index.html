@@ -233,7 +233,7 @@ let detuneAmount = 15;
 let waveType = "sawtooth";
 
 // --- Effect Nodes ---
-let filterDryWet, reverbDryWet, flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
+let reverbDryWet, flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
 
 // --- Note to Color Mapping ---
 const noteColors = {
@@ -275,18 +275,16 @@ function startSynth(){
         oscillators.push(osc);
     }
     
-    // --- Signal Chain (All effects are initially bypassed) ---
+    // --- CORRECTED SIGNAL CHAIN ---
     masterGain.connect(filter);
-    filter.connect(masterGain); // Dry signal path
-    
+    filter.connect(audioCtx.destination); // Filter is always in the main path now
+
     // Effect paths (connected but gain is 0)
     filter.connect(reverb); reverb.connect(reverbDryWet); reverbDryWet.connect(audioCtx.destination);
     filter.connect(flanger.delay); flangerDryWet.connect(audioCtx.destination);
     filter.connect(phaser.filter); phaserDryWet.connect(audioCtx.destination);
     filter.connect(distortionGain); distortionGain.connect(distortionWaveShaper); distortionWaveShaper.connect(audioCtx.destination);
     filter.connect(delayNode); delayNode.connect(delayFeedback); delayFeedback.connect(delayNode); delayDryWet.connect(audioCtx.destination);
-    
-    masterGain.connect(audioCtx.destination);
 }
 
 // === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
@@ -410,8 +408,13 @@ document.getElementById("filterReso").oninput = e=>{ if(filter) filter.Q.value=p
 document.getElementById("delayTime").oninput = e=>{ if(delayNode) delayNode.delayTime.value = parseFloat(e.target.value) / 1000; };
 document.getElementById("delayFeedback").oninput = e=>{ if(delayFeedback) delayFeedback.gain.value = parseFloat(e.target.value) / 100; };
 
-// --- Effect Toggles ---
-document.getElementById("toggleFilter").onclick = () => { isFilter = !isFilter; filterDryWet.gain.setTargetAtTime(isFilter ? 0 : 1, audioCtx.currentTime, 0.01); document.getElementById("toggleFilter").classList.toggle('active', isFilter); };
+// --- CORRECTED Effect Toggles ---
+document.getElementById("toggleFilter").onclick = () => {
+    isFilter = !isFilter;
+    // This now toggles the filter's resonance to make it noticeable
+    filter.Q.setTargetAtTime(isFilter ? 10 : 1, audioCtx.currentTime, 0.01);
+    document.getElementById("toggleFilter").classList.toggle('active', isFilter);
+};
 document.getElementById("toggleReverb").onclick = () => { isReverb = !isReverb; reverbDryWet.gain.setTargetAtTime(isReverb ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleReverb").classList.toggle('active', isReverb); };
 document.getElementById("toggleFlanger").onclick = () => { isFlanger = !isFlanger; flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleFlanger").classList.toggle('active', isFlanger); };
 document.getElementById("togglePhaser").onclick = () => { isPhaser = !isPhaser; phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("togglePhaser").classList.toggle('active', isPhaser); };
