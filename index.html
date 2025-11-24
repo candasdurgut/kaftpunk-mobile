@@ -100,6 +100,24 @@
             backdrop-filter: blur(10px);
         }
 
+        #motionDisplay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            pointer-events: none;
+            z-index: 10;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
         #controls {
             height: 40vh;
             display: grid;
@@ -322,6 +340,7 @@
         <div id="pad">
             <div id="noteDisplay">C4</div>
             <div id="octaveDisplay">Octave: 0</div>
+            <div id="motionDisplay">Motion: 0°</div>
         </div>
         
         <div id="controls">
@@ -410,7 +429,7 @@
             reverb: null,
             delayNode: null,
             delayFeedback: null,
-            baseFreq: 261.63,
+            baseFreq: 261.63, // C4
             octaveOffset: 0,
             tiltBend: 0,
             isFilter: false,
@@ -423,7 +442,8 @@
             detuneAmount: 15,
             waveType: "sawtooth",
             isPlaying: false,
-            motionEnabled: false
+            motionEnabled: false,
+            currentAlpha: 0 // Cihaz yönü için alpha değeri (0-360)
         };
 
         // Effect Nodes
@@ -443,12 +463,16 @@
             pad: document.getElementById("pad"),
             noteDisplay: document.getElementById("noteDisplay"),
             octaveDisplay: document.getElementById("octaveDisplay"),
+            motionDisplay: document.getElementById("motionDisplay"),
             startBtn: document.getElementById("startBtn"),
             stopBtn: document.getElementById("stopBtn"),
             motionBtn: document.getElementById("motionBtn"),
             statusMessage: document.getElementById("statusMessage"),
             permissionModal: document.getElementById("permissionModal")
         };
+
+        // Nota isimleri
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
         // Utility Functions
         function showStatus(message, duration = 2000) {
@@ -715,20 +739,31 @@
             ruler.id = 'noteRuler';
             elements.pad.appendChild(ruler);
 
+            // 1 oktavlık nota aralığı için cetvel (C'den C'ye)
             const notesToShow = [
-                { name: 'C', octave: 5 },
-                { name: 'A', octave: 4 },
-                { name: 'F', octave: 4 },
-                { name: 'D', octave: 4 },
-                { name: 'B', octave: 3 },
-                { name: 'G', octave: 3 },
-                { name: 'E', octave: 3 },
-                { name: 'C', octave: 3 }
+                { name: 'C', octave: 4 + AppState.octaveOffset, position: 1.0 },
+                { name: 'B', octave: 3 + AppState.octaveOffset, position: 0.92 },
+                { name: 'A#', octave: 3 + AppState.octaveOffset, position: 0.83 },
+                { name: 'A', octave: 3 + AppState.octaveOffset, position: 0.75 },
+                { name: 'G#', octave: 3 + AppState.octaveOffset, position: 0.67 },
+                { name: 'G', octave: 3 + AppState.octaveOffset, position: 0.58 },
+                { name: 'F#', octave: 3 + AppState.octaveOffset, position: 0.50 },
+                { name: 'F', octave: 3 + AppState.octaveOffset, position: 0.42 },
+                { name: 'E', octave: 3 + AppState.octaveOffset, position: 0.33 },
+                { name: 'D#', octave: 3 + AppState.octaveOffset, position: 0.25 },
+                { name: 'D', octave: 3 + AppState.octaveOffset, position: 0.17 },
+                { name: 'C', octave: 3 + AppState.octaveOffset, position: 0.08 }
             ];
 
+            // Cetveli temizle
+            ruler.innerHTML = '';
+
+            // Nota pozisyonlarına göre cetvel öğelerini oluştur
             notesToShow.forEach(noteInfo => {
                 const item = document.createElement('div');
                 item.className = 'ruler-item';
+                item.style.position = 'absolute';
+                item.style.top = `${(1 - noteInfo.position) * 100}%`;
                 
                 const tick = document.createElement('div');
                 tick.className = 'tick';
@@ -748,13 +783,13 @@
             const semitonesFromA4 = 12 * Math.log2(freq / A4);
             const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
             const octave = Math.floor((semitonesFromA4 + 9) / 12);
-            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
             const noteName = noteNames[(noteIndex + 12) % 12];
             
             return { 
                 name: noteName, 
                 octave: octave, 
-                fullName: `${noteName}${octave}` 
+                fullName: `${noteName}${octave}`,
+                cents: Math.round((semitonesFromA4 - Math.round(semitonesFromA4)) * 100)
             };
         }
 
@@ -765,24 +800,36 @@
             document.documentElement.style.setProperty('--b', color[2]);
         }
 
+        // YENİ: 1 oktavlık nota aralığı için pad fonksiyonu
         function noteFromPad(y) {
             const padHeight = window.innerHeight * 0.6;
             const ratio = 1 - (y / padHeight);
-            const rootNoteFreq = 261.63 * Math.pow(2, AppState.octaveOffset);
-            return rootNoteFreq * Math.pow(2, ratio);
+            
+            // 1 oktav = 12 yarım ton
+            // C3'ten C4'e kadar (veya seçilen oktava göre)
+            const baseNoteIndex = 0; // C
+            const semitones = ratio * 12;
+            
+            // Temel frekansı hesapla (C3 = 130.81 Hz)
+            const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
+            
+            // Frekansı hesapla: baseFreq * 2^(semitones/12)
+            return baseFreq * Math.pow(2, semitones / 12);
         }
 
         function applyPitch() {
             if (!AppState.audioCtx || AppState.audioCtx.state !== 'running') return;
             
-            const freq = AppState.baseFreq * Math.pow(2, AppState.tiltBend / 12);
+            const freq = AppState.baseFreq;
             const noteInfo = freqToNote(freq);
             
             AppState.oscillators.forEach(osc => {
                 osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
             });
             
-            elements.noteDisplay.textContent = noteInfo.fullName;
+            // Cent bilgisini göster (akort için)
+            const centDisplay = noteInfo.cents !== 0 ? ` (${noteInfo.cents > 0 ? '+' : ''}${noteInfo.cents}¢)` : '';
+            elements.noteDisplay.textContent = noteInfo.fullName + centDisplay;
             elements.octaveDisplay.textContent = `Octave: ${AppState.octaveOffset}`;
             updateThemeColor(noteInfo.name);
         }
@@ -807,7 +854,7 @@
             applyPitch();
         }
 
-        // Motion Control
+        // Motion Control - 360 derece
         function enableMotion() {
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 elements.permissionModal.style.display = 'flex';
@@ -821,7 +868,8 @@
             AppState.motionEnabled = true;
             elements.motionBtn.textContent = "Disable Motion";
             elements.motionBtn.classList.add('active');
-            showStatus('Motion control enabled');
+            elements.motionDisplay.style.display = 'block';
+            showStatus('Motion control enabled - Rotate device 360°');
         }
 
         function disableMotion() {
@@ -831,14 +879,27 @@
             applyPitch();
             elements.motionBtn.textContent = "Enable Motion";
             elements.motionBtn.classList.remove('active');
+            elements.motionDisplay.style.display = 'none';
             showStatus('Motion control disabled');
         }
 
         function handleOrientation(e) {
-            if (e.beta !== null) {
-                const normalizedBeta = Math.max(-45, Math.min(45, e.beta));
-                AppState.tiltBend = (normalizedBeta / 45) * 12;
+            if (e.alpha !== null) {
+                // Alpha: 0-360 derece arasında, cihazın z-ekseni etrafındaki dönüşü
+                AppState.currentAlpha = e.alpha;
+                
+                // 360 dereceyi 2 oktava (24 yarım ton) eşle
+                // Her 15 derece = 1 yarım ton
+                AppState.tiltBend = (AppState.currentAlpha / 15) - 12; // -12 ile +12 arası
+                
+                // Frekansı güncelle
+                const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
+                AppState.baseFreq = baseFreq * Math.pow(2, AppState.tiltBend / 12);
+                
                 applyPitch();
+                
+                // Motion display'i güncelle
+                elements.motionDisplay.textContent = `Motion: ${Math.round(AppState.currentAlpha)}° (${AppState.tiltBend > 0 ? '+' : ''}${Math.round(AppState.tiltBend * 10) / 10} st)`;
             }
         }
 
@@ -860,11 +921,13 @@
             document.getElementById("octUp").addEventListener("click", () => {
                 AppState.octaveOffset++;
                 applyPitch();
+                createNoteRuler(); // Cetveli güncelle
             });
             
             document.getElementById("octDown").addEventListener("click", () => {
                 AppState.octaveOffset--;
                 applyPitch();
+                createNoteRuler(); // Cetveli güncelle
             });
 
             // Permission modal
@@ -1023,7 +1086,7 @@
             updateThemeColor('C');
             initializeEventListeners();
             updateButtonStates();
-            showStatus('Ready to play');
+            showStatus('Ready to play - Touch pad or enable motion control');
         });
 
         // Prevent context menu on long press
