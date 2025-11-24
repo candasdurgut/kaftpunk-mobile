@@ -245,6 +245,8 @@ const noteColors = {
 };
 
 function startSynth(){
+    const startBtn = document.getElementById("startBtn");
+
     if (isSynthRunning) {
         // Stop the synth
         if (audioCtx) {
@@ -252,8 +254,8 @@ function startSynth(){
             audioCtx = null;
         }
         isSynthRunning = false;
-        document.getElementById("startBtn").textContent = "Start Synth";
-        document.getElementById("startBtn").classList.remove('active');
+        startBtn.textContent = "Start Synth";
+        startBtn.classList.remove('active');
         return;
     }
 
@@ -298,8 +300,8 @@ function startSynth(){
     filter.connect(delayNode); delayNode.connect(delayFeedback); delayFeedback.connect(delayNode); delayDryWet.connect(audioCtx.destination);
 
     isSynthRunning = true;
-    document.getElementById("startBtn").textContent = "Stop Synth";
-    document.getElementById("startBtn").classList.add('active');
+    startBtn.textContent = "Stop Synth";
+    startBtn.classList.add('active');
 }
 
 // === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
@@ -382,7 +384,7 @@ function noteFromPad(y){
 }
 
 function applyPitch(){
-    if (!isSynthRunning) return;
+    if (!isSynthRunning || !audioCtx) return;
     const freq = baseFreq * Math.pow(2, tiltBend / 12);
     const noteInfo = freqToNote(freq);
     
