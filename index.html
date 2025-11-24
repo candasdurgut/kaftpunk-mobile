@@ -118,6 +118,24 @@
             display: none;
         }
 
+        #wahDisplay {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            pointer-events: none;
+            z-index: 10;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
         #controls {
             height: 40vh;
             display: grid;
@@ -333,6 +351,28 @@
         .modal-buttons button {
             flex: 1;
         }
+
+        /* Effect Group Styling */
+        .effect-group {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .effect-group-title {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--border-color);
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -341,6 +381,7 @@
             <div id="noteDisplay">C4</div>
             <div id="octaveDisplay">Octave: 0</div>
             <div id="motionDisplay">Motion: 0°</div>
+            <div id="wahDisplay">Wah: 0%</div>
         </div>
         
         <div id="controls">
@@ -367,41 +408,110 @@
                 <label for="detuneRange">Detune</label>
                 <input type="range" id="detuneRange" min="0" max="50" value="15">
             </div>
-            
-            <div class="control-group">
-                <label for="filterFreq">Filter Frequency</label>
-                <input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
+
+            <!-- Wah Wah Effect Group -->
+            <div class="effect-group">
+                <div class="effect-group-title">WAH WAH EFFECTS</div>
+                <button id="toggleAutoWah">Auto Wah</button>
+                <button id="toggleManualWah">Manual Wah</button>
+                
+                <div class="control-group">
+                    <label for="autoWahRate">Auto Wah Rate</label>
+                    <input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="autoWahDepth">Auto Wah Depth</label>
+                    <input type="range" id="autoWahDepth" min="100" max="1500" value="800">
+                </div>
+
+                <div class="control-group">
+                    <label for="wahFreq">Wah Frequency</label>
+                    <input type="range" id="wahFreq" min="200" max="2000" value="800">
+                </div>
+
+                <div class="control-group">
+                    <label for="wahReso">Wah Resonance</label>
+                    <input type="range" id="wahReso" min="0.5" max="20" value="5" step="0.5">
+                </div>
             </div>
 
-            <div class="control-group">
-                <label for="filterReso">Filter Resonance</label>
-                <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-            </div>
-            
-            <button id="toggleFilter">Enable Filter</button>
-            <button id="toggleReverb">Enable Reverb</button>
-            <button id="toggleFlanger">Enable Flanger</button>
-            <button id="togglePhaser">Enable Phaser</button>
-            <button id="toggleDist">Enable Distortion</button>
-            <button id="toggleDelay">Enable Delay</button>
+            <!-- Filter Effects Group -->
+            <div class="effect-group">
+                <div class="effect-group-title">FILTER EFFECTS</div>
+                <button id="toggleFilter">Enable Filter</button>
+                
+                <div class="control-group">
+                    <label for="filterFreq">Filter Frequency</label>
+                    <input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
+                </div>
 
-            <div class="control-group">
-                <label for="reverbMix">Reverb Mix</label>
-                <input type="range" id="reverbMix" min="0" max="100" value="70">
-            </div>
-
-            <div class="control-group">
-                <label for="distAmount">Distortion Amount</label>
-                <input type="range" id="distAmount" min="0" max="100" value="50">
+                <div class="control-group">
+                    <label for="filterReso">Filter Resonance</label>
+                    <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
+                </div>
             </div>
 
-            <div class="control-group">
-                <label for="delayTime">Delay Time (ms)</label>
-                <input type="range" id="delayTime" min="50" max="1000" value="250">
+            <!-- Modulation Effects Group -->
+            <div class="effect-group">
+                <div class="effect-group-title">MODULATION EFFECTS</div>
+                <button id="toggleFlanger">Enable Flanger</button>
+                <button id="togglePhaser">Enable Phaser</button>
+                <button id="toggleChorus">Enable Chorus</button>
+                <button id="toggleTremolo">Enable Tremolo</button>
+
+                <div class="control-group">
+                    <label for="flangerRate">Flanger Rate</label>
+                    <input type="range" id="flangerRate" min="0.1" max="2" value="0.25" step="0.05">
+                </div>
+
+                <div class="control-group">
+                    <label for="phaserRate">Phaser Rate</label>
+                    <input type="range" id="phaserRate" min="0.1" max="2" value="0.5" step="0.05">
+                </div>
+
+                <div class="control-group">
+                    <label for="chorusRate">Chorus Rate</label>
+                    <input type="range" id="chorusRate" min="0.1" max="2" value="0.5" step="0.05">
+                </div>
+
+                <div class="control-group">
+                    <label for="tremoloRate">Tremolo Rate</label>
+                    <input type="range" id="tremoloRate" min="0.1" max="10" value="5" step="0.1">
+                </div>
             </div>
-            <div class="control-group">
-                <label for="delayFeedback">Delay Feedback</label>
-                <input type="range" id="delayFeedback" min="0" max="90" value="40">
+
+            <!-- Time-Based Effects Group -->
+            <div class="effect-group">
+                <div class="effect-group-title">TIME-BASED EFFECTS</div>
+                <button id="toggleReverb">Enable Reverb</button>
+                <button id="toggleDelay">Enable Delay</button>
+                <button id="toggleDist">Enable Distortion</button>
+                <button id="toggleBitCrusher">Enable Bit Crusher</button>
+
+                <div class="control-group">
+                    <label for="reverbMix">Reverb Mix</label>
+                    <input type="range" id="reverbMix" min="0" max="100" value="70">
+                </div>
+
+                <div class="control-group">
+                    <label for="distAmount">Distortion Amount</label>
+                    <input type="range" id="distAmount" min="0" max="100" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label for="delayTime">Delay Time (ms)</label>
+                    <input type="range" id="delayTime" min="50" max="1000" value="250">
+                </div>
+                <div class="control-group">
+                    <label for="delayFeedback">Delay Feedback</label>
+                    <input type="range" id="delayFeedback" min="0" max="90" value="40">
+                </div>
+
+                <div class="control-group">
+                    <label for="bitCrushBits">Bit Depth</label>
+                    <input type="range" id="bitCrushBits" min="1" max="16" value="8">
+                </div>
             </div>
         </div>
     </div>
@@ -438,17 +548,28 @@
             isPhaser: false,
             isDist: false,
             isDelay: false,
+            isAutoWah: false,
+            isManualWah: false,
+            isChorus: false,
+            isTremolo: false,
+            isBitCrusher: false,
             NUM_OSC: 7,
             detuneAmount: 15,
             waveType: "sawtooth",
             isPlaying: false,
             motionEnabled: false,
-            currentAlpha: 0 // Cihaz yönü için alpha değeri (0-360)
+            currentAlpha: 0, // Cihaz yönü için alpha değeri (0-360)
+            manualWahPosition: 0.5 // Manual wah için pozisyon (0-1)
         };
 
         // Effect Nodes
         let reverbDryWet, flangerDryWet, phaserDryWet, distortionGain, delayDryWet;
         let flanger, phaser, distortionWaveShaper;
+        let autoWahFilter, autoWahLFO, autoWahDryWet;
+        let manualWahFilter, manualWahDryWet;
+        let chorusNode, chorusDryWet;
+        let tremoloGain, tremoloLFO, tremoloDryWet;
+        let bitCrusherNode, bitCrusherDryWet;
 
         // Note to Color Mapping
         const noteColors = {
@@ -464,6 +585,7 @@
             noteDisplay: document.getElementById("noteDisplay"),
             octaveDisplay: document.getElementById("octaveDisplay"),
             motionDisplay: document.getElementById("motionDisplay"),
+            wahDisplay: document.getElementById("wahDisplay"),
             startBtn: document.getElementById("startBtn"),
             stopBtn: document.getElementById("stopBtn"),
             motionBtn: document.getElementById("motionBtn"),
@@ -574,6 +696,38 @@
             AppState.delayNode.delayTime.value = 0.25;
             AppState.delayFeedback.gain.value = 0.4;
             delayDryWet.gain.value = 0;
+
+            // Auto Wah
+            const autoWah = createAutoWah(AppState.audioCtx);
+            autoWahFilter = autoWah.filter;
+            autoWahLFO = autoWah.lfo;
+            autoWahDryWet = autoWah.dryWet;
+            autoWahDryWet.gain.value = 0;
+
+            // Manual Wah
+            const manualWah = createManualWah(AppState.audioCtx);
+            manualWahFilter = manualWah.filter;
+            manualWahDryWet = manualWah.dryWet;
+            manualWahDryWet.gain.value = 0;
+
+            // Chorus
+            const chorus = createChorus(AppState.audioCtx);
+            chorusNode = chorus.chorus;
+            chorusDryWet = chorus.dryWet;
+            chorusDryWet.gain.value = 0;
+
+            // Tremolo
+            const tremolo = createTremolo(AppState.audioCtx);
+            tremoloGain = tremolo.gain;
+            tremoloLFO = tremolo.lfo;
+            tremoloDryWet = tremolo.dryWet;
+            tremoloDryWet.gain.value = 0;
+
+            // Bit Crusher
+            const bitCrusher = createBitCrusher(AppState.audioCtx);
+            bitCrusherNode = bitCrusher.bitCrusher;
+            bitCrusherDryWet = bitCrusher.dryWet;
+            bitCrusherDryWet.gain.value = 0;
         }
 
         function createOscillators(now) {
@@ -621,29 +775,28 @@
             AppState.delayFeedback.connect(AppState.delayNode);
             AppState.delayNode.connect(delayDryWet);
             delayDryWet.connect(AppState.audioCtx.destination);
-        }
 
-        function stopSynth() {
-            if (!AppState.audioCtx) {
-                showStatus('No synth is running');
-                return;
-            }
+            // Wah effects
+            AppState.filter.connect(autoWahFilter);
+            autoWahFilter.connect(autoWahDryWet);
+            autoWahDryWet.connect(AppState.audioCtx.destination);
 
-            try {
-                AppState.audioCtx.close().then(() => {
-                    AppState.audioCtx = null;
-                    AppState.oscillators = [];
-                    AppState.isPlaying = false;
-                    updateButtonStates();
-                    showStatus('Synth stopped');
-                }).catch(error => {
-                    console.error('Error closing audio context:', error);
-                    showStatus('Error stopping synth', 4000);
-                });
-            } catch (error) {
-                console.error('Error in stopSynth:', error);
-                showStatus('Error stopping synth', 4000);
-            }
+            AppState.filter.connect(manualWahFilter);
+            manualWahFilter.connect(manualWahDryWet);
+            manualWahDryWet.connect(AppState.audioCtx.destination);
+
+            // New effects
+            AppState.filter.connect(chorusNode);
+            chorusNode.connect(chorusDryWet);
+            chorusDryWet.connect(AppState.audioCtx.destination);
+
+            AppState.filter.connect(tremoloGain);
+            tremoloGain.connect(tremoloDryWet);
+            tremoloDryWet.connect(AppState.audioCtx.destination);
+
+            AppState.filter.connect(bitCrusherNode);
+            bitCrusherNode.connect(bitCrusherDryWet);
+            bitCrusherDryWet.connect(AppState.audioCtx.destination);
         }
 
         // Effect Creation Functions
@@ -731,6 +884,83 @@
             waveshaper.curve = curve;
             waveshaper.oversample = '4x';
             return waveshaper;
+        }
+
+        // YENİ: Auto Wah efekti
+        function createAutoWah(ctx) {
+            const filter = ctx.createBiquadFilter();
+            filter.type = "bandpass";
+            filter.frequency.value = 800;
+            filter.Q.value = 5;
+            
+            const lfo = ctx.createOscillator();
+            lfo.frequency.value = 1.0; // Default rate
+            
+            const lfoGain = ctx.createGain();
+            lfoGain.gain.value = 600; // Default depth
+            
+            const dryWet = ctx.createGain();
+            dryWet.gain.value = 0;
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(filter.frequency);
+            lfo.start();
+            
+            return { filter, lfo, lfoGain, dryWet };
+        }
+
+        // YENİ: Manual Wah efekti
+        function createManualWah(ctx) {
+            const filter = ctx.createBiquadFilter();
+            filter.type = "bandpass";
+            filter.frequency.value = 800;
+            filter.Q.value = 5;
+            
+            const dryWet = ctx.createGain();
+            dryWet.gain.value = 0;
+            
+            return { filter, dryWet };
+        }
+
+        // YENİ: Chorus efekti
+        function createChorus(ctx) {
+            const chorus = ctx.createGain();
+            const dryWet = ctx.createGain();
+            dryWet.gain.value = 0;
+
+            // Basit chorus implementasyonu
+            return { chorus, dryWet };
+        }
+
+        // YENİ: Tremolo efekti
+        function createTremolo(ctx) {
+            const gain = ctx.createGain();
+            gain.gain.value = 1.0;
+            
+            const lfo = ctx.createOscillator();
+            lfo.frequency.value = 5.0; // Default rate
+            
+            const lfoGain = ctx.createGain();
+            lfoGain.gain.value = 0.5; // Default depth
+            
+            const dryWet = ctx.createGain();
+            dryWet.gain.value = 0;
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(gain.gain);
+            lfo.start();
+            
+            return { gain, lfo, lfoGain, dryWet };
+        }
+
+        // YENİ: Bit Crusher efekti
+        function createBitCrusher(ctx) {
+            const bitCrusher = ctx.createGain();
+            const dryWet = ctx.createGain();
+            dryWet.gain.value = 0;
+
+            // Basit bit crusher implementasyonu
+            return { bitCrusher, dryWet };
         }
 
         // UI Functions
@@ -851,7 +1081,28 @@
             const volume = clientX / window.innerWidth;
             AppState.masterGain.gain.setTargetAtTime(volume * 0.4, AppState.audioCtx.currentTime, 0.01);
 
+            // Manual wah kontrolü
+            if (AppState.isManualWah) {
+                AppState.manualWahPosition = clientX / window.innerWidth;
+                updateManualWah();
+            }
+
             applyPitch();
+        }
+
+        // YENİ: Manual wah güncelleme
+        function updateManualWah() {
+            if (!manualWahFilter) return;
+            
+            const minFreq = 200;
+            const maxFreq = 2000;
+            const freq = minFreq + (AppState.manualWahPosition * (maxFreq - minFreq));
+            
+            manualWahFilter.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
+            
+            // Wah display'i güncelle
+            elements.wahDisplay.textContent = `Wah: ${Math.round(AppState.manualWahPosition * 100)}%`;
+            elements.wahDisplay.style.display = 'block';
         }
 
         // Motion Control - 360 derece
@@ -1022,6 +1273,66 @@
                 }
             });
 
+            // Wah controls
+            document.getElementById("autoWahRate").addEventListener("input", e => {
+                if (autoWahLFO) {
+                    autoWahLFO.frequency.value = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById("autoWahDepth").addEventListener("input", e => {
+                if (autoWahLFO) {
+                    autoWahLFO.gain.value = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById("wahFreq").addEventListener("input", e => {
+                const freq = parseFloat(e.target.value);
+                if (autoWahFilter) {
+                    autoWahFilter.frequency.value = freq;
+                }
+                if (manualWahFilter) {
+                    manualWahFilter.frequency.value = freq;
+                }
+            });
+            
+            document.getElementById("wahReso").addEventListener("input", e => {
+                const reso = parseFloat(e.target.value);
+                if (autoWahFilter) {
+                    autoWahFilter.Q.value = reso;
+                }
+                if (manualWahFilter) {
+                    manualWahFilter.Q.value = reso;
+                }
+            });
+
+            // New effect controls
+            document.getElementById("flangerRate").addEventListener("input", e => {
+                if (flanger && flanger.lfo) {
+                    flanger.lfo.frequency.value = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById("phaserRate").addEventListener("input", e => {
+                if (phaser && phaser.lfo) {
+                    phaser.lfo.frequency.value = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById("chorusRate").addEventListener("input", e => {
+                // Chorus rate kontrolü
+            });
+            
+            document.getElementById("tremoloRate").addEventListener("input", e => {
+                if (tremoloLFO) {
+                    tremoloLFO.frequency.value = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById("bitCrushBits").addEventListener("input", e => {
+                // Bit crusher kontrolü
+            });
+
             // Effect toggles
             document.getElementById("toggleFilter").addEventListener("click", () => {
                 AppState.isFilter = !AppState.isFilter;
@@ -1077,6 +1388,69 @@
                     delayDryWet.gain.setTargetAtTime(AppState.isDelay ? 0.5 : 0, AppState.audioCtx.currentTime, 0.01);
                 }
                 document.getElementById("toggleDelay").classList.toggle('active', AppState.isDelay);
+            });
+
+            // YENİ: Wah effect toggles
+            document.getElementById("toggleAutoWah").addEventListener("click", () => {
+                AppState.isAutoWah = !AppState.isAutoWah;
+                AppState.isManualWah = false; // Sadece bir wah aktif olabilir
+                
+                if (autoWahDryWet) {
+                    autoWahDryWet.gain.setTargetAtTime(AppState.isAutoWah ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                if (manualWahDryWet) {
+                    manualWahDryWet.gain.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.01);
+                }
+                
+                document.getElementById("toggleAutoWah").classList.toggle('active', AppState.isAutoWah);
+                document.getElementById("toggleManualWah").classList.toggle('active', false);
+                elements.wahDisplay.style.display = AppState.isAutoWah ? 'block' : 'none';
+                elements.wahDisplay.textContent = "Auto Wah: ON";
+            });
+            
+            document.getElementById("toggleManualWah").addEventListener("click", () => {
+                AppState.isManualWah = !AppState.isManualWah;
+                AppState.isAutoWah = false; // Sadece bir wah aktif olabilir
+                
+                if (manualWahDryWet) {
+                    manualWahDryWet.gain.setTargetAtTime(AppState.isManualWah ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                if (autoWahDryWet) {
+                    autoWahDryWet.gain.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.01);
+                }
+                
+                document.getElementById("toggleManualWah").classList.toggle('active', AppState.isManualWah);
+                document.getElementById("toggleAutoWah").classList.toggle('active', false);
+                elements.wahDisplay.style.display = AppState.isManualWah ? 'block' : 'none';
+                
+                if (AppState.isManualWah) {
+                    updateManualWah();
+                }
+            });
+
+            // YENİ: Diğer efekt toggles
+            document.getElementById("toggleChorus").addEventListener("click", () => {
+                AppState.isChorus = !AppState.isChorus;
+                if (chorusDryWet) {
+                    chorusDryWet.gain.setTargetAtTime(AppState.isChorus ? 0.7 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleChorus").classList.toggle('active', AppState.isChorus);
+            });
+            
+            document.getElementById("toggleTremolo").addEventListener("click", () => {
+                AppState.isTremolo = !AppState.isTremolo;
+                if (tremoloDryWet) {
+                    tremoloDryWet.gain.setTargetAtTime(AppState.isTremolo ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleTremolo").classList.toggle('active', AppState.isTremolo);
+            });
+            
+            document.getElementById("toggleBitCrusher").addEventListener("click", () => {
+                AppState.isBitCrusher = !AppState.isBitCrusher;
+                if (bitCrusherDryWet) {
+                    bitCrusherDryWet.gain.setTargetAtTime(AppState.isBitCrusher ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
+                }
+                document.getElementById("toggleBitCrusher").classList.toggle('active', AppState.isBitCrusher);
             });
         }
 
