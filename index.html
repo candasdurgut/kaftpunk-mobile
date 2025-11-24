@@ -48,15 +48,15 @@ body {
 
 .note-indicator {
     position: absolute;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: 2px solid var(--border-color);
     background: rgba(var(--r), var(--g), var(--b), 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--border-color);
     pointer-events: none;
@@ -228,6 +228,7 @@ let oscillators = [];
 let masterGain, filter, reverb, delayNode, delayFeedback;
 let baseFreq = 261.63, octaveOffset = 0, tiltBend = 0;
 let isFilter=false, isReverb=false, isFlanger=false, isPhaser=false, isDist=false, isDelay=false;
+let isSynthRunning = false, isMotionEnabled = false;
 const NUM_OSC = 7;
 let detuneAmount = 15;
 let waveType = "sawtooth";
@@ -244,9 +245,19 @@ const noteColors = {
 };
 
 function startSynth(){
-    if (audioCtx) {
-        audioCtx.close();
+    if (isSynthRunning) {
+        // Stop the synth
+        if (audioCtx) {
+            audioCtx.close();
+            audioCtx = null;
+        }
+        isSynthRunning = false;
+        document.getElementById("startBtn").textContent = "Start Synth";
+        document.getElementById("startBtn").classList.remove('active');
+        return;
     }
+
+    // Start the synth
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     const now = audioCtx.currentTime;
 
@@ -285,10 +296,14 @@ function startSynth(){
     filter.connect(phaser.filter); phaserDryWet.connect(audioCtx.destination);
     filter.connect(distortionGain); distortionGain.connect(distortionWaveShaper); distortionWaveShaper.connect(audioCtx.destination);
     filter.connect(delayNode); delayNode.connect(delayFeedback); delayFeedback.connect(delayNode); delayDryWet.connect(audioCtx.destination);
+
+    isSynthRunning = true;
+    document.getElementById("startBtn").textContent = "Stop Synth";
+    document.getElementById("startBtn").classList.add('active');
 }
 
 // === Helper Functions (Reverb, Flanger, Phaser, Distortion) ===
-function createReverb(ctx) { /* ... same as before ... */
+function createReverb(ctx) {
     const convolver = ctx.createConvolver(); const len = 3*ctx.sampleRate;
     const impulse = ctx.createBuffer(2,len,ctx.sampleRate);
     for(let c=0;c<2;c++){ const buf = impulse.getChannelData(c);
@@ -324,12 +339,17 @@ const root = document.documentElement;
 
 function createNoteIndicators() {
     const padRect = pad.getBoundingClientRect();
-    const notesToShow = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C2'];
+    const notesToShow = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C2'];
+    const totalNotes = notesToShow.length;
+    
     notesToShow.forEach((note, index) => {
         const indicator = document.createElement('div');
         indicator.className = 'note-indicator';
         indicator.textContent = note;
-        const y = padRect.height * (1 - (index / (notesToShow.length - 1)));
+        
+        // Y eksenini pad genişliğine göre hesapla
+        const y = padRect.height * (1 - (index / (totalNotes - 1)));
+        
         indicator.style.top = `${y}px`;
         indicator.style.left = '20px';
         indicator.style.transform = 'translateY(-50%)';
@@ -362,6 +382,7 @@ function noteFromPad(y){
 }
 
 function applyPitch(){
+    if (!isSynthRunning) return;
     const freq = baseFreq * Math.pow(2, tiltBend / 12);
     const noteInfo = freqToNote(freq);
     
@@ -383,23 +404,54 @@ function handleTouch(e){
     
     baseFreq = noteFromPad(clientY);
     
-    const volume = clientX / window.innerWidth;
-    masterGain.gain.setTargetAtTime(volume * 0.4, audioCtx.currentTime, 0.01);
+    if (masterGain) {
+        const volume = clientX / window.innerWidth;
+        masterGain.gain.setTargetAtTime(volume * 0.4, audioCtx.currentTime, 0.01);
+    }
 
     applyPitch();
 }
 
 function enableMotion(){
+    if (isMotionEnabled) {
+        // Motion is already enabled, so disable it
+        isMotionEnabled = false;
+        document.getElementById("motionBtn").textContent = "Enable Motion";
+        document.getElementById("motionBtn").classList.remove('active');
+        // Note: The event listener itself remains, but its effect is nullified by the flag.
+        return;
+    }
+
+    // Try to enable motion
     if(typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(res=>{ if(res==='granted'){
-            window.addEventListener("deviceorientation", e=>{ if(e.beta !== null) { const norm = e.beta/45; tiltBend = norm*24; applyPitch(); } });
-        }});
-    } else { window.addEventListener("deviceorientation", e=>{ if(e.beta !== null) { const norm = e.beta/45; tiltBend = norm*24; applyPitch(); } }); }
+        DeviceOrientationEvent.requestPermission().then(res=>{
+            if(res==='granted'){
+                isMotionEnabled = true;
+                document.getElementById("motionBtn").textContent = "Disable Motion";
+                document.getElementById("motionBtn").classList.add('active');
+                window.addEventListener("deviceorientation", handleOrientation);
+            }
+        });
+    } else {
+        // For non-iOS devices
+        isMotionEnabled = true;
+        document.getElementById("motionBtn").textContent = "Disable Motion";
+        document.getElementById("motionBtn").classList.add('active');
+        window.addEventListener("deviceorientation", handleOrientation);
+    }
 }
 
+function handleOrientation(e){
+    if(!isMotionEnabled || e.beta === null) return;
+    const norm = e.beta/45;
+    tiltBend = norm*24;
+    applyPitch();
+}
+
+
 // === Event Listeners ===
-document.getElementById("startBtn").onclick = ()=>startSynth();
-document.getElementById("motionBtn").onclick = ()=>enableMotion();
+document.getElementById("startBtn").onclick = startSynth;
+document.getElementById("motionBtn").onclick = enableMotion;
 document.getElementById("octUp").onclick = ()=>{ octaveOffset++; applyPitch(); };
 document.getElementById("octDown").onclick = ()=>{ octaveOffset--; applyPitch(); };
 document.getElementById("waveSelect").onchange = e=>{ waveType = e.target.value; oscillators.forEach(osc=>osc.type=waveType); };
@@ -409,17 +461,36 @@ document.getElementById("delayTime").oninput = e=>{ if(delayNode) delayNode.dela
 document.getElementById("delayFeedback").oninput = e=>{ if(delayFeedback) delayFeedback.gain.value = parseFloat(e.target.value) / 100; };
 
 // --- CORRECTED Effect Toggles ---
-document.getElementById("toggleFilter").onclick = () => {
+document.getElementById("toggleFilter").onclick = function() {
     isFilter = !isFilter;
-    // This now toggles the filter's resonance to make it noticeable
     filter.Q.setTargetAtTime(isFilter ? 10 : 1, audioCtx.currentTime, 0.01);
-    document.getElementById("toggleFilter").classList.toggle('active', isFilter);
+    this.classList.toggle('active', isFilter);
 };
-document.getElementById("toggleReverb").onclick = () => { isReverb = !isReverb; reverbDryWet.gain.setTargetAtTime(isReverb ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleReverb").classList.toggle('active', isReverb); };
-document.getElementById("toggleFlanger").onclick = () => { isFlanger = !isFlanger; flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleFlanger").classList.toggle('active', isFlanger); };
-document.getElementById("togglePhaser").onclick = () => { isPhaser = !isPhaser; phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01); document.getElementById("togglePhaser").classList.toggle('active', isPhaser); };
-document.getElementById("toggleDist").onclick = () => { isDist = !isDist; distortionGain.gain.setTargetAtTime(isDist ? 1 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDist").classList.toggle('active', isDist); };
-document.getElementById("toggleDelay").onclick = () => { isDelay = !isDelay; delayDryWet.gain.setTargetAtTime(isDelay ? 0.5 : 0, audioCtx.currentTime, 0.01); document.getElementById("toggleDelay").classList.toggle('active', isDelay); };
+document.getElementById("toggleReverb").onclick = function() {
+    isReverb = !isReverb; 
+    reverbDryWet.gain.setTargetAtTime(isReverb ? 0.7 : 0, audioCtx.currentTime, 0.01); 
+    this.classList.toggle('active', isReverb);
+};
+document.getElementById("toggleFlanger").onclick = function() {
+    isFlanger = !isFlanger; 
+    flangerDryWet.gain.setTargetAtTime(isFlanger ? 0.7 : 0, audioCtx.currentTime, 0.01); 
+    this.classList.toggle('active', isFlanger);
+};
+document.getElementById("togglePhaser").onclick = function() {
+    isPhaser = !isPhaser; 
+    phaserDryWet.gain.setTargetAtTime(isPhaser ? 0.7 : 0, audioCtx.currentTime, 0.01); 
+    this.classList.toggle('active', isPhaser);
+};
+document.getElementById("toggleDist").onclick = function() {
+    isDist = !isDist; 
+    distortionGain.gain.setTargetAtTime(isDist ? 1 : 0, audioCtx.currentTime, 0.01); 
+    this.classList.toggle('active', isDist);
+};
+document.getElementById("toggleDelay").onclick = function() {
+    isDelay = !isDelay; 
+    delayDryWet.gain.setTargetAtTime(isDelay ? 0.5 : 0, audioCtx.currentTime, 0.01); 
+    this.classList.toggle('active', isDelay);
+};
 
 // Initialize
 window.addEventListener('load', () => {
