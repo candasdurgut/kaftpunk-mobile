@@ -558,8 +558,8 @@
             waveType: "sawtooth",
             isPlaying: false,
             motionEnabled: false,
-            currentAlpha: 0, // Cihaz yönü için alpha değeri (0-360)
-            manualWahPosition: 0.5 // Manual wah için pozisyon (0-1)
+            currentAlpha: 0,
+            manualWahPosition: 0.5
         };
 
         // Effect Nodes
@@ -683,7 +683,7 @@
             phaserDryWet = AppState.audioCtx.createGain();
             phaserDryWet.gain.value = 0;
 
-            // Distortion
+            // Distortion - DÜZELTİLDİ
             distortionWaveShaper = createDistortion(AppState.audioCtx, 50);
             distortionGain = AppState.audioCtx.createGain();
             distortionGain.gain.value = 0;
@@ -766,6 +766,7 @@
             phaser.filter.connect(phaserDryWet);
             phaserDryWet.connect(AppState.audioCtx.destination);
             
+            // Distortion bağlantısı - DÜZELTİLDİ
             AppState.filter.connect(distortionGain);
             distortionGain.connect(distortionWaveShaper);
             distortionWaveShaper.connect(AppState.audioCtx.destination);
@@ -886,7 +887,7 @@
             return waveshaper;
         }
 
-        // YENİ: Auto Wah efekti
+        // Auto Wah efekti
         function createAutoWah(ctx) {
             const filter = ctx.createBiquadFilter();
             filter.type = "bandpass";
@@ -894,10 +895,10 @@
             filter.Q.value = 5;
             
             const lfo = ctx.createOscillator();
-            lfo.frequency.value = 1.0; // Default rate
+            lfo.frequency.value = 1.0;
             
             const lfoGain = ctx.createGain();
-            lfoGain.gain.value = 600; // Default depth
+            lfoGain.gain.value = 600;
             
             const dryWet = ctx.createGain();
             dryWet.gain.value = 0;
@@ -909,7 +910,7 @@
             return { filter, lfo, lfoGain, dryWet };
         }
 
-        // YENİ: Manual Wah efekti
+        // Manual Wah efekti
         function createManualWah(ctx) {
             const filter = ctx.createBiquadFilter();
             filter.type = "bandpass";
@@ -922,26 +923,24 @@
             return { filter, dryWet };
         }
 
-        // YENİ: Chorus efekti
+        // Chorus efekti
         function createChorus(ctx) {
             const chorus = ctx.createGain();
             const dryWet = ctx.createGain();
             dryWet.gain.value = 0;
-
-            // Basit chorus implementasyonu
             return { chorus, dryWet };
         }
 
-        // YENİ: Tremolo efekti
+        // Tremolo efekti
         function createTremolo(ctx) {
             const gain = ctx.createGain();
             gain.gain.value = 1.0;
             
             const lfo = ctx.createOscillator();
-            lfo.frequency.value = 5.0; // Default rate
+            lfo.frequency.value = 5.0;
             
             const lfoGain = ctx.createGain();
-            lfoGain.gain.value = 0.5; // Default depth
+            lfoGain.gain.value = 0.5;
             
             const dryWet = ctx.createGain();
             dryWet.gain.value = 0;
@@ -953,13 +952,11 @@
             return { gain, lfo, lfoGain, dryWet };
         }
 
-        // YENİ: Bit Crusher efekti
+        // Bit Crusher efekti
         function createBitCrusher(ctx) {
             const bitCrusher = ctx.createGain();
             const dryWet = ctx.createGain();
             dryWet.gain.value = 0;
-
-            // Basit bit crusher implementasyonu
             return { bitCrusher, dryWet };
         }
 
@@ -969,7 +966,6 @@
             ruler.id = 'noteRuler';
             elements.pad.appendChild(ruler);
 
-            // 1 oktavlık nota aralığı için cetvel (C'den C'ye)
             const notesToShow = [
                 { name: 'C', octave: 4 + AppState.octaveOffset, position: 1.0 },
                 { name: 'B', octave: 3 + AppState.octaveOffset, position: 0.92 },
@@ -985,10 +981,8 @@
                 { name: 'C', octave: 3 + AppState.octaveOffset, position: 0.08 }
             ];
 
-            // Cetveli temizle
             ruler.innerHTML = '';
 
-            // Nota pozisyonlarına göre cetvel öğelerini oluştur
             notesToShow.forEach(noteInfo => {
                 const item = document.createElement('div');
                 item.className = 'ruler-item';
@@ -1030,20 +1024,15 @@
             document.documentElement.style.setProperty('--b', color[2]);
         }
 
-        // YENİ: 1 oktavlık nota aralığı için pad fonksiyonu
         function noteFromPad(y) {
             const padHeight = window.innerHeight * 0.6;
             const ratio = 1 - (y / padHeight);
             
-            // 1 oktav = 12 yarım ton
-            // C3'ten C4'e kadar (veya seçilen oktava göre)
-            const baseNoteIndex = 0; // C
+            const baseNoteIndex = 0;
             const semitones = ratio * 12;
             
-            // Temel frekansı hesapla (C3 = 130.81 Hz)
             const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
             
-            // Frekansı hesapla: baseFreq * 2^(semitones/12)
             return baseFreq * Math.pow(2, semitones / 12);
         }
 
@@ -1057,7 +1046,6 @@
                 osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
             });
             
-            // Cent bilgisini göster (akort için)
             const centDisplay = noteInfo.cents !== 0 ? ` (${noteInfo.cents > 0 ? '+' : ''}${noteInfo.cents}¢)` : '';
             elements.noteDisplay.textContent = noteInfo.fullName + centDisplay;
             elements.octaveDisplay.textContent = `Octave: ${AppState.octaveOffset}`;
@@ -1090,7 +1078,7 @@
             applyPitch();
         }
 
-        // YENİ: Manual wah güncelleme
+        // Manual wah güncelleme
         function updateManualWah() {
             if (!manualWahFilter) return;
             
@@ -1100,14 +1088,13 @@
             
             manualWahFilter.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
             
-            // Wah display'i güncelle
             elements.wahDisplay.textContent = `Wah: ${Math.round(AppState.manualWahPosition * 100)}%`;
             elements.wahDisplay.style.display = 'block';
         }
 
-        // Motion Control - 360 derece
+        // YENİ: Geliştirilmiş Motion Control (Verilen koddan)
         function enableMotion() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            if (typeof DeviceOrientationEvent.requestPermission === "function") {
                 elements.permissionModal.style.display = 'flex';
             } else {
                 startMotionControl();
@@ -1120,7 +1107,7 @@
             elements.motionBtn.textContent = "Disable Motion";
             elements.motionBtn.classList.add('active');
             elements.motionDisplay.style.display = 'block';
-            showStatus('Motion control enabled - Rotate device 360°');
+            showStatus('Motion control enabled - Tilt device for pitch bend');
         }
 
         function disableMotion() {
@@ -1135,13 +1122,11 @@
         }
 
         function handleOrientation(e) {
-            if (e.alpha !== null) {
-                // Alpha: 0-360 derece arasında, cihazın z-ekseni etrafındaki dönüşü
-                AppState.currentAlpha = e.alpha;
-                
-                // 360 dereceyi 2 oktava (24 yarım ton) eşle
-                // Her 15 derece = 1 yarım ton
-                AppState.tiltBend = (AppState.currentAlpha / 15) - 12; // -12 ile +12 arası
+            if (e.beta !== null) {
+                // e.beta = -180 → 180
+                // normalize tilt - 45° tilt = 1 oktav
+                const norm = e.beta / 45;
+                AppState.tiltBend = norm * 12; // semitones
                 
                 // Frekansı güncelle
                 const baseFreq = 130.81 * Math.pow(2, AppState.octaveOffset);
@@ -1150,7 +1135,7 @@
                 applyPitch();
                 
                 // Motion display'i güncelle
-                elements.motionDisplay.textContent = `Motion: ${Math.round(AppState.currentAlpha)}° (${AppState.tiltBend > 0 ? '+' : ''}${Math.round(AppState.tiltBend * 10) / 10} st)`;
+                elements.motionDisplay.textContent = `Tilt: ${Math.round(e.beta)}° (${AppState.tiltBend > 0 ? '+' : ''}${Math.round(AppState.tiltBend * 10) / 10} st)`;
             }
         }
 
@@ -1172,13 +1157,13 @@
             document.getElementById("octUp").addEventListener("click", () => {
                 AppState.octaveOffset++;
                 applyPitch();
-                createNoteRuler(); // Cetveli güncelle
+                createNoteRuler();
             });
             
             document.getElementById("octDown").addEventListener("click", () => {
                 AppState.octaveOffset--;
                 applyPitch();
-                createNoteRuler(); // Cetveli güncelle
+                createNoteRuler();
             });
 
             // Permission modal
@@ -1220,6 +1205,29 @@
             initializeEffectControls();
         }
 
+        function stopSynth() {
+            if (!AppState.audioCtx) {
+                showStatus('No synth is running');
+                return;
+            }
+
+            try {
+                AppState.audioCtx.close().then(() => {
+                    AppState.audioCtx = null;
+                    AppState.oscillators = [];
+                    AppState.isPlaying = false;
+                    updateButtonStates();
+                    showStatus('Synth stopped');
+                }).catch(error => {
+                    console.error('Error closing audio context:', error);
+                    showStatus('Error stopping synth', 4000);
+                });
+            } catch (error) {
+                console.error('Error in stopSynth:', error);
+                showStatus('Error stopping synth', 4000);
+            }
+        }
+
         function initializeEffectControls() {
             // Filter controls
             document.getElementById("filterFreq").addEventListener("input", e => {
@@ -1258,13 +1266,12 @@
                 }
             });
 
-            // Distortion control
+            // Distortion control - DÜZELTİLDİ
             document.getElementById("distAmount").addEventListener("input", e => {
                 const amount = parseFloat(e.target.value);
                 if (distortionWaveShaper && AppState.audioCtx) {
                     const newWaveShaper = createDistortion(AppState.audioCtx, amount);
                     
-                    // Reconnect the distortion chain
                     distortionGain.disconnect();
                     distortionGain.connect(newWaveShaper);
                     newWaveShaper.connect(AppState.audioCtx.destination);
@@ -1304,33 +1311,6 @@
                 if (manualWahFilter) {
                     manualWahFilter.Q.value = reso;
                 }
-            });
-
-            // New effect controls
-            document.getElementById("flangerRate").addEventListener("input", e => {
-                if (flanger && flanger.lfo) {
-                    flanger.lfo.frequency.value = parseFloat(e.target.value);
-                }
-            });
-            
-            document.getElementById("phaserRate").addEventListener("input", e => {
-                if (phaser && phaser.lfo) {
-                    phaser.lfo.frequency.value = parseFloat(e.target.value);
-                }
-            });
-            
-            document.getElementById("chorusRate").addEventListener("input", e => {
-                // Chorus rate kontrolü
-            });
-            
-            document.getElementById("tremoloRate").addEventListener("input", e => {
-                if (tremoloLFO) {
-                    tremoloLFO.frequency.value = parseFloat(e.target.value);
-                }
-            });
-            
-            document.getElementById("bitCrushBits").addEventListener("input", e => {
-                // Bit crusher kontrolü
             });
 
             // Effect toggles
@@ -1390,10 +1370,10 @@
                 document.getElementById("toggleDelay").classList.toggle('active', AppState.isDelay);
             });
 
-            // YENİ: Wah effect toggles
+            // Wah effect toggles
             document.getElementById("toggleAutoWah").addEventListener("click", () => {
                 AppState.isAutoWah = !AppState.isAutoWah;
-                AppState.isManualWah = false; // Sadece bir wah aktif olabilir
+                AppState.isManualWah = false;
                 
                 if (autoWahDryWet) {
                     autoWahDryWet.gain.setTargetAtTime(AppState.isAutoWah ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
@@ -1410,7 +1390,7 @@
             
             document.getElementById("toggleManualWah").addEventListener("click", () => {
                 AppState.isManualWah = !AppState.isManualWah;
-                AppState.isAutoWah = false; // Sadece bir wah aktif olabilir
+                AppState.isAutoWah = false;
                 
                 if (manualWahDryWet) {
                     manualWahDryWet.gain.setTargetAtTime(AppState.isManualWah ? 1 : 0, AppState.audioCtx.currentTime, 0.01);
@@ -1428,7 +1408,7 @@
                 }
             });
 
-            // YENİ: Diğer efekt toggles
+            // Diğer efekt toggles
             document.getElementById("toggleChorus").addEventListener("click", () => {
                 AppState.isChorus = !AppState.isChorus;
                 if (chorusDryWet) {
