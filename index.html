@@ -1,48 +1,61 @@
-<!doctype html>
-<html lang="tr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover"/>
-<title>Synth Pro — Final</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Synth</title>
 <style>
-:root{--r:100;--g:100;--b:100;--bg:rgb(var(--r),var(--g),var(--b));--control-bg:rgba(0,0,0,0.18);--text:#f0f0f0;--border:rgba(var(--r),var(--g),var(--b),0.45)}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#111;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-body{background:var(--bg);transition:background .12s}
-#pad{height:100vh;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.45));cursor:crosshair;touch-action:none}
-#noteDisplay{position:absolute;top:max(20px,env(safe-area-inset-top));left:16px;background:rgba(0,0,0,0.7);color:var(--text);padding:8px 12px;border-radius:16px;border:1px solid var(--border);backdrop-filter:blur(8px);z-index:10;font-size:20px}
-#motionDisplay,#wahDisplay,#panDisplay{bottom:18px;left:50%;transform:translateX(-50%);display:none;background:rgba(0,0,0,0.7);color:var(--text);padding:8px 12px;border-radius:16px;border:1px solid var(--border);backdrop-filter:blur(8px);z-index:10}
-#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(0,0,0,0.28);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;padding:8px 0;pointer-events:none}
-.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--border);border-bottom:1px solid rgba(255,255,255,0.06)}
-#controls{position:fixed;left:0;right:0;bottom:0;padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;background:rgba(0,0,0,0.92);backdrop-filter:blur(14px);border-top:1px solid var(--border);transform:translateY(calc(100% - 50px));transition:transform .28s;max-height:70vh;overflow-y:auto}
-#controls.expanded{transform:translateY(0)}
-#toggleControls{position:fixed;right:18px;bottom:12px;width:50px;height:50px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1000}
-button,select,input[type=range],label{font-family:inherit;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--control-bg);color:var(--text);padding:8px}
-button{cursor:pointer;transition:all .15s}
-button:active{transform:scale(.95)}
-button.active{background:var(--bg);color:#111;font-weight:700}
-.control-group{display:flex;flex-direction:column;align-items:center;gap:4px}
-.control-group label{font-size:11px;color:#aaa}
-.rhythm-panel,.effect-group{grid-column:1/-1;display:grid;padding:8px;border-radius:8px;border:1px solid var(--border);gap:8px}
-.rhythm-panel{grid-template-columns:repeat(5,1fr);background:rgba(0,0,0,0.3)}
-.effect-group{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));background:rgba(0,0,0,0.32)}
-#statusMessage{position:fixed;left:50%;transform:translateX(-50%);bottom:80px;background:rgba(0,0,0,0.85);padding:8px 12px;border-radius:8px;opacity:0;transition:opacity .2s;color:#fff;font-size:12px;pointer-events:none}
-#statusMessage.show{opacity:1}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;z-index:2000}
-.modal-content{background:rgba(30,30,30,0.98);padding:18px;border-radius:12px;border:1px solid var(--border)}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(.96)}100%{transform:scale(1)}}
-.pulse{animation:pulse .28s}
-@keyframes flash{0%{background:rgba(255,255,255,.1)}50%{background:rgba(255,255,255,.02)}}
-.flash{animation:flash .12s}
-.bpm-control{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:8px}
-.bpm-control label{flex:0 0 auto}
-.bpm-control input{flex:1}
-.delay-panel{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.32)}
+:root {
+--r:100;--g:100;--b:100;
+--bg-color:rgb(var(--r),var(--g),var(--b));
+--control-bg:rgba(0,0,0,0.2);
+--text-color:#f0f0f0;
+--border-color:rgba(var(--r),var(--g),var(--b),0.5);
+--safe-area-inset-top:env(safe-area-inset-top);
+--safe-area-inset-bottom:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background-color:#111;color:var(--text-color);font-family:-apple-system,sans-serif;font-weight:400;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;overflow:hidden;}
+body{background-color:var(--bg-color);}
+#app-container{height:100%;display:flex;flex-direction:column;}
+#pad{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.5));cursor:crosshair;}
+#noteDisplay,#octaveDisplay,#motionDisplay,#wahDisplay,#panDisplay{position:absolute;background-color:rgba(0,0,0,0.7);color:var(--text-color);pointer-events:none;z-index:10;border:1px solid var(--border-color);backdrop-filter:blur(10px);padding:8px 16px;border-radius:20px;font-size:14px;font-weight:500;}
+#noteDisplay{top:max(20px,var(--safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:24px;text-shadow:0 0 15px var(--bg-color);}
+#octaveDisplay{top:max(20px,var(--safe-area-inset-top));right:20px;}
+#motionDisplay,#wahDisplay,#panDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}
+#wahDisplay{bottom:60px;}#panDisplay{bottom:100px;}#motionDisplay{bottom:140px;}
+#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(0,0,0,0.3);border-left:1px solid var(--border-color);display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;pointer-events:none;z-index:5;}
+.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--border-color);border-bottom:1px solid rgba(255,255,255,0.1);}
+#controls{position:fixed;bottom:0;left:0;right:0;max-height:70vh;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);border-top:1px solid var(--border-color);transform:translateY(calc(100% - 50px));transition:transform 0.3s ease;overflow-y:auto;padding:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;}
+#controls.expanded{transform:translateY(0);}
+#toggleControls{position:fixed;bottom:10px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--bg-color);border:2px solid var(--border-color);color:#111;font-size:20px;font-weight:bold;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,0,0,0.5);}
+button,select,input[type=range],label{font-family:inherit;font-size:12px;font-weight:500;border-radius:8px;border:1px solid var(--border-color);background:var(--control-bg);color:var(--text-color);-webkit-appearance:none;appearance:none;transition:all 0.2s ease;outline:none;}
+button{padding:10px 12px;cursor:pointer;min-height:40px;}
+button.active{background:var(--bg-color);color:#111;font-weight:600;}
+.control-group{display:flex;flex-direction:column;align-items:center;}
+label{font-size:10px;margin-bottom:3px;text-align:center;}
+input[type=range]{width:100%;height:4px;background:rgba(var(--r),var(--g),var(--b),0.2);border:none;margin:5px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--bg-color);cursor:pointer;border-radius:50%;box-shadow:0 0 10px var(--bg-color);}
+select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
+#statusMessage{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:8px 16px;border-radius:8px;font-size:12px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+#statusMessage.show{opacity:1;}
+.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0;padding:8px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid var(--border-color);}
+.effect-group-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--border-color);margin-bottom:3px;}
+.rhythm-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;padding:12px;background:rgba(0,0,0,0.4);border-radius:8px;border:1px solid var(--border-color);}
+.rhythm-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--border-color);margin-bottom:5px;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
+.modal-content{background:rgba(30,30,30,0.95);padding:20px;border-radius:15px;max-width:80%;text-align:center;backdrop-filter:blur(20px);border:1px solid var(--border-color);}
+.modal-buttons{display:flex;gap:8px;margin-top:15px;}
+.modal-buttons button{flex:1;}
 </style>
 </head>
 <body>
+<div id="app-container">
 <div id="pad">
-<div id="noteDisplay">C4 (Oct:0)</div>
+<div id="noteDisplay">C4</div>
+<div id="octaveDisplay">Oct:0</div>
 <div id="motionDisplay">Tilt:0°</div>
 <div id="wahDisplay">Wah:ON</div>
 <div id="panDisplay">Pan:0%</div>
@@ -54,7 +67,7 @@ button.active{background:var(--bg);color:#111;font-weight:700}
 <button id="stopBtn" disabled>Stop</button>
 <button id="motionBtn">Motion</button>
 <button id="panBtn">Pan</button>
-<button id="octDown">Oct−</button>
+<button id="octDown">Oct-</button>
 <button id="octUp">Oct+</button>
 <div class="control-group">
 <label>Wave</label>
@@ -68,74 +81,45 @@ button.active{background:var(--bg);color:#111;font-weight:700}
 </select>
 </div>
 <div class="control-group">
-<label>Unison Detune (¢)</label>
-<input id="detuneRange" type="range" min="0" max="50" value="15"/>
-</div>
-<div class="control-group">
-<label>FM Depth (Hz)</label>
-<input id="fmDepthRange" type="range" min="0" max="1200" value="0"/>
-</div>
-<div class="control-group">
-<label>Pulse Width</label>
-<input id="pulseWidthRange" type="range" min="0.01" max="0.99" value="0.5" step="0.01"/>
+<label>Detune</label>
+<input type="range" id="detuneRange" min="0" max="50" value="15">
 </div>
 <div class="control-group">
 <label>Filter Freq</label>
-<input id="filterFreq" type="range" min="200" max="20000" value="20000" step="100"/>
+<input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
 </div>
 <div class="control-group">
-<label>Filter Q</label>
-<input id="filterReso" type="range" min="0.5" max="10" value="1" step="0.1"/>
+<label>Filter Reso</label>
+<input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
 </div>
 <div class="control-group">
 <label>Wah Rate</label>
-<input id="autoWahRate" type="range" min="0.1" max="8" value="1" step="0.1"/>
+<input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
 </div>
 <div class="control-group">
 <label>Wah Depth</label>
-<input id="autoWahDepth" type="range" min="0" max="1200" value="600"/>
+<input type="range" id="autoWahDepth" min="100" max="1500" value="800">
 </div>
-<div class="bpm-control">
-<label>BPM: <span id="bpmValue">120</span></label>
-<input id="bpmRange" type="range" min="40" max="255" value="120"/>
-</div>
+
 <div class="rhythm-panel">
+<div class="rhythm-title">RHYTHM</div>
 <button id="rhythm4">1/4</button>
 <button id="rhythm8">1/8</button>
 <button id="rhythm16">1/16</button>
-<button id="rhythm32">1/32</button>
 <button id="rhythmStop">Stop</button>
-<button id="rhythmTriplet">Trip</button>
-<button id="rhythmShuffle">Shuf</button>
-<button id="rhythmDotted">Dot</button>
-<button id="rhythmStutter">Stut</button>
-<button id="rhythmRandom">Rnd</button>
 </div>
-<div class="delay-panel">
-<div class="control-group">
-<label>Delay Time</label>
-<input id="delayTime" type="range" min="0.1" max="1.0" value="0.3" step="0.05"/>
-</div>
-<div class="control-group">
-<label>Delay Feedback</label>
-<input id="delayFeedback" type="range" min="0" max="0.9" value="0.45" step="0.05"/>
-</div>
-<div class="control-group">
-<label>Delay Mix</label>
-<input id="delayMix" type="range" min="0" max="1" value="0.5" step="0.05"/>
-</div>
-<div class="control-group">
-<button id="toggleDelay">Delay OFF</button>
-</div>
-</div>
+
 <div class="effect-group">
+<div class="effect-group-title">EFFECTS</div>
 <button id="toggleDist">Distortion</button>
 <button id="toggleAutoWah">Auto Wah</button>
 <button id="toggleFlanger">Flanger</button>
 <button id="toggleChorus">Chorus</button>
 <button id="toggleTremolo">Tremolo</button>
 <button id="toggleFilter">Filter</button>
+<button id="toggleDelay">Delay</button>
 <button id="toggleReverb">Reverb</button>
+</div>
 </div>
 </div>
 <div id="statusMessage"></div>
@@ -143,55 +127,89 @@ button.active{background:var(--bg);color:#111;font-weight:700}
 <div class="modal-content">
 <h3>Motion Access Required</h3>
 <p>This feature needs access to your device's motion sensors for tilt control.</p>
-<div style="display:flex;gap:8px;margin-top:12px;">
+<div class="modal-buttons">
 <button id="permissionAllow">Allow</button>
 <button id="permissionDeny">Deny</button>
 </div>
 </div>
 </div>
 <script>
-const workletCode=`class SynthProcessor extends AudioWorkletProcessor{static get parameterDescriptors(){return[{name:'baseFreq',defaultValue:261.63,minValue:20,maxValue:20000,automationRate:'a-rate'},{name:'fmDepth',defaultValue:0,minValue:0,maxValue:5000,automationRate:'a-rate'},{name:'pulseWidth',defaultValue:0.5,minValue:0.01,maxValue:0.99,automationRate:'k-rate'}]}constructor(){super();this.sampleRate=sampleRate;this.numVoices=7;this.phases=new Float32Array(this.numVoices);this.detunes=new Float32Array(this.numVoices);this.wave='sawtooth';this.fmEnabled=false;this.fmPhase=0;this.fmFreq=2;this.twoPI=2*Math.PI;this.port.onmessage=e=>{const d=e.data;if(d.type==='detuneArray'&&d.detuneArray)for(let i=0;i<Math.min(this.numVoices,d.detuneArray.length);i++)this.detunes[i]=d.detuneArray[i];else if(d.type==='wave'){this.wave=d.wave;this.fmEnabled=d.wave==='fm'}else if(d.type==='voices'){const nv=Math.min(12,Math.max(1,d.numVoices));if(nv!==this.numVoices){this.numVoices=nv;this.phases=new Float32Array(this.numVoices);this.detunes=new Float32Array(this.numVoices)}}}}polyBLEP(t,dt){if(t<dt){t/=dt;return t+t-t*t-1}else if(t>1-dt){t=(t-1)/dt;return t*t+t+t+1}return 0}bl_saw(phase,dt){let t=phase%1,v=2*t-1;v-=this.polyBLEP(t,dt);return v}bl_square(phase,duty,dt){let t=phase%1,v=t<duty?1:-1;v+=this.polyBLEP(t,dt);let t2=(t-duty+1)%1;v-=this.polyBLEP(t2,dt);return v}process(inputs,outputs,parameters){const out=outputs[0];if(!out||!out[0])return true;const chCount=out.length,frames=out[0].length,baseFreqArr=parameters.baseFreq,fmDepthArr=parameters.fmDepth,pulseArr=parameters.pulseWidth;const detuneFactors=new Float32Array(this.numVoices);for(let v=0;v<this.numVoices;v++)detuneFactors[v]=Math.pow(2,(this.detunes[v]||0)/1200);for(let i=0;i<frames;i++){const baseFreq=baseFreqArr.length>1?baseFreqArr[i]:baseFreqArr[0],fmDepth=fmDepthArr.length>1?fmDepthArr[i]:fmDepthArr[0],pulseW=pulseArr.length>1?pulseArr[i]:pulseArr[0];const fmInc=(this.fmFreq||2)/this.sampleRate;this.fmPhase+=fmInc;if(this.fmPhase>=1)this.fmPhase-=1;const fmModGlobal=Math.sin(this.twoPI*this.fmPhase)*fmDepth;let maxF=baseFreq*detuneFactors[0];for(let v=1;v<this.numVoices;v++){const f=baseFreq*detuneFactors[v];if(f>maxF)maxF=f}maxF+=Math.abs(fmModGlobal);maxF=Math.min(maxF,this.sampleRate*0.49);const dt=Math.min(0.5,maxF/this.sampleRate);let mix=0;for(let v=0;v<this.numVoices;v++){let freq=baseFreq*detuneFactors[v];if(this.fmEnabled&&fmDepth!==0){freq+=fmModGlobal;freq=Math.max(20,Math.min(freq,this.sampleRate*0.49))}const phaseInc=freq/this.sampleRate;let p=this.phases[v],s=0;switch(this.wave){case'sine':s=Math.sin(this.twoPI*p);break;case'square':s=this.bl_square(p,.5,dt);break;case'pulse':s=this.bl_square(p,pulseW,dt);break;case'sawtooth':s=this.bl_saw(p,dt);break;case'triangle':s=2*Math.abs(2*(p-Math.floor(p+.5)))-1;break;case'fm':s=Math.sin(this.twoPI*p);break;default:s=Math.sin(this.twoPI*p)}mix+=s;p+=phaseInc;if(p>=1)p-=1;this.phases[v]=p}mix=mix/this.numVoices*.85;for(let ch=0;ch<chCount;ch++)out[ch][i]=mix}return true}}registerProcessor('synth-processor',SynthProcessor);`;
-
-const workerCode=`let isRunning=false,tempo=120,lookahead=25,patternUnits=1,step=0,tickIndex=0,startTime=0,workerStartTime=0;self.onmessage=e=>{const d=e.data;if(d.type==='start'){isRunning=true;tempo=d.tempo||120;startTime=d.audioTime+.05;workerStartTime=performance.now()/1000;tickIndex=0;setPattern(d.pattern||'16');scheduler(d.scheduleAheadTime)}else if(d.type==='stop'){isRunning=false}else if(d.type==='tempo'){tempo=d.tempo;updateStep()}};function setPattern(p){switch(p){case'4':patternUnits=4;break;case'8':patternUnits=2;break;case'16':patternUnits=1;break;case'32':patternUnits=.5;break;case'triplet':patternUnits=4/3;break;case'shuffle':patternUnits=1.5;break;case'dotted':patternUnits=6;break;case'stutter':patternUnits=.5;break;case'random':patternUnits=1;break;default:patternUnits=1}updateStep()}function updateStep(){const quarter=60/tempo;step=quarter/4*patternUnits}function scheduler(scheduleAheadTime){if(!isRunning)return;const elapsed=(performance.now()/1000)-workerStartTime,scheduleTime=startTime+tickIndex*step;if(scheduleTime<elapsed+scheduleAheadTime){self.postMessage({type:'beat',relativeTime:scheduleTime-startTime});tickIndex++}setTimeout(()=>scheduler(scheduleAheadTime),25)}`;
-
-const AppState={audioCtx:null,engine:null,workletNode:null,lastVolume:.15,baseFreq:261.63,octaveOffset:0,waveType:'sawtooth',detuneAmount:15,fmDepth:0,pulseWidth:.5,isPlaying:false,motionEnabled:false,panEnabled:false,NUM_VOICES:7,pendingPan:0,pendingTilt:0,smoothedPan:0,smoothedTilt:0,lastDetuneSent:null,schedulerWorker:null,workerStartTime:0,bpm:120};
-
-const elements={pad:document.getElementById('pad'),noteDisplay:document.getElementById('noteDisplay'),motionDisplay:document.getElementById('motionDisplay'),wahDisplay:document.getElementById('wahDisplay'),panDisplay:document.getElementById('panDisplay'),startBtn:document.getElementById('startBtn'),stopBtn:document.getElementById('stopBtn'),motionBtn:document.getElementById('motionBtn'),panBtn:document.getElementById('panBtn'),statusMessage:document.getElementById('statusMessage'),controls:document.getElementById('controls'),toggleControls:document.getElementById('toggleControls'),noteRuler:document.getElementById('noteRuler'),permissionModal:document.getElementById('permissionModal')};
-
-const noteFrequencies={'A#2':116.54,'B2':123.47,'C3':130.81,'C#3':138.59,'D3':146.83,'D#3':155.56,'E3':164.81,'F3':174.61,'F#3':185,'G3':196,'G#3':207.65,'A3':220,'A#3':233.08,'B3':246.94,'C4':261.63,'C#4':277.18,'D4':293.66};
+const AppState={audioCtx:null,oscillators:[],masterGain:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5};
+const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:true,delay:false,reverb:false};
+let audioNodes={};
+let rhythmInterval=null;
+const noteColors={'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]};
+const elements={pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),octaveDisplay:document.getElementById("octaveDisplay"),motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls"),noteRuler:document.getElementById("noteRuler")};
 const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-
-function showStatus(msg,dur=1500){elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');clearTimeout(showStatus._t);showStatus._t=setTimeout(()=>elements.statusMessage.classList.remove('show'),dur)}
-function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying}
-
-class AdvancedSynthEngine{constructor(){this.audioContext=null;this.workletNode=null;this.audioNodes={};this.dryWet={};this.effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:true,delay:false,reverb:false};this.effectLFOs={}}async init(){this.audioContext=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive',sampleRate:44100});await this._addWorkletModuleSafe();this._createNodes();this._connectGraph();this._postInitialParams()}async _addWorkletModuleSafe(){const blob=new Blob([workletCode],{type:'application/javascript'}),url=URL.createObjectURL(blob);try{await this.audioContext.audioWorklet.addModule(url)}catch(e){URL.revokeObjectURL(url);throw e}URL.revokeObjectURL(url)}_createNodes(){const ctx=this.audioContext;this.audioNodes.masterGain=ctx.createGain();this.audioNodes.masterGain.gain.value=AppState.lastVolume;this.audioNodes.tremoloGain=ctx.createGain();this.audioNodes.tremoloGain.gain.value=1;this.audioNodes.panner=ctx.createStereoPanner();this.audioNodes.filter=ctx.createBiquadFilter();this.audioNodes.filter.type='lowpass';this.audioNodes.filter.frequency.value=20000;this.audioNodes.filter.Q.value=1;this.audioNodes.distortion=this._createWaveShaper(50);this.audioNodes.delay=ctx.createDelay(2);this.audioNodes.delay.delayTime.value=.3;this.audioNodes.delayFeedback=ctx.createGain();this.audioNodes.delayFeedback.gain.value=.45;this.audioNodes.delayMix=ctx.createGain();this.audioNodes.delayMix.gain.value=0;this.audioNodes.reverb=ctx.createConvolver();if(!window._cachedReverbBuffer){this._createImpulseAsync(ctx,.5).then(buf=>{window._cachedReverbBuffer=buf;this.audioNodes.reverb.buffer=buf}).catch(()=>{})}else{this.audioNodes.reverb.buffer=window._cachedReverbBuffer}this.audioNodes.autoWah=ctx.createBiquadFilter();this.audioNodes.autoWah.type='bandpass';this.audioNodes.autoWah.frequency.value=800;this.audioNodes.autoWah.Q.value=5;this.audioNodes.chorusDelay=ctx.createDelay(.05);this.audioNodes.chorusFeedback=ctx.createGain();this.audioNodes.chorusMix=ctx.createGain();this.audioNodes.chorusFeedback.gain.value=.12;this.audioNodes.chorusMix.gain.value=0;this.audioNodes.flangerDelay=ctx.createDelay(.01);this.audioNodes.flangerFeedback=ctx.createGain();this.audioNodes.flangerMix=ctx.createGain();this.audioNodes.flangerFeedback.gain.value=.45;this.audioNodes.flangerMix.gain.value=0;this.dryWet.distDry=ctx.createGain();this.dryWet.distWet=ctx.createGain();this.dryWet.delayDry=ctx.createGain();this.dryWet.delayWet=ctx.createGain();this.dryWet.reverbDry=ctx.createGain();this.dryWet.reverbWet=ctx.createGain();this.dryWet.chorusDry=ctx.createGain();this.dryWet.chorusWet=ctx.createGain();this.dryWet.flangerDry=ctx.createGain();this.dryWet.flangerWet=ctx.createGain();this.dryWet.finalMerge=ctx.createGain();this.dryWet.distDry.gain.value=1;this.dryWet.distWet.gain.value=0;this.dryWet.delayDry.gain.value=1;this.dryWet.delayWet.gain.value=0;this.dryWet.reverbDry.gain.value=1;this.dryWet.reverbWet.gain.value=0;this.dryWet.chorusDry.gain.value=1;this.dryWet.chorusWet.gain.value=0;this.dryWet.flangerDry.gain.value=1;this.dryWet.flangerWet.gain.value=0}async _createImpulseAsync(ctx,seconds=.5){const len=Math.floor(ctx.sampleRate*seconds),buf=ctx.createBuffer(2,len,ctx.sampleRate),chunk=16384;for(let c=0;c<2;c++){const data=buf.getChannelData(c);for(let i=0;i<len;i+=chunk){const to=Math.min(len,i+chunk);for(let j=i;j<to;j++)data[j]=(Math.random()*2-1)*Math.pow(1-j/len,2.5)*.6;await new Promise(r=>setTimeout(r,0))}}return buf}_connectGraph(){const ctx=this.audioContext;this.workletNode=new AudioWorkletNode(ctx,'synth-processor',{outputChannelCount:[2]});this.workletNode.connect(this.audioNodes.tremoloGain);this.audioNodes.tremoloGain.connect(this.audioNodes.masterGain);const master=this.audioNodes.masterGain;master.connect(this.dryWet.distDry);master.connect(this.audioNodes.distortion);this.audioNodes.distortion.connect(this.dryWet.distWet);const postDist=ctx.createGain();this.dryWet.distDry.connect(postDist);this.dryWet.distWet.connect(postDist);postDist.connect(this.audioNodes.autoWah);this.audioNodes.autoWah.connect(this.audioNodes.filter);const filterOut=this.audioNodes.filter;filterOut.connect(this.dryWet.delayDry);filterOut.connect(this.audioNodes.delay);this.audioNodes.delay.connect(this.audioNodes.delayFeedback);this.audioNodes.delayFeedback.connect(this.audioNodes.delay);this.audioNodes.delay.connect(this.audioNodes.delayMix);this.dryWet.delayDry.connect(this.dryWet.finalMerge);this.audioNodes.delayMix.connect(this.dryWet.finalMerge);const reverbSplitter=ctx.createGain();filterOut.connect(reverbSplitter);reverbSplitter.connect(this.dryWet.reverbDry);reverbSplitter.connect(this.audioNodes.reverb);this.audioNodes.reverb.connect(this.dryWet.reverbWet);this.dryWet.reverbDry.connect(this.dryWet.finalMerge);this.dryWet.reverbWet.connect(this.dryWet.finalMerge);const chorusSplitter=ctx.createGain();filterOut.connect(chorusSplitter);chorusSplitter.connect(this.dryWet.chorusDry);chorusSplitter.connect(this.audioNodes.chorusDelay);this.audioNodes.chorusDelay.connect(this.audioNodes.chorusFeedback);this.audioNodes.chorusFeedback.connect(this.audioNodes.chorusDelay);this.audioNodes.chorusDelay.connect(this.audioNodes.chorusMix);this.dryWet.chorusDry.connect(this.dryWet.finalMerge);this.audioNodes.chorusMix.connect(this.dryWet.chorusWet);this.dryWet.chorusWet.connect(this.dryWet.finalMerge);const flangerSplitter=ctx.createGain();filterOut.connect(flangerSplitter);flangerSplitter.connect(this.dryWet.flangerDry);flangerSplitter.connect(this.audioNodes.flangerDelay);this.audioNodes.flangerDelay.connect(this.audioNodes.flangerFeedback);this.audioNodes.flangerFeedback.connect(this.audioNodes.flangerDelay);this.audioNodes.flangerDelay.connect(this.audioNodes.flangerMix);this.dryWet.flangerDry.connect(this.dryWet.finalMerge);this.audioNodes.flangerMix.connect(this.dryWet.flangerWet);this.dryWet.flangerWet.connect(this.dryWet.finalMerge);this.dryWet.finalMerge.connect(this.audioNodes.panner);this.audioNodes.panner.connect(ctx.destination);this.params=this.workletNode.parameters}_createWaveShaper(amount){const ctx=this.audioContext,ws=ctx.createWaveShaper(),N=2048,curve=new Float32Array(N);for(let i=0;i<N;i++){const x=i/(N-1)*2-1;curve[i]=Math.tanh(x*(1+amount/50))}ws.curve=curve;ws.oversample='4x';return ws}_postInitialParams(){if(!this.workletNode)return;try{const detunes=[],center=Math.floor(AppState.NUM_VOICES/2);for(let i=0;i<AppState.NUM_VOICES;i++)detunes.push((i-center)*AppState.detuneAmount);const key=detunes.join(',');if(AppState.lastDetuneSent!==key){this.workletNode.port.postMessage({type:'detuneArray',detuneArray:detunes});AppState.lastDetuneSent=key}this.workletNode.port.postMessage({type:'wave',wave:AppState.waveType});this.workletNode.port.postMessage({type:'voices',numVoices:AppState.NUM_VOICES});const now=this.audioContext.currentTime;try{this.workletNode.parameters.get('baseFreq').setValueAtTime(AppState.baseFreq,now)}catch(e){}try{this.workletNode.parameters.get('fmDepth').setValueAtTime(AppState.fmDepth,now)}catch(e){}try{this.workletNode.parameters.get('pulseWidth').setValueAtTime(AppState.pulseWidth,now)}catch(e){}}catch(e){console.warn('postInitialParams:',e)}}enableAutoWah(on){const ctx=this.audioContext;if(on){if(!this.effectLFOs.autoWah){const lfo=ctx.createOscillator(),g=ctx.createGain();lfo.type='sine';lfo.frequency.value=parseFloat(document.getElementById('autoWahRate').value||1);g.gain.value=parseFloat(document.getElementById('autoWahDepth').value||600);lfo.connect(g);g.connect(this.audioNodes.autoWah.frequency);if(ctx.state==='running')lfo.start();else ctx.resume().then(()=>lfo.start()).catch(()=>{});this.effectLFOs.autoWah={lfo,gain:g}}}else{if(this.effectLFOs.autoWah){try{this.effectLFOs.autoWah.lfo.disconnect();this.effectLFOs.autoWah.gain.disconnect();this.effectLFOs.autoWah.lfo.stop()}catch(e){}this.effectLFOs.autoWah=null}}}enableFlanger(on){const ctx=this.audioContext;if(on){if(!this.effectLFOs.flanger){const lfo=ctx.createOscillator(),g=ctx.createGain();lfo.type='sine';lfo.frequency.value=.25;g.gain.value=.005;lfo.connect(g);g.connect(this.audioNodes.flangerDelay.delayTime);if(ctx.state==='running')lfo.start();else ctx.resume().then(()=>lfo.start()).catch(()=>{});this.effectLFOs.flanger={lfo,gain:g};this.dryWet.flangerWet.gain.value=.5}}else{if(this.effectLFOs.flanger){try{this.effectLFOs.flanger.lfo.disconnect();this.effectLFOs.flanger.gain.disconnect();this.effectLFOs.flanger.lfo.stop()}catch(e){}this.effectLFOs.flanger=null;this.dryWet.flangerWet.gain.value=0}}}enableChorus(on){const ctx=this.audioContext;if(on){if(!this.effectLFOs.chorus){const lfo=ctx.createOscillator(),g=ctx.createGain();lfo.type='sine';lfo.frequency.value=.6;g.gain.value=.01;lfo.connect(g);g.connect(this.audioNodes.chorusDelay.delayTime);if(ctx.state==='running')lfo.start();else ctx.resume().then(()=>lfo.start()).catch(()=>{});this.effectLFOs.chorus={lfo,gain:g};this.dryWet.chorusWet.gain.value=.3}}else{if(this.effectLFOs.chorus){try{this.effectLFOs.chorus.lfo.disconnect();this.effectLFOs.chorus.gain.disconnect();this.effectLFOs.chorus.lfo.stop()}catch(e){}this.effectLFOs.chorus=null;this.dryWet.chorusWet.gain.value=0}}}enableTremolo(on){const ctx=this.audioContext;if(on){if(!this.effectLFOs.tremolo){const lfo=ctx.createOscillator(),g=ctx.createGain(),offset=ctx.createConstantSource();lfo.type='sine';lfo.frequency.value=5;g.gain.value=.5;offset.offset.value=.5;lfo.connect(g);g.connect(this.audioNodes.tremoloGain.gain);offset.connect(this.audioNodes.tremoloGain.gain);if(ctx.state==='running'){lfo.start();offset.start()}else ctx.resume().then(()=>{lfo.start();offset.start()}).catch(()=>{});this.effectLFOs.tremolo={lfo,gain:g,offset}}}else{if(this.effectLFOs.tremolo){try{this.effectLFOs.tremolo.lfo.disconnect();this.effectLFOs.tremolo.gain.disconnect();this.effectLFOs.tremolo.offset.disconnect();this.effectLFOs.tremolo.lfo.stop();this.effectLFOs.tremolo.offset.stop()}catch(e){}this.effectLFOs.tremolo=null;this.audioNodes.tremoloGain.gain.value=1}}}updateEffectParameters(){const ef=this.effects;this.dryWet.distWet.gain.value=ef.dist?1:0;this.dryWet.distDry.gain.value=ef.dist?0:1;this.dryWet.delayWet.gain.value=ef.delay?.28:0;this.dryWet.delayDry.gain.value=ef.delay?.72:1;this.dryWet.reverbWet.gain.value=ef.reverb?.4:0;this.dryWet.reverbDry.gain.value=ef.reverb?.6:1;this.dryWet.chorusWet.gain.value=ef.chorus?.5:0;this.dryWet.chorusDry.gain.value=ef.chorus?.5:1;this.dryWet.flangerWet.gain.value=ef.flanger?.5:0;this.dryWet.flangerDry.gain.value=ef.flanger?.5:1;this.enableAutoWah(ef.autoWah);this.enableFlanger(ef.flanger);this.enableChorus(ef.chorus);this.enableTremolo(ef.tremolo);if(this.audioNodes.delayMix){this.audioNodes.delayMix.gain.value=ef.delay?parseFloat(document.getElementById('delayMix').value):0}}dispose(){try{if(this.workletNode){try{this.workletNode.disconnect()}catch(e){}this.workletNode=null}['autoWah','flanger','chorus','tremolo'].forEach(k=>{if(this.effectLFOs[k]){try{this.effectLFOs[k].lfo.disconnect();this.effectLFOs[k].gain&&this.effectLFOs[k].gain.disconnect();this.effectLFOs[k].offset&&this.effectLFOs[k].offset.disconnect();this.effectLFOs[k].lfo.stop();this.effectLFOs[k].offset&&this.effectLFOs[k].offset.stop()}catch(e){}this.effectLFOs[k]=null}})}catch(e){}}}
-
-class AdvancedScheduler{constructor(){this.isRunning=false;this.tempo=120}start(callback,pattern='16'){if(!AppState.engine||!AppState.audioCtx)return;this.stop();this.isRunning=true;if(!AppState.schedulerWorker){const blob=new Blob([workerCode],{type:'application/javascript'}),url=URL.createObjectURL(blob);AppState.schedulerWorker=new Worker(url);URL.revokeObjectURL(url);AppState.schedulerWorker.onmessage=e=>{if(e.data.type==='beat'){const audioTime=AppState.audioCtx.currentTime+e.data.relativeTime;callback(audioTime)}}}AppState.workerStartTime=performance.now()/1000;AppState.schedulerWorker.postMessage({type:'start',audioTime:AppState.audioCtx.currentTime,pattern,tempo:AppState.bpm,scheduleAheadTime:.1})}stop(){this.isRunning=false;if(AppState.schedulerWorker){AppState.schedulerWorker.postMessage({type:'stop'})}}}
-
-const scheduler=new AdvancedScheduler();
-function isAudioRunning(){return AppState.audioCtx&&AppState.audioCtx.state==='running'}
-function createEngineAndStart(){if(AppState.isPlaying){showStatus('Already running');return}AppState.engine=new AdvancedSynthEngine();AppState.engine.init().then(()=>{AppState.audioCtx=AppState.engine.audioContext;AppState.workletNode=AppState.engine.workletNode;AppState.isPlaying=true;updateButtonStates();showStatus('Started ✓');AppState.engine._postInitialParams()}).catch(err=>{console.error('Engine init failed',err);showStatus('Audio init failed')})}
-function stopSynth(){if(!AppState.audioCtx){showStatus('No synth running');return}try{scheduler.stop();AppState.engine.dispose();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.engine=null;AppState.workletNode=null;AppState.isPlaying=false;updateButtonStates();showStatus('Stopped')}).catch(e=>{console.error(e);showStatus('Stop error')})}catch(e){console.error(e);showStatus('Stop error')}}
-function noteFromPad(y){const padHeight=window.innerHeight,ratio=1-y/padHeight,notes=Object.keys(noteFrequencies),idx=Math.max(0,Math.min(notes.length-1,Math.floor(ratio*(notes.length-1))));return noteFrequencies[notes[idx]]}
-function applyPitchToWorklet(freq){if(!AppState.engine||!AppState.engine.workletNode||!AppState.audioCtx)return;try{const param=AppState.engine.workletNode.parameters.get('baseFreq'),t=AppState.audioCtx.currentTime;param.cancelScheduledValues(t);param.setValueAtTime(param.value||freq,t);param.linearRampToValueAtTime(freq,t+.03);const noteInfo=freqToNote(freq);elements.noteDisplay.textContent=`${noteInfo.fullName} (Oct:${AppState.octaveOffset})`;updateThemeColor(noteInfo.name)}catch(e){}}
-function applyFMDepthToWorklet(depth){if(!AppState.engine||!AppState.engine.workletNode||!AppState.audioCtx)return;try{const param=AppState.engine.workletNode.parameters.get('fmDepth'),t=AppState.audioCtx.currentTime;param.cancelScheduledValues(t);param.setValueAtTime(depth,t)}catch(e){}}
-function applyPulseWidthToWorklet(pw){if(!AppState.engine||!AppState.engine.workletNode||!AppState.audioCtx)return;try{const param=AppState.engine.workletNode.parameters.get('pulseWidth');param.setValueAtTime(pw,AppState.audioCtx.currentTime)}catch(e){}}
-let lastTouchTime=0;function handleTouch(e){const now=performance.now();if(now-lastTouchTime<35)return;lastTouchTime=now;if(!isAudioRunning()){showStatus('Start synth first');return}const touch=e.touches?e.touches[0]:e,cx=touch.clientX,cy=touch.clientY,freq=noteFromPad(cy)*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=freq;applyPitchToWorklet(freq);const targetVolume=(cx/window.innerWidth)*.45;AppState.lastVolume+=(targetVolume-AppState.lastVolume)*.1;try{if(AppState.engine&&AppState.engine.audioNodes&&AppState.engine.audioNodes.masterGain){AppState.engine.audioNodes.masterGain.gain.setTargetAtTime(AppState.lastVolume,AppState.audioCtx.currentTime,.02)}}catch(e){}e.preventDefault&&e.preventDefault()}
-function createClickSound(time){if(!AppState.audioCtx)return;const ctx=AppState.audioCtx,t=time||ctx.currentTime,osc=ctx.createOscillator(),g=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(1000,t);g.gain.setValueAtTime(.14,t);g.gain.exponentialRampToValueAtTime(.0001,t+.08);osc.connect(g);g.connect(ctx.destination);osc.start(t);osc.stop(t+.09)}
-function rhythmBeat(time){if(!AppState.engine)return;try{const g=AppState.engine.audioNodes.masterGain;g.gain.setTargetAtTime(.28,time,.01);setTimeout(()=>{if(isAudioRunning())g.gain.setTargetAtTime(AppState.lastVolume,AppState.audioCtx.currentTime,.02)},55)}catch(e){}triggerVisualFeedback();createClickSound(time)}
-function startRhythm(pattern){if(!isAudioRunning()){showStatus('Start synth first');return}scheduler.start(time=>rhythmBeat(time),pattern);showStatus('Rhythm: '+pattern)}
-function stopRhythm(){scheduler.stop();showStatus('Rhythm stopped')}
-function handleOrientationEvent(e){if(e.beta!==undefined&&e.gamma!==undefined){AppState.pendingTilt=e.beta;AppState.pendingPan=e.gamma/90}}
-function handleMotionEvent(e){}
-function orientationRAF(){const alpha=.12;AppState.smoothedPan=AppState.smoothedPan+(AppState.pendingPan-AppState.smoothedPan)*alpha;AppState.smoothedTilt=AppState.smoothedTilt+((AppState.pendingTilt||0)-AppState.smoothedTilt)*alpha;if(AppState.motionEnabled){const tilt=AppState.smoothedTilt,bend=(tilt/45)*12,base=130.81*Math.pow(2,AppState.octaveOffset),freq=base*Math.pow(2,bend/12);AppState.baseFreq=freq;applyPitchToWorklet(freq);elements.motionDisplay.style.display='block';elements.motionDisplay.textContent=`Tilt:${Math.round(bend*10)/10}st`}if(AppState.panEnabled&&AppState.engine&&AppState.engine.audioNodes&&AppState.audioCtx){const ctx=AppState.audioCtx;AppState.engine.audioNodes.panner.pan.setTargetAtTime(AppState.smoothedPan,ctx.currentTime,.02);elements.panDisplay.style.display='block';elements.panDisplay.textContent=`Pan:${Math.round(AppState.smoothedPan*100)}%`}requestAnimationFrame(orientationRAF)}
-requestAnimationFrame(orientationRAF);
-function triggerVisualFeedback(){document.body.classList.add('flash');setTimeout(()=>document.body.classList.remove('flash'),120);document.querySelectorAll('button').forEach(btn=>{btn.classList.add('pulse');setTimeout(()=>btn.classList.remove('pulse'),300)})}
-function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4),noteIndex=Math.round(semitonesFromA4+9)%12,octave=Math.floor((semitonesFromA4+9)/12)+4,noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave,fullName:`${noteName}${octave}`}}
-let uiRAF=null;function updateThemeColor(noteName){if(uiRAF)cancelAnimationFrame(uiRAF);uiRAF=requestAnimationFrame(()=>{const map={'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]},color=map[noteName]||[100,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2])})}
-function createNoteRuler(){const notes=['D4','C#4','C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C#3','C3','B2','A#2'];elements.noteRuler.innerHTML='';notes.forEach(n=>{const d=document.createElement('div');d.className='ruler-note';d.textContent=n;elements.noteRuler.appendChild(d)})}
-function initializeEventListeners(){elements.pad.addEventListener('touchstart',handleTouch,{passive:false});elements.pad.addEventListener('touchmove',handleTouch,{passive:false});elements.pad.addEventListener('mousedown',handleTouch);elements.pad.addEventListener('mousemove',e=>{if(e.buttons===1)handleTouch(e)});elements.startBtn.addEventListener('click',createEngineAndStart);elements.stopBtn.addEventListener('click',stopSynth);elements.toggleControls.addEventListener('click',()=>{elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️'});document.getElementById('octUp').addEventListener('click',()=>{AppState.octaveOffset++;applyPitchToWorklet(AppState.baseFreq);createNoteRuler()});document.getElementById('octDown').addEventListener('click',()=>{AppState.octaveOffset--;applyPitchToWorklet(AppState.baseFreq);createNoteRuler()});document.getElementById('waveSelect').addEventListener('change',e=>{AppState.waveType=e.target.value;if(AppState.engine&&AppState.engine.workletNode){try{AppState.engine.workletNode.port.postMessage({type:'wave',wave:AppState.waveType})}catch(e){}}showStatus('Wave: '+AppState.waveType)});document.getElementById('detuneRange').addEventListener('input',e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.engine&&AppState.engine.workletNode){const detunes=[],center=Math.floor(AppState.NUM_VOICES/2);for(let i=0;i<AppState.NUM_VOICES;i++)detunes.push((i-center)*AppState.detuneAmount);try{const key=detunes.join(',');if(AppState.lastDetuneSent!==key){AppState.engine.workletNode.port.postMessage({type:'detuneArray',detuneArray:detunes});AppState.lastDetuneSent=key}}catch(e){}}});document.getElementById('fmDepthRange').addEventListener('input',e=>{AppState.fmDepth=parseFloat(e.target.value);applyFMDepthToWorklet(AppState.fmDepth)});document.getElementById('pulseWidthRange').addEventListener('input',e=>{AppState.pulseWidth=parseFloat(e.target.value);applyPulseWidthToWorklet(AppState.pulseWidth)});document.getElementById('filterFreq').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.audioNodes.filter)AppState.engine.audioNodes.filter.frequency.value=parseFloat(e.target.value)});document.getElementById('filterReso').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.audioNodes.filter){const safeQ=Math.min(parseFloat(e.target.value),10);AppState.engine.audioNodes.filter.Q.value=safeQ}});document.getElementById('autoWahRate').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.effectLFOs&&AppState.engine.effectLFOs.autoWah)AppState.engine.effectLFOs.autoWah.lfo.frequency.value=parseFloat(e.target.value)});document.getElementById('autoWahDepth').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.effectLFOs&&AppState.engine.effectLFOs.autoWah)AppState.engine.effectLFOs.autoWah.gain.gain.value=parseFloat(e.target.value)});document.getElementById('bpmRange').addEventListener('input',e=>{AppState.bpm=parseInt(e.target.value);document.getElementById('bpmValue').textContent=AppState.bpm;if(AppState.schedulerWorker){AppState.schedulerWorker.postMessage({type:'tempo',tempo:AppState.bpm})}});document.getElementById('delayTime').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.audioNodes.delay)AppState.engine.audioNodes.delay.delayTime.value=parseFloat(e.target.value)});document.getElementById('delayFeedback').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.audioNodes.delayFeedback)AppState.engine.audioNodes.delayFeedback.gain.value=parseFloat(e.target.value)});document.getElementById('delayMix').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.audioNodes.delayMix&&AppState.engine.effects.delay)AppState.engine.audioNodes.delayMix.gain.value=parseFloat(e.target.value)});const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleFilter:'filter',toggleDelay:'delay',toggleReverb:'reverb'};Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener('click',()=>{if(!AppState.engine){showStatus('Start first');return}AppState.engine.effects[effect]=!AppState.engine.effects[effect];document.getElementById(id).classList.toggle('active',AppState.engine.effects[effect]);AppState.engine.updateEffectParameters();showStatus(effect+' '+(AppState.engine.effects[effect]?'ON':'OFF'));if(effect==='autoWah'){elements.wahDisplay.style.display=AppState.engine.effects.autoWah?'block':'none';elements.wahDisplay.textContent='Wah:'+(AppState.engine.effects.autoWah?'ON':'OFF')}if(effect==='delay'){document.getElementById('toggleDelay').textContent='Delay '+(AppState.engine.effects.delay?'ON':'OFF');if(AppState.engine.audioNodes.delayMix){AppState.engine.audioNodes.delayMix.gain.value=AppState.engine.effects.delay?parseFloat(document.getElementById('delayMix').value):0}}})});document.getElementById('rhythm4').addEventListener('click',()=>startRhythm('4'));document.getElementById('rhythm8').addEventListener('click',()=>startRhythm('8'));document.getElementById('rhythm16').addEventListener('click',()=>startRhythm('16'));document.getElementById('rhythm32').addEventListener('click',()=>startRhythm('32'));document.getElementById('rhythmTriplet').addEventListener('click',()=>startRhythm('triplet'));document.getElementById('rhythmShuffle').addEventListener('click',()=>startRhythm('shuffle'));document.getElementById('rhythmDotted').addEventListener('click',()=>startRhythm('dotted'));document.getElementById('rhythmStutter').addEventListener('click',()=>startRhythm('stutter'));document.getElementById('rhythmRandom').addEventListener('click',()=>startRhythm('random'));document.getElementById('rhythmStop').addEventListener('click',()=>stopRhythm());elements.motionBtn.addEventListener('click',()=>{if(AppState.motionEnabled){window.removeEventListener('deviceorientation',handleOrientationEvent);window.removeEventListener('devicemotion',handleMotionEvent);AppState.motionEnabled=false;elements.motionBtn.classList.remove('active');elements.motionBtn.textContent='Motion';elements.motionDisplay.style.display='none';showStatus('Motion disabled')}else{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){elements.permissionModal.style.display='flex'}else{window.addEventListener('deviceorientation',handleOrientationEvent,{passive:true});window.addEventListener('devicemotion',handleMotionEvent,{passive:true});AppState.motionEnabled=true;elements.motionBtn.classList.add('active');elements.motionBtn.textContent='Motion ON';showStatus('Motion enabled')}}});document.getElementById('permissionAllow').addEventListener('click',()=>{DeviceOrientationEvent.requestPermission().then(res=>{elements.permissionModal.style.display='none';if(res==='granted'){window.addEventListener('deviceorientation',handleOrientationEvent,{passive:true});window.addEventListener('devicemotion',handleMotionEvent,{passive:true});AppState.motionEnabled=true;elements.motionBtn.classList.add('active');elements.motionBtn.textContent='Motion ON';showStatus('Motion enabled')}else showStatus('Motion permission denied')}).catch(e=>{elements.permissionModal.style.display='none';showStatus('Permission error')})});document.getElementById('permissionDeny').addEventListener('click',()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled')});elements.panBtn.addEventListener('click',()=>{AppState.panEnabled=!AppState.panEnabled;elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.panBtn.textContent=AppState.panEnabled?'Pan ON':'Pan';elements.panDisplay.style.display=AppState.panEnabled?'block':'none';if(!AppState.panEnabled&&AppState.engine&&AppState.engine.audioNodes){AppState.engine.audioNodes.panner.pan.setTargetAtTime(0,AppState.audioCtx.currentTime,.01)}})}
-window.addEventListener('load',()=>{createNoteRuler();initializeEventListeners();updateButtonStates();showStatus('Ready — Click Start')});
-window.addEventListener('contextmenu',e=>e.preventDefault());
+function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
+function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Start synth first');return false;}try{op();return true}catch(e){console.error(e);showStatus('Audio error');return false;}}
+function showStatus(msg,dur=1500){elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');setTimeout(()=>elements.statusMessage.classList.remove('show'),dur);}
+function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;}
+function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscillators.forEach(o=>{try{o.stop();o.disconnect();}catch(e){}});AppState.oscillators=[];}}
+function startSynth(){if(isAudioContextValid()){showStatus('Already running');return;}
+try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started - Try effects!');}catch(e){console.error(e);showStatus('Start failed');}}
+function createAudioNodes(){
+cleanupOscillators();
+AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
+audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;
+audioNodes.distortion=createWaveShaper(50);audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;
+audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";audioNodes.autoWah.frequency.value=800;audioNodes.autoWah.Q.value=5;
+audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1;audioNodes.autoWahGain=AppState.audioCtx.createGain();audioNodes.autoWahGain.gain.value=600;
+audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);audioNodes.autoWahLFO.start();
+audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);audioNodes.flangerDelay.delayTime.value=0.005;audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.frequency.value=0.2;
+audioNodes.flangerGain=AppState.audioCtx.createGain();audioNodes.flangerGain.gain.value=0.005;audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.5;
+audioNodes.flangerLFO.connect(audioNodes.flangerGain);audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);audioNodes.flangerLFO.start();
+audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);audioNodes.chorusDelay.delayTime.value=0.025;audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.frequency.value=0.5;
+audioNodes.chorusGain=AppState.audioCtx.createGain();audioNodes.chorusGain.gain.value=0.01;audioNodes.chorusLFO.connect(audioNodes.chorusGain);audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);audioNodes.chorusLFO.start();
+audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5;audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=0;
+audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);audioNodes.tremoloLFO.start();
+audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";audioNodes.filter.frequency.value=20000;audioNodes.filter.Q.value=1;
+audioNodes.delay=AppState.audioCtx.createDelay(2);audioNodes.delay.delayTime.value=0.3;audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;
+audioNodes.reverb=AppState.audioCtx.createConvolver();const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}audioNodes.reverb.buffer=buffer;
+createOscillators();connectAudioGraph();}
+function createWaveShaper(amount){const ws=AppState.audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=(3+amount)*x*20*0.0174533/(Math.PI+amount*Math.abs(x));}ws.curve=curve;ws.oversample='4x';return ws;}
+function createOscillators(){const now=AppState.audioCtx.currentTime;
+for(let i=0;i<AppState.NUM_OSC;i++){let osc;if(AppState.waveType==='fm'){osc=AppState.audioCtx.createOscillator();osc.type='sine';const modulator=AppState.audioCtx.createOscillator();modulator.type='sine';modulator.frequency.value=AppState.baseFreq*2;const modGain=AppState.audioCtx.createGain();modGain.gain.value=100;modulator.connect(modGain);modGain.connect(osc.frequency);modulator.start(now);}else if(AppState.waveType==='pulse'){osc=AppState.audioCtx.createOscillator();osc.type='square';}else{osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;}
+osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;if(AppState.waveType==='pulse'){const pulseWidth=AppState.audioCtx.createWaveShaper();const pulseCurve=new Float32Array(256);for(let j=0;j<256;j++){pulseCurve[j]=j<128*AppState.pulseWidth?-1:1;}pulseWidth.curve=pulseCurve;osc.connect(pulseWidth);pulseWidth.connect(AppState.masterGain);}else{osc.connect(AppState.masterGain);}osc.start(now);AppState.oscillators.push(osc);}}
+function connectAudioGraph(){
+AppState.masterGain.disconnect();audioNodes.distortion.disconnect();audioNodes.autoWah.disconnect();audioNodes.flangerDelay.disconnect();audioNodes.chorusDelay.disconnect();audioNodes.filter.disconnect();audioNodes.delay.disconnect();audioNodes.reverb.disconnect();audioNodes.panner.disconnect();
+let signal=AppState.masterGain;
+if(effects.dist){signal.connect(audioNodes.distortion);signal=audioNodes.distortion;}
+if(effects.autoWah){signal.connect(audioNodes.autoWah);signal=audioNodes.autoWah;}
+if(effects.flanger){signal.connect(audioNodes.flangerDelay);audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);signal=audioNodes.flangerDelay;}
+if(effects.chorus){signal.connect(audioNodes.chorusDelay);signal=audioNodes.chorusDelay;}
+signal.connect(audioNodes.filter);
+if(effects.delay){audioNodes.filter.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delay);signal=audioNodes.delay;}
+if(effects.reverb){signal.connect(audioNodes.reverb);signal=audioNodes.reverb;}
+if(effects.tremolo){audioNodes.tremoloGain.connect(signal.gain);}
+signal.connect(audioNodes.panner);audioNodes.panner.connect(AppState.audioCtx.destination);
+audioNodes.distortionGain.gain.value=effects.dist?1:0;audioNodes.autoWahGain.gain.value=effects.autoWah?1:0;audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:0;
+}
+function createNoteRuler(){const notes=['D4','C#4','C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C#3','C3','B2','A#2'];elements.noteRuler.innerHTML='';notes.forEach(note=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=note;elements.noteRuler.appendChild(div);});}
+function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4);const noteIndex=Math.round(semitonesFromA4+9)%12;const octave=Math.floor((semitonesFromA4+9)/12);const noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};}
+function updateThemeColor(noteName){const color=noteColors[noteName]||[100,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);}
+function noteFromPad(y){const padHeight=window.innerHeight;const ratio=1-(y/padHeight);const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);return baseFreq*Math.pow(2,(ratio*17)/12);}
+function applyPitch(){if(!safeAudioOperation(()=>{const freq=AppState.baseFreq;const noteInfo=freqToNote(freq);AppState.oscillators.forEach((osc,i)=>{if(osc.frequency){osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.005);}});elements.noteDisplay.textContent=noteInfo.fullName;elements.octaveDisplay.textContent=`Oct:${AppState.octaveOffset}`;updateThemeColor(noteInfo.name);}))return;}
+let lastTouchTime=0;
+function handleTouch(e){const now=performance.now();if(now-lastTouchTime<4)return;lastTouchTime=now;if(!isAudioContextValid()){showStatus('Start synth first');return;}
+const clientY=e.touches?e.touches[0].clientY:e.clientY;const clientX=e.touches?e.touches[0].clientX:e.clientX;AppState.baseFreq=noteFromPad(clientY);const volume=clientX/window.innerWidth;safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.005);});applyPitch();}
+function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.005);const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;});}
+function stopSynth(){if(!AppState.audioCtx){showStatus('No synth running');return;}
+try{cleanupOscillators();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.isPlaying=false;updateButtonStates();showStatus('Stopped');}).catch(e=>{console.error(e);showStatus('Stop error');});}catch(e){console.error(e);showStatus('Stop error');}}
+function toggleControls(){elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
+function requestMotionPermission(){if(typeof DeviceOrientationEvent.requestPermission==='function'){elements.permissionModal.style.display='flex';}else{startMotionControl();}}
+function startMotionControl(){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;elements.motionBtn.textContent="Motion ON";elements.motionBtn.classList.add('active');elements.motionDisplay.style.display='block';showStatus('Motion enabled - Tilt device for pitch!');}
+function disableMotion(){window.removeEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=false;AppState.tiltBend=0;elements.motionBtn.textContent="Motion OFF";elements.motionBtn.classList.remove('active');elements.motionDisplay.style.display='none';showStatus('Motion disabled');}
+function togglePan(){AppState.panEnabled=!AppState.panEnabled;elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.panDisplay.style.display=AppState.panEnabled?'block':'none';if(!AppState.panEnabled){updatePan(0);}showStatus(AppState.panEnabled?'Pan enabled - Tilt device sideways!':'Pan disabled');}
+let lastOrientationTime=0;
+function handleOrientation(e){const now=performance.now();if(now-lastOrientationTime<16)return;lastOrientationTime=now;if(e.beta===null)return;const tilt=e.beta;const pan=e.gamma;if(AppState.motionEnabled){AppState.tiltBend=tilt/45*12;const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);elements.motionDisplay.textContent=`Tilt:${Math.round(AppState.tiltBend*10)/10}st`;applyPitch();}if(AppState.panEnabled&&pan!==null){const panValue=Math.max(-1,Math.min(1,pan/90));updatePan(panValue);}}
+function startRhythm(pattern){if(!isAudioContextValid()){showStatus('Start synth first');return;}
+stopRhythm();let interval;switch(pattern){case'4':interval=500;break;case'8':interval=250;break;case'16':interval=125;break;}
+rhythmInterval=setInterval(()=>{safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(0.3,AppState.audioCtx.currentTime,0.01);setTimeout(()=>{if(isAudioContextValid()){AppState.masterGain.gain.setTargetAtTime(0.05,AppState.audioCtx.currentTime,0.01);}},50);});},interval);}
+function stopRhythm(){if(rhythmInterval){clearInterval(rhythmInterval);rhythmInterval=null;}}
+function initializeEventListeners(){elements.pad.addEventListener("touchstart",handleTouch,{passive:false});elements.pad.addEventListener("touchmove",handleTouch,{passive:false});elements.pad.addEventListener("mousedown",handleTouch);elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});elements.startBtn.addEventListener("click",startSynth);elements.stopBtn.addEventListener("click",stopSynth);elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():requestMotionPermission();});elements.panBtn.addEventListener("click",togglePan);elements.toggleControls.addEventListener("click",toggleControls);document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();createNoteRuler();});document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();createNoteRuler();});document.getElementById("permissionAllow").addEventListener("click",()=>{DeviceOrientationEvent.requestPermission().then(r=>{elements.permissionModal.style.display='none';if(r==='granted'){startMotionControl();}else{showStatus('Motion permission denied');}}).catch(e=>{elements.permissionModal.style.display='none';showStatus('Permission error');});});document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;cleanupOscillators();createOscillators();connectAudioGraph();showStatus('Wave: '+AppState.waveType);});document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{if(osc.detune)osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;});}});document.getElementById("filterFreq").addEventListener("input",e=>{audioNodes.filter.frequency.value=parseFloat(e.target.value);});document.getElementById("filterReso").addEventListener("input",e=>{audioNodes.filter.Q.value=parseFloat(e.target.value);});document.getElementById("autoWahRate").addEventListener("input",e=>{audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);});document.getElementById("autoWahDepth").addEventListener("input",e=>{audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);});const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleFilter:'filter',toggleDelay:'delay',toggleReverb:'reverb'};Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener("click",()=>{effects[effect]=!effects[effect];document.getElementById(id).classList.toggle('active',effects[effect]);connectAudioGraph();showStatus(effect+' '+(effects[effect]?'ON':'OFF'));if(effect==='autoWah'){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'ON':'OFF');}});});document.getElementById("rhythm4").addEventListener("click",()=>{startRhythm('4');showStatus('1/4 Rhythm');});document.getElementById("rhythm8").addEventListener("click",()=>{startRhythm('8');showStatus('1/8 Rhythm');});document.getElementById("rhythm16").addEventListener("click",()=>{startRhythm('16');showStatus('1/16 Rhythm');});document.getElementById("rhythmStop").addEventListener("click",()=>{stopRhythm();showStatus('Rhythm Stopped');});}
+window.addEventListener('load',()=>{updateThemeColor('C');initializeEventListeners();updateButtonStates();createNoteRuler();showStatus('Ready - Click Start then try effects!');});
+window.addEventListener("contextmenu",e=>e.preventDefault());
 </script>
 </body>
 </html>
