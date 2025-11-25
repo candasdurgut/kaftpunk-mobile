@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Synth Pro</title>
+<title>Pro Synth - Launchpad Effects</title>
 <style>
 :root {
 --r:100;--g:100;--b:100;
@@ -50,6 +50,10 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 .delay-controls{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:8px 0;padding:12px;background:rgba(0,0,0,0.4);border-radius:8px;border:1px solid var(--border-color);}
 .delay-title{grid-column:1/-1;text-align:center;font-size:12px;font-weight:600;color:var(--border-color);margin-bottom:5px;}
 .launchpad-info{grid-column:1/-1;text-align:center;font-size:11px;color:var(--border-color);margin:5px 0;padding:8px;background:rgba(var(--r),var(--g),var(--b),0.1);border-radius:6px;}
+.launchpad-effects{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;padding:12px;background:rgba(0,0,0,0.5);border-radius:8px;border:2px solid var(--border-color);}
+.launchpad-title{grid-column:1/-1;text-align:center;font-size:13px;font-weight:700;color:var(--bg-color);margin-bottom:8px;text-transform:uppercase;}
+.effect-icon{font-size:18px;margin-bottom:4px;}
+.launchpad-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70px;padding:8px;font-size:10px;text-align:center;}
 </style>
 </head>
 <body>
@@ -93,14 +97,6 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <label>Filter Reso</label>
 <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
 </div>
-<div class="control-group">
-<label>Wah Rate</label>
-<input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
-</div>
-<div class="control-group">
-<label>Wah Depth</label>
-<input type="range" id="autoWahDepth" min="100" max="1500" value="800">
-</div>
 
 <div class="delay-controls">
 <div class="delay-title">DELAY CONTROLS</div>
@@ -120,22 +116,91 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <label>Delay Filter</label>
 <input type="range" id="delayFilter" min="200" max="8000" value="4000" step="100">
 </div>
-<button id="toggleDelay">Delay ON</button>
+<button id="toggleDelay">Delay OFF</button>
+</div>
+
+<!-- LAUNCHPAD STYLE EFFECTS -->
+<div class="launchpad-effects">
+<div class="launchpad-title">Launchpad Effects</div>
+<button class="launchpad-btn" id="lpFilter">
+<div class="effect-icon">🔘</div>
+<div>Filter</div>
+</button>
+<button class="launchpad-btn" id="lpGatedFilter">
+<div class="effect-icon">🎚️</div>
+<div>Gated Filter</div>
+</button>
+<button class="launchpad-btn" id="lpPhaser">
+<div class="effect-icon">🌀</div>
+<div>Phaser</div>
+</button>
+<button class="launchpad-btn" id="lpResonant">
+<div class="effect-icon">⚡</div>
+<div>Resonant</div>
+</button>
+<button class="launchpad-btn" id="lpReverbFreeze">
+<div class="effect-icon">❄️</div>
+<div>Freeze</div>
+</button>
+<button class="launchpad-btn" id="lpStutter1">
+<div class="effect-icon">🔁</div>
+<div>Stutter 1</div>
+</button>
+<button class="launchpad-btn" id="lpStutter2">
+<div class="effect-icon">🔂</div>
+<div>Stutter 2</div>
+</button>
+<button class="launchpad-btn" id="lpFlanger">
+<div class="effect-icon">🌊</div>
+<div>Flanger</div>
+</button>
+<button class="launchpad-btn" id="lpDestroy">
+<div class="effect-icon">🔪</div>
+<div>Destroy</div>
+</button>
+<button class="launchpad-btn" id="lpGate">
+<div class="effect-icon">⏱️</div>
+<div>Gate</div>
+</button>
+<button class="launchpad-btn" id="lpPitch">
+<div class="effect-icon">🎛️</div>
+<div>Pitch Bend</div>
+</button>
+<button class="launchpad-btn" id="lpReverse">
+<div class="effect-icon">↩️</div>
+<div>Reverse</div>
+</button>
+<button class="launchpad-btn" id="lpBeatRepeat1">
+<div class="effect-icon">1/4</div>
+<div>Beat Repeat 1</div>
+</button>
+<button class="launchpad-btn" id="lpBeatRepeat2">
+<div class="effect-icon">1/1</div>
+<div>Beat Repeat 2</div>
+</button>
+<button class="launchpad-btn" id="lpHighResonance">
+<div class="effect-icon">💎</div>
+<div>High Resonance</div>
+</button>
+<button class="launchpad-btn" id="lpAllOff">
+<div class="effect-icon">⏹️</div>
+<div>All Off</div>
+</button>
 </div>
 
 <div class="effect-group">
-<div class="effect-group-title">EFFECTS</div>
-<button id="toggleDist">Distortion</button>
-<button id="toggleAutoWah">Auto Wah</button>
-<button id="toggleFlanger">Flanger</button>
-<button id="toggleChorus">Chorus</button>
-<button id="toggleTremolo">Tremolo</button>
-<button id="toggleFilter">Filter</button>
-<button id="toggleReverb">Reverb</button>
+<div class="effect-group-title">BASIC EFFECTS</div>
+<button id="toggleDist">Distortion OFF</button>
+<button id="toggleAutoWah">Auto Wah OFF</button>
+<button id="toggleFlanger">Flanger OFF</button>
+<button id="toggleChorus">Chorus OFF</button>
+<button id="toggleTremolo">Tremolo OFF</button>
+<button id="toggleFilter">Filter ON</button>
+<button id="toggleReverb">Reverb OFF</button>
 </div>
 
 <div class="launchpad-info">
-Launchpad: Use MIDI mapping in your DAW for control
+🎵 Launchpad Style - Tap effects for instant remix control
 </div>
 </div>
 </div>
@@ -154,7 +219,8 @@ Launchpad: Use MIDI mapping in your DAW for control
 const AppState={
     audioCtx:null,oscillators:[],masterGain:null,baseFreq:261.63,octaveOffset:0,
     tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,
-    motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5,noiseNode:null
+    motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5,
+    currentPitchBend:0,isReversing:false
 };
 
 const effects={
@@ -162,7 +228,28 @@ const effects={
     tremolo:false,filter:true,delay:false,reverb:false
 };
 
+const launchpadEffects={
+    filter: false,
+    gatedFilter: false,
+    phaser: false,
+    resonant: false,
+    highResonance: false,
+    reverbFreeze: false,
+    stutter1: false,
+    stutter2: false,
+    destroy: false,
+    gate: false,
+    pitchBend: false,
+    reverse: false,
+    beatRepeat1: false,
+    beatRepeat2: false
+};
+
 let audioNodes={};
+let activeStutter = null;
+let activeReverse = false;
+let originalFreq = 0;
+
 const noteColors={
     'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],
     'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],
@@ -208,9 +295,6 @@ function cleanupOscillators(){
         });
         AppState.oscillators=[];
     }
-    if(AppState.noiseNode){
-        try{AppState.noiseNode.stop();AppState.noiseNode.disconnect();}catch(e){}
-    }
 }
 
 function startSynth(){
@@ -220,7 +304,7 @@ function startSynth(){
         createAudioNodes();
         AppState.isPlaying=true;
         updateButtonStates();
-        showStatus('Started - Try the new Delay controls!');
+        showStatus('Started - Try Launchpad effects!');
     }catch(e){
         console.error(e);
         showStatus('Start failed');
@@ -271,6 +355,17 @@ function createAudioNodes(){
     audioNodes.flangerLFO.connect(audioNodes.flangerGain);
     audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);
     audioNodes.flangerLFO.start();
+    
+    // Phaser
+    audioNodes.phaser = AppState.audioCtx.createBiquadFilter();
+    audioNodes.phaser.type = "allpass";
+    audioNodes.phaserLFO = AppState.audioCtx.createOscillator();
+    audioNodes.phaserLFO.frequency.value = 0.3;
+    audioNodes.phaserGain = AppState.audioCtx.createGain();
+    audioNodes.phaserGain.gain.value = 500;
+    audioNodes.phaserLFO.connect(audioNodes.phaserGain);
+    audioNodes.phaserGain.connect(audioNodes.phaser.frequency);
+    audioNodes.phaserLFO.start();
     
     // Chorus
     audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);
@@ -387,6 +482,7 @@ function connectAudioGraph(){
     audioNodes.distortion.disconnect();
     audioNodes.autoWah.disconnect();
     audioNodes.flangerDelay.disconnect();
+    audioNodes.phaser.disconnect();
     audioNodes.chorusDelay.disconnect();
     audioNodes.filter.disconnect();
     audioNodes.delay.disconnect();
@@ -403,6 +499,11 @@ function connectAudioGraph(){
     if(effects.autoWah){
         signal.connect(audioNodes.autoWah);
         signal=audioNodes.autoWah;
+    }
+    
+    if(launchpadEffects.phaser){
+        signal.connect(audioNodes.phaser);
+        signal=audioNodes.phaser;
     }
     
     if(effects.flanger){
@@ -495,7 +596,13 @@ function noteFromPad(y){
 
 function applyPitch(){
     if(!safeAudioOperation(()=>{
-        const freq=AppState.baseFreq;
+        let freq = AppState.baseFreq;
+        
+        // Apply pitch bend if active
+        if(launchpadEffects.pitchBend){
+            freq = freq * Math.pow(2, AppState.currentPitchBend/12);
+        }
+        
         const noteInfo=freqToNote(freq);
         
         if(AppState.oscillators.length>0){
@@ -646,6 +753,290 @@ function updateDelayControls(){
     });
 }
 
+// LAUNCHPAD EFFECT FUNCTIONS
+function applyFilterEffect(){
+    if(launchpadEffects.filter){
+        audioNodes.filter.frequency.value = 800;
+        audioNodes.filter.Q.value = 5;
+    } else {
+        audioNodes.filter.frequency.value = 20000;
+        audioNodes.filter.Q.value = 1;
+    }
+}
+
+function applyGatedFilter(){
+    if(launchpadEffects.gatedFilter){
+        // Create rhythmic gate effect
+        const gateLFO = AppState.audioCtx.createOscillator();
+        gateLFO.frequency.value = 8; // 1/8 notes
+        const gateGain = AppState.audioCtx.createGain();
+        gateGain.gain.value = 0;
+        
+        // Square wave for on/off gate
+        const gateCurve = new Float32Array(2);
+        gateCurve[0] = 1;
+        gateCurve[1] = 0;
+        const gateWave = AppState.audioCtx.createPeriodicWave(gateCurve, new Float32Array(2));
+        gateLFO.setPeriodicWave(gateWave);
+        
+        gateLFO.connect(gateGain);
+        gateGain.connect(AppState.masterGain.gain);
+        gateLFO.start();
+        
+        audioNodes.gateLFO = gateLFO;
+        audioNodes.gateGain = gateGain;
+        
+        // Also apply filter
+        audioNodes.filter.frequency.value = 1200;
+        audioNodes.filter.Q.value = 10;
+    } else {
+        if(audioNodes.gateLFO){
+            audioNodes.gateLFO.stop();
+        }
+        AppState.masterGain.gain.value = 0.2;
+        audioNodes.filter.frequency.value = 20000;
+        audioNodes.filter.Q.value = 1;
+    }
+}
+
+function applyResonantFilter(){
+    if(launchpadEffects.resonant){
+        audioNodes.filter.frequency.value = 1500;
+        audioNodes.filter.Q.value = 20;
+    } else {
+        audioNodes.filter.frequency.value = 20000;
+        audioNodes.filter.Q.value = 1;
+    }
+}
+
+function applyHighResonance(){
+    if(launchpadEffects.highResonance){
+        audioNodes.filter.frequency.value = 3000;
+        audioNodes.filter.Q.value = 30;
+    } else {
+        audioNodes.filter.frequency.value = 20000;
+        audioNodes.filter.Q.value = 1;
+    }
+}
+
+function applyStutter1(){
+    if(launchpadEffects.stutter1){
+        // Fast stutter (1/16 notes)
+        const stutterLFO = AppState.audioCtx.createOscillator();
+        stutterLFO.frequency.value = 16;
+        const stutterGain = AppState.audioCtx.createGain();
+        stutterGain.gain.value = 0;
+        
+        const stutterCurve = new Float32Array(2);
+        stutterCurve[0] = 1;
+        stutterCurve[1] = 0;
+        const stutterWave = AppState.audioCtx.createPeriodicWave(stutterCurve, new Float32Array(2));
+        stutterLFO.setPeriodicWave(stutterWave);
+        
+        stutterLFO.connect(stutterGain);
+        stutterGain.connect(AppState.masterGain.gain);
+        stutterLFO.start();
+        
+        audioNodes.stutterLFO = stutterLFO;
+        audioNodes.stutterGain = stutterGain;
+    } else {
+        if(audioNodes.stutterLFO){
+            audioNodes.stutterLFO.stop();
+        }
+        AppState.masterGain.gain.value = 0.2;
+    }
+}
+
+function applyStutter2(){
+    if(launchpadEffects.stutter2){
+        // Slower stutter (1/8 notes)
+        const stutterLFO = AppState.audioCtx.createOscillator();
+        stutterLFO.frequency.value = 8;
+        const stutterGain = AppState.audioCtx.createGain();
+        stutterGain.gain.value = 0;
+        
+        const stutterCurve = new Float32Array(2);
+        stutterCurve[0] = 1;
+        stutterCurve[1] = 0;
+        const stutterWave = AppState.audioCtx.createPeriodicWave(stutterCurve, new Float32Array(2));
+        stutterLFO.setPeriodicWave(stutterWave);
+        
+        stutterLFO.connect(stutterGain);
+        stutterGain.connect(AppState.masterGain.gain);
+        stutterLFO.start();
+        
+        audioNodes.stutterLFO = stutterLFO;
+        audioNodes.stutterGain = stutterGain;
+    } else {
+        if(audioNodes.stutterLFO){
+            audioNodes.stutterLFO.stop();
+        }
+        AppState.masterGain.gain.value = 0.2;
+    }
+}
+
+function applyDestroy(){
+    if(launchpadEffects.destroy){
+        audioNodes.distortionGain.gain.value = 1;
+        effects.dist = true;
+        document.getElementById("toggleDist").classList.add('active');
+        document.getElementById("toggleDist").textContent = "Distortion ON";
+    } else {
+        audioNodes.distortionGain.gain.value = 0;
+        effects.dist = false;
+        document.getElementById("toggleDist").classList.remove('active');
+        document.getElementById("toggleDist").textContent = "Distortion OFF";
+    }
+    connectAudioGraph();
+}
+
+function applyGate(){
+    if(launchpadEffects.gate){
+        // Rhythmic gate
+        const gateLFO = AppState.audioCtx.createOscillator();
+        gateLFO.frequency.value = 4; // 1/4 notes
+        const gateGain = AppState.audioCtx.createGain();
+        gateGain.gain.value = 0;
+        
+        const gateCurve = new Float32Array(2);
+        gateCurve[0] = 1;
+        gateCurve[1] = 0;
+        const gateWave = AppState.audioCtx.createPeriodicWave(gateCurve, new Float32Array(2));
+        gateLFO.setPeriodicWave(gateWave);
+        
+        gateLFO.connect(gateGain);
+        gateGain.connect(AppState.masterGain.gain);
+        gateLFO.start();
+        
+        audioNodes.gateLFO = gateLFO;
+        audioNodes.gateGain = gateGain;
+    } else {
+        if(audioNodes.gateLFO){
+            audioNodes.gateLFO.stop();
+        }
+        AppState.masterGain.gain.value = 0.2;
+    }
+}
+
+function applyPitchBend(){
+    if(launchpadEffects.pitchBend){
+        // Start pitch bending
+        AppState.currentPitchBend = 7; // +7 semitones
+        showStatus('Pitch Bend Active - Drag on pad to bend');
+    } else {
+        AppState.currentPitchBend = 0;
+    }
+    applyPitch();
+}
+
+function applyReverse(){
+    if(launchpadEffects.reverse){
+        showStatus('Reverse Effect - Creates glitchy reverse sounds');
+        // In a real implementation, this would buffer and reverse audio
+        // For now, we'll create a glitchy effect
+        audioNodes.filter.frequency.value = 500;
+        audioNodes.filter.Q.value = 15;
+    } else {
+        audioNodes.filter.frequency.value = 20000;
+        audioNodes.filter.Q.value = 1;
+    }
+}
+
+function applyBeatRepeat1(){
+    if(launchpadEffects.beatRepeat1){
+        // 1/4 note repeats
+        const repeatLFO = AppState.audioCtx.createOscillator();
+        repeatLFO.frequency.value = 4;
+        const repeatGain = AppState.audioCtx.createGain();
+        repeatGain.gain.value = 0;
+        
+        const repeatCurve = new Float32Array(4);
+        repeatCurve[0] = 1; repeatCurve[1] = 0; repeatCurve[2] = 1; repeatCurve[3] = 0;
+        const repeatWave = AppState.audioCtx.createPeriodicWave(repeatCurve, new Float32Array(4));
+        repeatLFO.setPeriodicWave(repeatWave);
+        
+        repeatLFO.connect(repeatGain);
+        repeatGain.connect(AppState.masterGain.gain);
+        repeatLFO.start();
+        
+        audioNodes.repeatLFO = repeatLFO;
+        audioNodes.repeatGain = repeatGain;
+    } else {
+        if(audioNodes.repeatLFO){
+            audioNodes.repeatLFO.stop();
+        }
+        AppState.masterGain.gain.value = 0.2;
+    }
+}
+
+function applyBeatRepeat2(){
+    if(launchpadEffects.beatRepeat2){
+        // 1/1 note repeats
+        const repeatLFO = AppState.audioCtx.createOscillator();
+        repeatLFO.frequency.value = 1;
+        const repeatGain = AppState.audioCtx.createGain();
+        repeatGain.gain.value = 0;
+        
+        const repeatCurve = new Float32Array(2);
+        repeatCurve[0] = 1; repeatCurve[1] = 0;
+        const repeatWave = AppState.audioCtx.createPeriodicWave(repeatCurve, new Float32Array(2));
+        repeatLFO.setPeriodicWave(repeatWave);
+        
+        repeatLFO.connect(repeatGain);
+        repeatGain.connect(AppState.masterGain.gain);
+        repeatLFO.start();
+        
+        audioNodes.repeatLFO = repeatLFO;
+        audioNodes.repeatGain = repeatGain;
+    } else {
+        if(audioNodes.repeatLFO){
+            audioNodes.repeatLFO.stop();
+        }
+        AppState.masterGain.gain.value = 0.2;
+    }
+}
+
+function applyReverbFreeze(){
+    if(launchpadEffects.reverbFreeze){
+        effects.reverb = true;
+        document.getElementById("toggleReverb").classList.add('active');
+        document.getElementById("toggleReverb").textContent = "Reverb ON";
+        showStatus('Reverb Freeze - Atmospheric hold');
+    } else {
+        effects.reverb = false;
+        document.getElementById("toggleReverb").classList.remove('active');
+        document.getElementById("toggleReverb").textContent = "Reverb OFF";
+    }
+    connectAudioGraph();
+}
+
+function turnOffAllLaunchpadEffects(){
+    // Reset all launchpad effects
+    Object.keys(launchpadEffects).forEach(key => {
+        launchpadEffects[key] = false;
+    });
+    
+    // Reset all launchpad buttons
+    document.querySelectorAll('.launchpad-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Reset audio parameters
+    audioNodes.filter.frequency.value = 20000;
+    audioNodes.filter.Q.value = 1;
+    AppState.masterGain.gain.value = 0.2;
+    AppState.currentPitchBend = 0;
+    
+    // Stop any LFOs
+    if(audioNodes.gateLFO) audioNodes.gateLFO.stop();
+    if(audioNodes.stutterLFO) audioNodes.stutterLFO.stop();
+    if(audioNodes.repeatLFO) audioNodes.repeatLFO.stop();
+    
+    applyPitch();
+    connectAudioGraph();
+    showStatus('All effects turned off');
+}
+
 function initializeEventListeners(){
     // Touch and mouse events
     elements.pad.addEventListener("touchstart",handleTouch,{passive:false});
@@ -720,14 +1111,6 @@ function initializeEventListeners(){
         audioNodes.filter.Q.value=parseFloat(e.target.value);
     });
     
-    // Wah controls
-    document.getElementById("autoWahRate").addEventListener("input",e=>{
-        audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);
-    });
-    document.getElementById("autoWahDepth").addEventListener("input",e=>{
-        audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);
-    });
-    
     // Enhanced Delay controls
     document.getElementById("delayTime").addEventListener("input",updateDelayControls);
     document.getElementById("delayFeedback").addEventListener("input",updateDelayControls);
@@ -768,6 +1151,66 @@ function initializeEventListeners(){
         showStatus('Delay '+(effects.delay?'ON':'OFF'));
         updateDelayControls();
     });
+    
+    // LAUNCHPAD EFFECTS
+    const launchpadMap = {
+        lpFilter: 'filter',
+        lpGatedFilter: 'gatedFilter',
+        lpPhaser: 'phaser',
+        lpResonant: 'resonant',
+        lpHighResonance: 'highResonance',
+        lpReverbFreeze: 'reverbFreeze',
+        lpStutter1: 'stutter1',
+        lpStutter2: 'stutter2',
+        lpFlanger: 'flanger',
+        lpDestroy: 'destroy',
+        lpGate: 'gate',
+        lpPitch: 'pitchBend',
+        lpReverse: 'reverse',
+        lpBeatRepeat1: 'beatRepeat1',
+        lpBeatRepeat2: 'beatRepeat2'
+    };
+    
+    Object.entries(launchpadMap).forEach(([buttonId, effect]) => {
+        document.getElementById(buttonId).addEventListener("click", () => {
+            // Toggle the effect
+            launchpadEffects[effect] = !launchpadEffects[effect];
+            
+            // Update button state
+            document.getElementById(buttonId).classList.toggle('active', launchpadEffects[effect]);
+            
+            // Apply the specific effect
+            switch(effect) {
+                case 'filter': applyFilterEffect(); break;
+                case 'gatedFilter': applyGatedFilter(); break;
+                case 'phaser': break; // Handled in connectAudioGraph
+                case 'resonant': applyResonantFilter(); break;
+                case 'highResonance': applyHighResonance(); break;
+                case 'reverbFreeze': applyReverbFreeze(); break;
+                case 'stutter1': applyStutter1(); break;
+                case 'stutter2': applyStutter2(); break;
+                case 'flanger': 
+                    effects.flanger = launchpadEffects.flanger;
+                    document.getElementById("toggleFlanger").classList.toggle('active', effects.flanger);
+                    document.getElementById("toggleFlanger").textContent = "Flanger " + (effects.flanger ? "ON" : "OFF");
+                    break;
+                case 'destroy': applyDestroy(); break;
+                case 'gate': applyGate(); break;
+                case 'pitchBend': applyPitchBend(); break;
+                case 'reverse': applyReverse(); break;
+                case 'beatRepeat1': applyBeatRepeat1(); break;
+                case 'beatRepeat2': applyBeatRepeat2(); break;
+            }
+            
+            // Reconnect audio graph for effects that need it
+            connectAudioGraph();
+            
+            showStatus(effect.replace(/([A-Z])/g, ' $1') + (launchpadEffects[effect] ? ' ON' : ' OFF'));
+        });
+    });
+    
+    // All Off button
+    document.getElementById("lpAllOff").addEventListener("click", turnOffAllLaunchpadEffects);
 }
 
 // Initialize app
@@ -776,7 +1219,7 @@ window.addEventListener('load',()=>{
     initializeEventListeners();
     updateButtonStates();
     createNoteRuler();
-    showStatus('Ready - Click Start then try the new Delay controls!');
+    showStatus('Ready - Click Start then try Launchpad effects!');
 });
 
 window.addEventListener("contextmenu",e=>e.preventDefault());
