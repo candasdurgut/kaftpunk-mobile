@@ -1,232 +1,1242 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Synth</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover" />
+<title>Synth Pro — Fixed (All fixes)</title>
 <style>
-:root {
---r:100;--g:100;--b:100;
---bg-color:rgb(var(--r),var(--g),var(--b));
---control-bg:rgba(0,0,0,0.2);
---text-color:#f0f0f0;
---border-color:rgba(var(--r),var(--g),var(--b),0.5);
---safe-area-inset-top:env(safe-area-inset-top);
---safe-area-inset-bottom:env(safe-area-inset-bottom);
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background-color:#111;color:var(--text-color);font-family:-apple-system,sans-serif;font-weight:400;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;overflow:hidden;}
-body{background-color:var(--bg-color);transition:background-color 0.1s;}
-#app-container{height:100%;display:flex;flex-direction:column;}
-#pad{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.5));cursor:crosshair;}
-#noteDisplay,#octaveDisplay,#motionDisplay,#wahDisplay,#panDisplay{position:absolute;background-color:rgba(0,0,0,0.7);color:var(--text-color);pointer-events:none;z-index:10;border:1px solid var(--border-color);backdrop-filter:blur(10px);padding:8px 16px;border-radius:20px;font-size:14px;font-weight:500;}
-#noteDisplay{top:max(20px,var(--safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:24px;text-shadow:0 0 15px var(--bg-color);}
-#octaveDisplay{top:max(20px,var(--safe-area-inset-top));right:20px;}
-#motionDisplay,#wahDisplay,#panDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}
-#wahDisplay{bottom:60px;}#panDisplay{bottom:100px;}#motionDisplay{bottom:140px;}
-#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(0,0,0,0.3);border-left:1px solid var(--border-color);display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;pointer-events:none;z-index:5;}
-.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--border-color);border-bottom:1px solid rgba(255,255,255,0.1);}
-#controls{position:fixed;bottom:0;left:0;right:0;max-height:70vh;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);border-top:1px solid var(--border-color);transform:translateY(calc(100% - 50px));transition:transform 0.3s ease;overflow-y:auto;padding:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;}
-#controls.expanded{transform:translateY(0);}
-#toggleControls{position:fixed;bottom:10px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--bg-color);border:2px solid var(--border-color);color:#111;font-size:20px;font-weight:bold;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(0,0,0,0.5);}
-button,select,input[type=range],label{font-family:inherit;font-size:12px;font-weight:500;border-radius:8px;border:1px solid var(--border-color);background:var(--control-bg);color:var(--text-color);-webkit-appearance:none;appearance:none;transition:all 0.2s ease;outline:none;}
-button{padding:10px 12px;cursor:pointer;min-height:40px;}
-button.active{background:var(--bg-color);color:#111;font-weight:600;}
-.control-group{display:flex;flex-direction:column;align-items:center;}
-label{font-size:10px;margin-bottom:3px;text-align:center;}
-input[type=range]{width:100%;height:4px;background:rgba(var(--r),var(--g),var(--b),0.2);border:none;margin:5px 0;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--bg-color);cursor:pointer;border-radius:50%;box-shadow:0 0 10px var(--bg-color);}
-select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
-#statusMessage{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:8px 16px;border-radius:8px;font-size:12px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;}
-#statusMessage.show{opacity:1;}
-.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0;padding:8px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid var(--border-color);}
-.effect-group-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--border-color);margin-bottom:3px;}
-.rhythm-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0;padding:12px;background:rgba(0,0,0,0.4);border-radius:8px;border:1px solid var(--border-color);}
-.rhythm-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--border-color);margin-bottom:5px;}
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
-.modal-content{background:rgba(30,30,30,0.95);padding:20px;border-radius:15px;max-width:80%;text-align:center;backdrop-filter:blur(20px);border:1px solid var(--border-color);}
-.modal-buttons{display:flex;gap:8px;margin-top:15px;}
-.modal-buttons button{flex:1;}
-@keyframes pulse{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(var(--r),var(--g),var(--b),0.7);}50%{transform:scale(0.95);box-shadow:0 0 0 10px rgba(var(--r),var(--g),var(--b),0);}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(var(--r),var(--g),var(--b),0);}}
-.pulse{animation:pulse 0.3s ease-in-out;}
-@keyframes flash{0%{background-color:var(--bg-color);}50%{background-color:white;}100%{background-color:var(--bg-color);}}
-.flash{animation:flash 0.15s ease-in-out;}
+:root{--r:100;--g:100;--b:100;--bg:rgb(var(--r),var(--g),var(--b));--control-bg:rgba(0,0,0,0.18);--text:#f0f0f0;--border:rgba(var(--r),var(--g),var(--b),0.45)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#111;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+body{background:var(--bg);transition:background .12s}
+#pad{height:100vh;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.45));cursor:crosshair}
+#noteDisplay,#octaveDisplay,#motionDisplay,#wahDisplay,#panDisplay{position:absolute;background:rgba(0,0,0,0.7);color:var(--text);padding:8px 12px;border-radius:16px;border:1px solid var(--border);backdrop-filter:blur(8px);z-index:10}
+#noteDisplay{top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:20px}
+#octaveDisplay{top:max(20px,env(safe-area-inset-top));right:16px}
+#motionDisplay,#wahDisplay,#panDisplay{bottom:18px;left:50%;transform:translateX(-50%);display:none}
+#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(0,0,0,0.28);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;padding:8px 0;pointer-events:none}
+.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--border);border-bottom:1px solid rgba(255,255,255,0.06)}
+#controls{position:fixed;left:0;right:0;bottom:0;padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;background:rgba(0,0,0,0.92);backdrop-filter:blur(14px);border-top:1px solid var(--border);transform:translateY(calc(100% - 50px));transition:transform .28s}
+#controls.expanded{transform:translateY(0)}
+#toggleControls{position:fixed;right:18px;bottom:12px;width:50px;height:50px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1000}
+button,select,input[type=range],label{font-family:inherit;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--control-bg);color:var(--text);padding:8px}
+button{cursor:pointer}
+button.active{background:var(--bg);color:#111;font-weight:700}
+.control-group{display:flex;flex-direction:column;align-items:center}
+.rhythm-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3)}
+.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;padding:8px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.32)}
+#statusMessage{position:fixed;left:50%;transform:translateX(-50%);bottom:80px;background:rgba(0,0,0,0.85);padding:8px 12px;border-radius:8px;opacity:0;transition:opacity .2s;color:#fff}
+#statusMessage.show{opacity:1}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;z-index:2000}
+.modal-content{background:rgba(30,30,30,0.98);padding:18px;border-radius:12px;border:1px solid var(--border)}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(.96)}100%{transform:scale(1)}}
+.pulse{animation:pulse .28s}
+.flash{animation:flash .12s}
 </style>
 </head>
 <body>
-<div id="app-container">
 <div id="pad">
-<div id="noteDisplay">C4</div>
-<div id="octaveDisplay">Oct:0</div>
-<div id="motionDisplay">Tilt:0°</div>
-<div id="wahDisplay">Wah:ON</div>
-<div id="panDisplay">Pan:0%</div>
-<div id="noteRuler"></div>
+  <div id="noteDisplay">C4</div>
+  <div id="octaveDisplay">Oct:0</div>
+  <div id="motionDisplay">Tilt:0°</div>
+  <div id="wahDisplay">Wah:ON</div>
+  <div id="panDisplay">Pan:0%</div>
+  <div id="noteRuler"></div>
 </div>
+
 <button id="toggleControls">⚙️</button>
+
 <div id="controls">
-<button id="startBtn">Start</button>
-<button id="stopBtn" disabled>Stop</button>
-<button id="motionBtn">Motion</button>
-<button id="panBtn">Pan</button>
-<button id="octDown">Oct-</button>
-<button id="octUp">Oct+</button>
-<div class="control-group">
-<label>Wave</label>
-<select id="waveSelect">
-<option value="sawtooth">Sawtooth</option>
-<option value="triangle">Triangle</option>
-<option value="square">Square</option>
-<option value="sine">Sine</option>
-<option value="pulse">Pulse</option>
-<option value="fm">FM</option>
-</select>
-</div>
-<div class="control-group">
-<label>Detune</label>
-<input type="range" id="detuneRange" min="0" max="50" value="15">
-</div>
-<div class="control-group">
-<label>Filter Freq</label>
-<input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
-</div>
-<div class="control-group">
-<label>Filter Reso</label>
-<input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-</div>
-<div class="control-group">
-<label>Wah Rate</label>
-<input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
-</div>
-<div class="control-group">
-<label>Wah Depth</label>
-<input type="range" id="autoWahDepth" min="100" max="1500" value="800">
+  <button id="startBtn">Start</button>
+  <button id="stopBtn" disabled>Stop</button>
+  <button id="motionBtn">Motion</button>
+  <button id="panBtn">Pan</button>
+  <button id="octDown">Oct-</button>
+  <button id="octUp">Oct+</button>
+
+  <div class="control-group">
+    <label>Wave</label>
+    <select id="waveSelect">
+      <option value="sawtooth">Sawtooth</option>
+      <option value="triangle">Triangle</option>
+      <option value="square">Square</option>
+      <option value="sine">Sine</option>
+      <option value="pulse">Pulse</option>
+      <option value="fm">FM</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label>Unison Detune (cents)</label>
+    <input id="detuneRange" type="range" min="0" max="50" value="15" />
+  </div>
+
+  <div class="control-group">
+    <label>FM Depth</label>
+    <input id="fmDepthRange" type="range" min="0" max="1200" value="0" />
+  </div>
+
+  <div class="control-group">
+    <label>Filter Freq</label>
+    <input id="filterFreq" type="range" min="200" max="20000" value="20000" step="100" />
+  </div>
+
+  <div class="control-group">
+    <label>Filter Reso (Q)</label>
+    <input id="filterReso" type="range" min="0.5" max="20" value="1" step="0.1" />
+  </div>
+
+  <div class="control-group">
+    <label>Wah Rate</label>
+    <input id="autoWahRate" type="range" min="0.1" max="8" value="1" step="0.1" />
+  </div>
+
+  <div class="control-group">
+    <label>Wah Depth</label>
+    <input id="autoWahDepth" type="range" min="0" max="1200" value="600" />
+  </div>
+
+  <div class="rhythm-panel">
+    <button id="rhythm4">1/4</button>
+    <button id="rhythm8">1/8</button>
+    <button id="rhythm16">1/16</button>
+    <button id="rhythm32">1/32</button>
+    <button id="rhythmStop">Stop</button>
+    <button id="rhythmTriplet">Triplet</button>
+    <button id="rhythmShuffle">Shuffle</button>
+    <button id="rhythmDotted">Dotted</button>
+    <button id="rhythmStutter">Stutter</button>
+    <button id="rhythmRandom">Random</button>
+  </div>
+
+  <div class="effect-group">
+    <button id="toggleDist">Distortion</button>
+    <button id="toggleAutoWah">Auto Wah</button>
+    <button id="toggleFlanger">Flanger</button>
+    <button id="toggleChorus">Chorus</button>
+    <button id="toggleTremolo">Tremolo</button>
+    <button id="toggleFilter">Filter</button>
+    <button id="toggleDelay">Delay</button>
+    <button id="toggleReverb">Reverb</button>
+  </div>
 </div>
 
-<div class="rhythm-panel">
-<div class="rhythm-title">RHYTHM</div>
-<button id="rhythm4">1/4</button>
-<button id="rhythm8">1/8</button>
-<button id="rhythm16">1/16</button>
-<button id="rhythm32">1/32</button>
-<button id="rhythmStop">Stop</button>
-<button id="rhythmTriplet">Triplet</button>
-<button id="rhythmShuffle">Shuffle</button>
-<button id="rhythmDotted">Dotted</button>
-<button id="rhythmStutter">Stutter</button>
-<button id="rhythmRandom">Random</button>
-</div>
-
-<div class="effect-group">
-<div class="effect-group-title">EFFECTS</div>
-<button id="toggleDist">Distortion</button>
-<button id="toggleAutoWah">Auto Wah</button>
-<button id="toggleFlanger">Flanger</button>
-<button id="toggleChorus">Chorus</button>
-<button id="toggleTremolo">Tremolo</button>
-<button id="toggleFilter">Filter</button>
-<button id="toggleDelay">Delay</button>
-<button id="toggleReverb">Reverb</button>
-</div>
-</div>
-</div>
 <div id="statusMessage"></div>
+
 <div id="permissionModal" class="modal">
-<div class="modal-content">
-<h3>Motion Access Required</h3>
-<p>This feature needs access to your device's motion sensors for tilt control.</p>
-<div class="modal-buttons">
-<button id="permissionAllow">Allow</button>
-<button id="permissionDeny">Deny</button>
+  <div class="modal-content">
+    <h3>Motion Access Required</h3>
+    <p>This feature needs access to your device's motion sensors for tilt control.</p>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button id="permissionAllow">Allow</button>
+      <button id="permissionDeny">Deny</button>
+    </div>
+  </div>
 </div>
-</div>
-</div>
+
 <script>
-const AppState={audioCtx:null,oscillators:[],masterGain:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5};
-const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:true,delay:false,reverb:false};
-let audioNodes={};
-let rhythmInterval=null;
-let currentRhythm=null;
-const noteFrequencies={
-'A#2':116.54,'B2':123.47,'C3':130.81,'C#3':138.59,'D3':146.83,'D#3':155.56,'E3':164.81,'F3':174.61,'F#3':185.00,'G3':196.00,'G#3':207.65,'A3':220.00,'A#3':233.08,'B3':246.94,'C4':261.63,'C#4':277.18,'D4':293.66
-};
-const noteColors={'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]};
-const elements={pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),octaveDisplay:document.getElementById("octaveDisplay"),motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls"),noteRuler:document.getElementById("noteRuler")};
-const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
-function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Start synth first');return false;}try{op();return true}catch(e){console.error(e);showStatus('Audio error');return false;}}
-function showStatus(msg,dur=1500){elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');setTimeout(()=>elements.statusMessage.classList.remove('show'),dur);}
-function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;}
-function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscillators.forEach(o=>{try{o.stop();o.disconnect();}catch(e){}});AppState.oscillators=[];}}
-function startSynth(){if(isAudioContextValid()){showStatus('Already running');return;}
-try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started - Try effects!');}catch(e){console.error(e);showStatus('Start failed');}}
-function createAudioNodes(){
-cleanupOscillators();
-AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
-audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;
-audioNodes.distortion=createWaveShaper(50);audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;
-audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";audioNodes.autoWah.frequency.value=800;audioNodes.autoWah.Q.value=5;
-audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1;audioNodes.autoWahGain=AppState.audioCtx.createGain();audioNodes.autoWahGain.gain.value=600;
-audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);audioNodes.autoWahLFO.start();
-audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);audioNodes.flangerDelay.delayTime.value=0.005;audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.frequency.value=0.2;
-audioNodes.flangerGain=AppState.audioCtx.createGain();audioNodes.flangerGain.gain.value=0.005;audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.5;
-audioNodes.flangerLFO.connect(audioNodes.flangerGain);audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);audioNodes.flangerLFO.start();
-audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);audioNodes.chorusDelay.delayTime.value=0.025;audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.frequency.value=0.5;
-audioNodes.chorusGain=AppState.audioCtx.createGain();audioNodes.chorusGain.gain.value=0.01;audioNodes.chorusLFO.connect(audioNodes.chorusGain);audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);audioNodes.chorusLFO.start();
-audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5;audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=0;
-audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);audioNodes.tremoloLFO.start();
-audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";audioNodes.filter.frequency.value=20000;audioNodes.filter.Q.value=1;
-audioNodes.delay=AppState.audioCtx.createDelay(2);audioNodes.delay.delayTime.value=0.3;audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;
-audioNodes.reverb=AppState.audioCtx.createConvolver();const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}audioNodes.reverb.buffer=buffer;
-createOscillators();connectAudioGraph();}
-function createWaveShaper(amount){const ws=AppState.audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=(3+amount)*x*20*0.0174533/(Math.PI+amount*Math.abs(x));}ws.curve=curve;ws.oversample='4x';return ws;}
-function createOscillators(){const now=AppState.audioCtx.currentTime;
-for(let i=0;i<AppState.NUM_OSC;i++){let osc;if(AppState.waveType==='fm'){osc=AppState.audioCtx.createOscillator();osc.type='sine';const modulator=AppState.audioCtx.createOscillator();modulator.type='sine';modulator.frequency.value=AppState.baseFreq*2;const modGain=AppState.audioCtx.createGain();modGain.gain.value=100;modulator.connect(modGain);modGain.connect(osc.frequency);modulator.start(now);}else if(AppState.waveType==='pulse'){osc=AppState.audioCtx.createOscillator();osc.type='square';}else{osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;}
-osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;if(AppState.waveType==='pulse'){const pulseWidth=AppState.audioCtx.createWaveShaper();const pulseCurve=new Float32Array(256);for(let j=0;j<256;j++){pulseCurve[j]=j<128*AppState.pulseWidth?-1:1;}pulseWidth.curve=pulseCurve;osc.connect(pulseWidth);pulseWidth.connect(AppState.masterGain);}else{osc.connect(AppState.masterGain);}osc.start(now);AppState.oscillators.push(osc);}}
-function connectAudioGraph(){
-AppState.masterGain.disconnect();audioNodes.distortion.disconnect();audioNodes.autoWah.disconnect();audioNodes.flangerDelay.disconnect();audioNodes.chorusDelay.disconnect();audioNodes.filter.disconnect();audioNodes.delay.disconnect();audioNodes.reverb.disconnect();audioNodes.panner.disconnect();
-let signal=AppState.masterGain;
-if(effects.dist){signal.connect(audioNodes.distortion);signal=audioNodes.distortion;}
-if(effects.autoWah){signal.connect(audioNodes.autoWah);signal=audioNodes.autoWah;}
-if(effects.flanger){signal.connect(audioNodes.flangerDelay);audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);signal=audioNodes.flangerDelay;}
-if(effects.chorus){signal.connect(audioNodes.chorusDelay);signal=audioNodes.chorusDelay;}
-signal.connect(audioNodes.filter);
-if(effects.delay){audioNodes.filter.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delay);signal=audioNodes.delay;}
-if(effects.reverb){signal.connect(audioNodes.reverb);signal=audioNodes.reverb;}
-if(effects.tremolo){audioNodes.tremoloGain.connect(signal.gain);}
-signal.connect(audioNodes.panner);audioNodes.panner.connect(AppState.audioCtx.destination);
-audioNodes.distortionGain.gain.value=effects.dist?1:0;audioNodes.autoWahGain.gain.value=effects.autoWah?1:0;audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:0;
+/* ============================
+   Worklet DSP (string)
+   - ParameterDescriptors expose baseFreq and fmDepth as AudioParams
+   - PolyBLEP anti-alias for saw/square/pulse
+   - Multi-voice Unison with detune array (postMessage only on detune changes)
+   ============================ */
+const workletCode = `
+class SynthProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    return [
+      { name: 'baseFreq', defaultValue: 261.63, minValue: 20, maxValue: 20000, automationRate: 'a-rate' },
+      { name: 'fmDepth', defaultValue: 0, minValue: 0, maxValue: 5000, automationRate: 'a-rate' },
+      { name: 'pulseWidth', defaultValue: 0.5, minValue: 0.01, maxValue: 0.99, automationRate: 'k-rate' },
+      { name: 'masterGain', defaultValue: 0.15, minValue: 0, maxValue: 1, automationRate: 'k-rate' }
+    ];
+  }
+
+  constructor() {
+    super();
+    this.sampleRate = sampleRate;
+    this.numVoices = 7;
+    this.phases = new Float32Array(this.numVoices);
+    this.detunes = new Float32Array(this.numVoices);
+    this.wave = 'sawtooth';
+    this.fmEnabled = false;
+
+    // polyblep helper
+    this._twoPI = 2 * Math.PI;
+
+    this.port.onmessage = (e) => {
+      const d = e.data;
+      if (d.type === 'detuneArray' && d.detuneArray) {
+        for (let i = 0; i < Math.min(this.numVoices, d.detuneArray.length); i++) {
+          this.detunes[i] = d.detuneArray[i];
+        }
+      } else if (d.type === 'wave') {
+        this.wave = d.wave;
+        this.fmEnabled = (d.wave === 'fm');
+      } else if (d.type === 'voices') {
+        if (d.numVoices) {
+          const nv = Math.min(12, Math.max(1, d.numVoices));
+          if (nv !== this.numVoices) {
+            this.numVoices = nv;
+            this.phases = new Float32Array(this.numVoices);
+            this.detunes = new Float32Array(this.numVoices);
+          }
+        }
+      }
+    };
+  }
+
+  // PolyBLEP (from classic implementations) for anti-aliasing discontinuities
+  polyBLEP(t, dt) {
+    if (t < dt) {
+      t = t / dt;
+      return t + t - t * t - 1.0;
+    } else if (t > 1.0 - dt) {
+      t = (t - 1.0) / dt;
+      return t * t + t + t + 1.0;
+    } else {
+      return 0.0;
+    }
+  }
+
+  // bandlimited saw
+  bl_saw(phase, dt) {
+    let t = phase % 1.0;
+    let v = 2.0 * t - 1.0;
+    v -= this.polyBLEP(t, dt);
+    return v;
+  }
+
+  // bandlimited square (via saw pair)
+  bl_square(phase, duty, dt) {
+    let t = phase % 1.0;
+    let v = t < duty ? 1.0 : -1.0;
+    // apply polyblep at both transitions
+    v += this.polyBLEP(t, dt);
+    let t2 = (t - duty + 1.0) % 1.0;
+    v -= this.polyBLEP(t2, dt);
+    return v;
+  }
+
+  process(inputs, outputs, parameters) {
+    const out = outputs[0];
+    if (!out || !out[0]) return true;
+    const chCount = out.length;
+    const frames = out[0].length;
+
+    const baseFreqArr = parameters.baseFreq;
+    const fmDepthArr = parameters.fmDepth;
+    const pulseArr = parameters.pulseWidth;
+    const masterGainArr = parameters.masterGain;
+
+    // per-sample processing
+    for (let i = 0; i < frames; i++) {
+      const baseFreq = baseFreqArr.length > 1 ? baseFreqArr[i] : baseFreqArr[0];
+      const fmDepth = fmDepthArr.length > 1 ? fmDepthArr[i] : fmDepthArr[0];
+      const pulseW = pulseArr.length > 1 ? pulseArr[i] : pulseArr[0];
+      const mgain = masterGainArr.length > 1 ? masterGainArr[i] : masterGainArr[0];
+
+      // dt used for PolyBLEP - depends on highest frequency
+      const nyq = 0.5 * this.sampleRate;
+      // approximate dt based on highest per-voice frequency
+      let maxFreq = baseFreq;
+      for (let v = 0; v < this.numVoices; v++) {
+        const cents = this.detunes[v] || 0;
+        const f = baseFreq * Math.pow(2, cents / 1200);
+        if (f > maxFreq) maxFreq = f;
+      }
+      const dt = Math.min(0.5, maxFreq / nyq); // normalized
+
+      let mix = 0.0;
+      for (let v = 0; v < this.numVoices; v++) {
+        const cents = this.detunes[v] || 0;
+        let freq = baseFreq * Math.pow(2, cents / 1200);
+        if (this.fmEnabled && fmDepth !== 0) {
+          // very small FM per-voice (here fmDepth interpreted in Hz)
+          const fm = Math.sin(this.phases[v] * this._twoPI) * fmDepth * 0.001;
+          freq += fm;
+        }
+        const phaseInc = freq / this.sampleRate;
+        let p = this.phases[v];
+        // generate band-limited waves
+        let s = 0;
+        switch (this.wave) {
+          case 'sine':
+            s = Math.sin(2 * Math.PI * p);
+            break;
+          case 'square':
+            s = this.bl_square(p, 0.5, dt);
+            break;
+          case 'pulse':
+            s = this.bl_square(p, pulseW, dt);
+            break;
+          case 'sawtooth':
+            s = this.bl_saw(p, dt);
+            break;
+          case 'triangle':
+            // triangle via integrated blep saw (approx)
+            s = 2.0 * Math.abs(2.0 * (p - Math.floor(p + 0.5))) - 1.0;
+            break;
+          case 'fm':
+            s = Math.sin(2 * Math.PI * p);
+            break;
+          default:
+            s = Math.sin(2 * Math.PI * p);
+        }
+        mix += s;
+        p += phaseInc;
+        if (p >= 1.0) p -= 1.0;
+        this.phases[v] = p;
+      }
+
+      mix = (mix / this.numVoices) * mgain;
+
+      for (let ch = 0; ch < chCount; ch++) {
+        out[ch][i] = mix;
+      }
+    }
+
+    return true;
+  }
 }
-function createNoteRuler(){const notes=['D4','C#4','C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C#3','C3','B2','A#2'];elements.noteRuler.innerHTML='';notes.forEach(note=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=note;elements.noteRuler.appendChild(div);});}
-function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4);const noteIndex=Math.round(semitonesFromA4+9)%12;const octave=Math.floor((semitonesFromA4+9)/12);const noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};}
-function updateThemeColor(noteName){const color=noteColors[noteName]||[100,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);}
-function noteFromPad(y){const padHeight=window.innerHeight;const ratio=1-(y/padHeight);const notes=Object.keys(noteFrequencies);const noteIndex=Math.floor(ratio*(notes.length-1));const selectedNote=notes[noteIndex];return noteFrequencies[selectedNote];}
-function applyPitch(){if(!safeAudioOperation(()=>{const freq=AppState.baseFreq;const noteInfo=freqToNote(freq);AppState.oscillators.forEach((osc,i)=>{if(osc.frequency){osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.005);}});elements.noteDisplay.textContent=noteInfo.fullName;elements.octaveDisplay.textContent=`Oct:${AppState.octaveOffset}`;updateThemeColor(noteInfo.name);}))return;}
-let lastTouchTime=0;
-function handleTouch(e){const now=performance.now();if(now-lastTouchTime<4)return;lastTouchTime=now;if(!isAudioContextValid()){showStatus('Start synth first');return;}
-const clientY=e.touches?e.touches[0].clientY:e.clientY;const clientX=e.touches?e.touches[0].clientX:e.clientX;AppState.baseFreq=noteFromPad(clientY);const volume=clientX/window.innerWidth;safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.005);});applyPitch();}
-function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.005);const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;});}
-function stopSynth(){if(!AppState.audioCtx){showStatus('No synth running');return;}
-try{cleanupOscillators();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.isPlaying=false;updateButtonStates();showStatus('Stopped');}).catch(e=>{console.error(e);showStatus('Stop error');});}catch(e){console.error(e);showStatus('Stop error');}}
-function toggleControls(){elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
-function requestMotionPermission(){if(typeof DeviceOrientationEvent.requestPermission==='function'){elements.permissionModal.style.display='flex';}else{startMotionControl();}}
-function startMotionControl(){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;elements.motionBtn.textContent="Motion ON";elements.motionBtn.classList.add('active');elements.motionDisplay.style.display='block';showStatus('Motion enabled - Tilt device for pitch!');}
-function disableMotion(){window.removeEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=false;AppState.tiltBend=0;elements.motionBtn.textContent="Motion OFF";elements.motionBtn.classList.remove('active');elements.motionDisplay.style.display='none';showStatus('Motion disabled');}
-function togglePan(){AppState.panEnabled=!AppState.panEnabled;elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.panDisplay.style.display=AppState.panEnabled?'block':'none';if(!AppState.panEnabled){updatePan(0);}showStatus(AppState.panEnabled?'Pan enabled - Tilt device sideways!':'Pan disabled');}
-let lastOrientationTime=0;
-function handleOrientation(e){const now=performance.now();if(now-lastOrientationTime<16)return;lastOrientationTime=now;if(e.beta===null)return;const tilt=e.beta;const pan=e.gamma;if(AppState.motionEnabled){AppState.tiltBend=tilt/45*12;const baseFreq=130.81*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);elements.motionDisplay.textContent=`Tilt:${Math.round(AppState.tiltBend*10)/10}st`;applyPitch();}if(AppState.panEnabled&&pan!==null){const panValue=Math.max(-1,Math.min(1,pan/90));updatePan(panValue);}}
-function triggerVisualFeedback(){document.body.classList.add('flash');setTimeout(()=>document.body.classList.remove('flash'),150);const buttons=document.querySelectorAll('button');buttons.forEach(btn=>{btn.classList.add('pulse');setTimeout(()=>btn.classList.remove('pulse'),300);});}
-function createClickSound(){if(!AppState.audioCtx)return;const now=AppState.audioCtx.currentTime;const clickOsc=AppState.audioCtx.createOscillator();const clickGain=AppState.audioCtx.createGain();clickOsc.type='sine';clickOsc.frequency.setValueAtTime(800,now);clickOsc.frequency.exponentialRampToValueAtTime(100,now+0.1);clickGain.gain.setValueAtTime(0.1,now);clickGain.gain.exponentialRampToValueAtTime(0.001,now+0.1);clickOsc.connect(clickGain);clickGain.connect(AppState.audioCtx.destination);clickOsc.start(now);clickOsc.stop(now+0.1);}
-function rhythmBeat(){safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(0.3,AppState.audioCtx.currentTime,0.01);setTimeout(()=>{if(isAudioContextValid()){AppState.masterGain.gain.setTargetAtTime(0.05,AppState.audioCtx.currentTime,0.01);}},50);});triggerVisualFeedback();createClickSound();}
-function startRhythm(pattern){if(!isAudioContextValid()){showStatus('Start synth first');return;}
-stopRhythm();currentRhythm=pattern;let intervals=[];switch(pattern){case'4':intervals=[500];break;case'8':intervals=[250];break;case'16':intervals=[125];break;case'32':intervals=[62];break;case'triplet':intervals=[167,167,166];break;case'shuffle':intervals=[375,125];break;case'dotted':intervals=[375,125];break;case'stutter':intervals=[100,100,100,100,100,100,100,100];break;case'random':intervals=Array.from({length:8},()=>Math.random()*200+50);break;}
-let beatIndex=0;rhythmInterval=setInterval(()=>{rhythmBeat();beatIndex=(beatIndex+1)%intervals.length;},intervals[beatIndex]);}
-function stopRhythm(){if(rhythmInterval){clearInterval(rhythmInterval);rhythmInterval=null;currentRhythm=null;}}
-function initializeEventListeners(){elements.pad.addEventListener("touchstart",handleTouch,{passive:false});elements.pad.addEventListener("touchmove",handleTouch,{passive:false});elements.pad.addEventListener("mousedown",handleTouch);elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});elements.startBtn.addEventListener("click",startSynth);elements.stopBtn.addEventListener("click",stopSynth);elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():requestMotionPermission();});elements.panBtn.addEventListener("click",togglePan);elements.toggleControls.addEventListener("click",toggleControls);document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();createNoteRuler();});document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();createNoteRuler();});document.getElementById("permissionAllow").addEventListener("click",()=>{DeviceOrientationEvent.requestPermission().then(r=>{elements.permissionModal.style.display='none';if(r==='granted'){startMotionControl();}else{showStatus('Motion permission denied');}}).catch(e=>{elements.permissionModal.style.display='none';showStatus('Permission error');});});document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;cleanupOscillators();createOscillators();connectAudioGraph();showStatus('Wave: '+AppState.waveType);});document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{if(osc.detune)osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;});}});document.getElementById("filterFreq").addEventListener("input",e=>{audioNodes.filter.frequency.value=parseFloat(e.target.value);});document.getElementById("filterReso").addEventListener("input",e=>{audioNodes.filter.Q.value=parseFloat(e.target.value);});document.getElementById("autoWahRate").addEventListener("input",e=>{audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);});document.getElementById("autoWahDepth").addEventListener("input",e=>{audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);});const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleFilter:'filter',toggleDelay:'delay',toggleReverb:'reverb'};Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener("click",()=>{effects[effect]=!effects[effect];document.getElementById(id).classList.toggle('active',effects[effect]);connectAudioGraph();showStatus(effect+' '+(effects[effect]?'ON':'OFF'));if(effect==='autoWah'){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'ON':'OFF');}});});document.getElementById("rhythm4").addEventListener("click",()=>{startRhythm('4');showStatus('1/4 Rhythm');});document.getElementById("rhythm8").addEventListener("click",()=>{startRhythm('8');showStatus('1/8 Rhythm');});document.getElementById("rhythm16").addEventListener("click",()=>{startRhythm('16');showStatus('1/16 Rhythm');});document.getElementById("rhythm32").addEventListener("click",()=>{startRhythm('32');showStatus('1/32 Rhythm');});document.getElementById("rhythmTriplet").addEventListener("click",()=>{startRhythm('triplet');showStatus('Triplet Rhythm');});document.getElementById("rhythmShuffle").addEventListener("click",()=>{startRhythm('shuffle');showStatus('Shuffle Rhythm');});document.getElementById("rhythmDotted").addEventListener("click",()=>{startRhythm('dotted');showStatus('Dotted Rhythm');});document.getElementById("rhythmStutter").addEventListener("click",()=>{startRhythm('stutter');showStatus('Stutter Rhythm');});document.getElementById("rhythmRandom").addEventListener("click",()=>{startRhythm('random');showStatus('Random Rhythm');});document.getElementById("rhythmStop").addEventListener("click",()=>{stopRhythm();showStatus('Rhythm Stopped');});}
-window.addEventListener('load',()=>{updateThemeColor('C');initializeEventListeners();updateButtonStates();createNoteRuler();showStatus('Ready - Click Start then try effects!');});
-window.addEventListener("contextmenu",e=>e.preventDefault());
+
+registerProcessor('synth-processor', SynthProcessor);
+`;
+
+/* ============================
+   App State & UI elements
+   ============================ */
+const AppState = {
+  audioCtx: null,
+  engine: null,
+  workletNode: null,
+  lastVolume: 0.15,
+  baseFreq: 261.63,
+  octaveOffset: 0,
+  waveType: 'sawtooth',
+  detuneAmount: 15,
+  fmDepth: 0,
+  isPlaying: false,
+  motionEnabled: false,
+  panEnabled: false,
+  NUM_VOICES: 7,
+  pendingPan: 0,
+  pendingTilt: 0,
+  smoothedPan: 0,
+  smoothedTilt: 0
+};
+
+const elements = {
+  pad: document.getElementById('pad'),
+  noteDisplay: document.getElementById('noteDisplay'),
+  octaveDisplay: document.getElementById('octaveDisplay'),
+  motionDisplay: document.getElementById('motionDisplay'),
+  wahDisplay: document.getElementById('wahDisplay'),
+  panDisplay: document.getElementById('panDisplay'),
+  startBtn: document.getElementById('startBtn'),
+  stopBtn: document.getElementById('stopBtn'),
+  motionBtn: document.getElementById('motionBtn'),
+  panBtn: document.getElementById('panBtn'),
+  statusMessage: document.getElementById('statusMessage'),
+  controls: document.getElementById('controls'),
+  toggleControls: document.getElementById('toggleControls'),
+  noteRuler: document.getElementById('noteRuler'),
+  permissionModal: document.getElementById('permissionModal')
+};
+
+const noteFrequencies = {
+  'A#2':116.54,'B2':123.47,'C3':130.81,'C#3':138.59,'D3':146.83,'D#3':155.56,'E3':164.81,
+  'F3':174.61,'F#3':185.00,'G3':196.00,'G#3':207.65,'A3':220.00,'A#3':233.08,'B3':246.94,
+  'C4':261.63,'C#4':277.18,'D4':293.66
+};
+const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+function showStatus(msg, dur = 1500) {
+  elements.statusMessage.textContent = msg;
+  elements.statusMessage.classList.add('show');
+  clearTimeout(showStatus._t);
+  showStatus._t = setTimeout(()=>elements.statusMessage.classList.remove('show'), dur);
+}
+
+function updateButtonStates() {
+  elements.startBtn.disabled = AppState.isPlaying;
+  elements.stopBtn.disabled = !AppState.isPlaying;
+}
+
+/* ============================
+   Engine (graph creation + nodes)
+   - Worklet addModule invoked inside Start handler (gesture)
+   - Effects (autoWah, flanger, chorus, tremolo) present and start/stop when enabled
+   - Reverb impulse cached on first creation to avoid repeated heavy generation
+   ============================ */
+class AdvancedSynthEngine {
+  constructor() {
+    this.audioContext = null;
+    this.workletNode = null;
+    this.audioNodes = {};
+    this.dryWet = {};
+    this.effects = {
+      dist: false, autoWah: false, flanger: false, chorus: false,
+      tremolo: false, filter: true, delay: false, reverb: false
+    };
+    // placeholders for dynamically created LFOs (for start/stop)
+    this.effectLFOs = {
+      autoWah: null,
+      flanger: null,
+      chorus: null,
+      tremolo: null
+    };
+  }
+
+  async init() {
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive', sampleRate: 44100 });
+
+    // add worklet module (must be called from user gesture ideally)
+    await this._addWorkletModule();
+
+    // create nodes
+    this._createNodes();
+
+    // connect graph
+    this._connectGraph();
+
+    // initial post params (detune array & wave)
+    this._postInitialParams();
+  }
+
+  async _addWorkletModule() {
+    // create blob and addModule
+    const blob = new Blob([workletCode], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    try {
+      await this.audioContext.audioWorklet.addModule(url);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  _createNodes() {
+    const ctx = this.audioContext;
+    // core nodes
+    this.audioNodes.masterGain = ctx.createGain();
+    this.audioNodes.masterGain.gain.value = AppState.lastVolume;
+    this.audioNodes.panner = ctx.createStereoPanner();
+    // effects nodes
+    this.audioNodes.filter = ctx.createBiquadFilter();
+    this.audioNodes.filter.type = 'lowpass';
+    this.audioNodes.filter.frequency.value = 20000;
+    this.audioNodes.filter.Q.value = 1;
+
+    this.audioNodes.distortion = this._createWaveShaper(50);
+
+    // delay
+    this.audioNodes.delay = ctx.createDelay(2.0);
+    this.audioNodes.delay.delayTime.value = 0.3;
+    this.audioNodes.delayFeedback = ctx.createGain();
+    this.audioNodes.delayFeedback.gain.value = 0.45;
+    this.audioNodes.delayMix = ctx.createGain();
+
+    // reverb convolver + cached impulse
+    this.audioNodes.reverb = ctx.createConvolver();
+    if (!window._cachedReverbBuffer) {
+      // generate once and cache (shorter buffer to reduce cost)
+      const len = Math.floor(ctx.sampleRate * 0.6); // 0.6s
+      const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const data = buf.getChannelData(c);
+        for (let i = 0; i < len; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5) * 0.6;
+        }
+      }
+      window._cachedReverbBuffer = buf;
+    }
+    this.audioNodes.reverb.buffer = window._cachedReverbBuffer;
+
+    // AutoWah nodes (LFO lazy-created on enable)
+    this.audioNodes.autoWah = ctx.createBiquadFilter();
+    this.audioNodes.autoWah.type = 'bandpass';
+    this.audioNodes.autoWah.frequency.value = 800;
+    this.audioNodes.autoWah.Q.value = 5;
+    // autoWahGain will be created when enabling to allow stop/start
+
+    // Chorus (use short delay + LFO)
+    this.audioNodes.chorusDelay = ctx.createDelay(0.05);
+    this.audioNodes.chorusFeedback = ctx.createGain();
+    this.audioNodes.chorusMix = ctx.createGain();
+    this.audioNodes.chorusFeedback.gain.value = 0.15;
+    this.audioNodes.chorusMix.gain.value = 0;
+
+    // Flanger (shorter delay)
+    this.audioNodes.flangerDelay = ctx.createDelay(0.01);
+    this.audioNodes.flangerFeedback = ctx.createGain();
+    this.audioNodes.flangerMix = ctx.createGain();
+    this.audioNodes.flangerFeedback.gain.value = 0.45;
+    this.audioNodes.flangerMix.gain.value = 0;
+
+    // Tremolo (amplitude LFO) - will be created when enabling
+    this.audioNodes.tremoloGain = ctx.createGain();
+    this.audioNodes.tremoloGain.gain.value = 1;
+
+    // dry/wet merges
+    this.dryWet.distDry = ctx.createGain(); this.dryWet.distWet = ctx.createGain();
+    this.dryWet.delayDry = ctx.createGain(); this.dryWet.delayWet = ctx.createGain();
+    this.dryWet.reverbDry = ctx.createGain(); this.dryWet.reverbWet = ctx.createGain();
+    this.dryWet.finalMerge = ctx.createGain();
+
+    // set defaults
+    this.dryWet.distDry.gain.value = 1; this.dryWet.distWet.gain.value = 0;
+    this.dryWet.delayDry.gain.value = 1; this.dryWet.delayWet.gain.value = 0;
+    this.dryWet.reverbDry.gain.value = 1; this.dryWet.reverbWet.gain.value = 0;
+    this.dryWet.finalMerge.gain.value = 1;
+  }
+
+  _connectGraph() {
+    const ctx = this.audioContext;
+
+    // create worklet node that outputs stereo and exposes parameters
+    this.workletNode = new AudioWorkletNode(ctx, 'synth-processor', { outputChannelCount: [2] });
+    // connect worklet -> masterGain
+    this.workletNode.connect(this.audioNodes.masterGain);
+
+    const master = this.audioNodes.masterGain;
+
+    // Distortion path
+    master.connect(this.dryWet.distDry);
+    master.connect(this.audioNodes.distortion);
+    this.audioNodes.distortion.connect(this.dryWet.distWet);
+    const postDist = ctx.createGain();
+    this.dryWet.distDry.connect(postDist);
+    this.dryWet.distWet.connect(postDist);
+
+    // AutoWah -> Filter
+    postDist.connect(this.audioNodes.autoWah);
+    this.audioNodes.autoWah.connect(this.audioNodes.filter);
+
+    // Filter -> delay + reverb paths
+    const filterOut = this.audioNodes.filter;
+    filterOut.connect(this.dryWet.delayDry);
+    filterOut.connect(this.audioNodes.delay);
+    this.audioNodes.delay.connect(this.dryWet.delayWet);
+    // delay feedback
+    this.audioNodes.delay.connect(this.audioNodes.delayFeedback);
+    this.audioNodes.delayFeedback.connect(this.audioNodes.delay);
+
+    // Reverb using splitter to avoid phase problems
+    const reverbSplitter = ctx.createGain();
+    filterOut.connect(reverbSplitter);
+    reverbSplitter.connect(this.dryWet.reverbDry);
+    reverbSplitter.connect(this.audioNodes.reverb);
+    this.audioNodes.reverb.connect(this.dryWet.reverbWet);
+
+    // Merge dry/wet into finalMerge (delay + reverb + dry)
+    this.dryWet.delayDry.connect(this.dryWet.finalMerge);
+    this.dryWet.delayWet.connect(this.dryWet.finalMerge);
+    this.dryWet.reverbDry.connect(this.dryWet.finalMerge);
+    this.dryWet.reverbWet.connect(this.dryWet.finalMerge);
+
+    // Flanger & Chorus inserts (post-filter) - connect to finalMerge via mix nodes
+    this.audioNodes.chorusDelay.connect(this.audioNodes.chorusFeedback);
+    this.audioNodes.chorusFeedback.connect(this.audioNodes.chorusDelay);
+    this.audioNodes.chorusDelay.connect(this.audioNodes.chorusMix);
+    this.audioNodes.chorusMix.connect(this.dryWet.finalMerge);
+
+    this.audioNodes.flangerDelay.connect(this.audioNodes.flangerFeedback);
+    this.audioNodes.flangerFeedback.connect(this.audioNodes.flangerDelay);
+    this.audioNodes.flangerDelay.connect(this.audioNodes.flangerMix);
+    this.audioNodes.flangerMix.connect(this.dryWet.finalMerge);
+
+    // Add main finalMerge -> panner -> destination
+    this.dryWet.finalMerge.connect(this.audioNodes.panner);
+    this.audioNodes.panner.connect(ctx.destination);
+
+    // Tremolo is implemented as gain node in series with masterGain
+    // connect masterGain -> tremoloGain -> final chain (we already connected master to distortion and worklet output)
+    // For simplicity we route worklet->masterGain->(post-dist/post-filter)->finalMerge. Tremolo applied by inserting tremoloGain in masterGain path if enabled
+    // In our graph tremolo is applied by multiplying masterGain externally when enabled (we create LFO to modulate audioNodes.tremoloGain.gain and insert it if needed).
+
+    // update local refs
+    this.params = this.workletNode.parameters;
+  }
+
+  _createWaveShaper(amount) {
+    const ctx = this.audioContext;
+    const ws = ctx.createWaveShaper();
+    const N = 44100;
+    const curve = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const x = (i / (N - 1)) * 2 - 1;
+      curve[i] = Math.tanh(x * (1 + amount / 50));
+    }
+    ws.curve = curve;
+    ws.oversample = '4x';
+    return ws;
+  }
+
+  // post initial params that are not frequent (detune array, wave choice)
+  _postInitialParams() {
+    if (!this.workletNode) return;
+    // detune array (cents)
+    const detunes = [];
+    const center = Math.floor(AppState.NUM_VOICES / 2);
+    for (let i = 0; i < AppState.NUM_VOICES; i++) detunes.push((i - center) * AppState.detuneAmount);
+    try {
+      this.workletNode.port.postMessage({ type: 'detuneArray', detuneArray: detunes });
+      this.workletNode.port.postMessage({ type: 'wave', wave: AppState.waveType });
+      this.workletNode.port.postMessage({ type: 'voices', numVoices: AppState.NUM_VOICES });
+    } catch (e) { /* ignore */ }
+    // set initial AudioParams (baseFreq and fmDepth and pulseWidth and masterGain)
+    try {
+      this.workletNode.parameters.get('baseFreq').setValueAtTime(AppState.baseFreq, this.audioContext.currentTime);
+      this.workletNode.parameters.get('fmDepth').setValueAtTime(AppState.fmDepth, this.audioContext.currentTime);
+      this.workletNode.parameters.get('pulseWidth').setValueAtTime(AppState.pulseWidth || 0.5, this.audioContext.currentTime);
+      this.workletNode.parameters.get('masterGain').setValueAtTime(AppState.lastVolume, this.audioContext.currentTime);
+    } catch (e) {}
+  }
+
+  // enable/disable AutoWah: start/stop LFO to modulate autoWah.frequency via gain node
+  enableAutoWah(on) {
+    const ctx = this.audioContext;
+    if (on) {
+      if (!this.effectLFOs.autoWah) {
+        const lfo = ctx.createOscillator();
+        const g = ctx.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.value = parseFloat(document.getElementById('autoWahRate').value || 1);
+        g.gain.value = parseFloat(document.getElementById('autoWahDepth').value || 600);
+        lfo.connect(g);
+        g.connect(this.audioNodes.autoWah.frequency);
+        try { lfo.start(); } catch (e) {}
+        this.effectLFOs.autoWah = { lfo, gain: g };
+      } else {
+        this.effectLFOs.autoWah.gain.gain.value = parseFloat(document.getElementById('autoWahDepth').value || 600);
+        this.effectLFOs.autoWah.lfo.frequency.value = parseFloat(document.getElementById('autoWahRate').value || 1);
+      }
+    } else {
+      // stop and disconnect to save CPU
+      if (this.effectLFOs.autoWah) {
+        try { this.effectLFOs.autoWah.lfo.disconnect(); this.effectLFOs.autoWah.gain.disconnect(); } catch (e) {}
+        try { this.effectLFOs.autoWah.lfo.stop(); } catch (e) {}
+        this.effectLFOs.autoWah = null;
+        // ensure no modulation remains
+      }
+    }
+  }
+
+  // Flanger / Chorus LFO management
+  enableFlanger(on) {
+    const ctx = this.audioContext;
+    if (on) {
+      if (!this.effectLFOs.flanger) {
+        const lfo = ctx.createOscillator();
+        const g = ctx.createGain();
+        lfo.type = 'sine'; lfo.frequency.value = 0.25;
+        g.gain.value = 0.005; // modulation depth
+        lfo.connect(g);
+        g.connect(this.audioNodes.flangerDelay.delayTime);
+        try { lfo.start(); } catch (e) {}
+        this.effectLFOs.flanger = { lfo, gain: g };
+        this.audioNodes.flangerMix.gain.value = 0.5;
+      }
+    } else {
+      if (this.effectLFOs.flanger) {
+        try { this.effectLFOs.flanger.lfo.disconnect(); this.effectLFOs.flanger.gain.disconnect(); } catch (e) {}
+        try { this.effectLFOs.flanger.lfo.stop(); } catch (e) {}
+        this.effectLFOs.flanger = null;
+        this.audioNodes.flangerMix.gain.value = 0;
+      }
+    }
+  }
+
+  enableChorus(on) {
+    const ctx = this.audioContext;
+    if (on) {
+      if (!this.effectLFOs.chorus) {
+        const lfo = ctx.createOscillator();
+        const g = ctx.createGain();
+        lfo.type = 'sine'; lfo.frequency.value = 0.6;
+        g.gain.value = 0.01;
+        lfo.connect(g);
+        g.connect(this.audioNodes.chorusDelay.delayTime);
+        try { lfo.start(); } catch (e) {}
+        this.effectLFOs.chorus = { lfo, gain: g };
+        this.audioNodes.chorusMix.gain.value = 0.3;
+      }
+    } else {
+      if (this.effectLFOs.chorus) {
+        try { this.effectLFOs.chorus.lfo.disconnect(); this.effectLFOs.chorus.gain.disconnect(); } catch (e) {}
+        try { this.effectLFOs.chorus.lfo.stop(); } catch (e) {}
+        this.effectLFOs.chorus = null;
+        this.audioNodes.chorusMix.gain.value = 0;
+      }
+    }
+  }
+
+  enableTremolo(on) {
+    const ctx = this.audioContext;
+    if (on) {
+      if (!this.effectLFOs.tremolo) {
+        const lfo = ctx.createOscillator();
+        const g = ctx.createGain();
+        lfo.type = 'sine'; lfo.frequency.value = 5.0;
+        g.gain.value = 0.5;
+        // connect lfo -> gain -> tremoloGain.gain (use offset to keep in [0..1])
+        // create a constant offset
+        const offset = ctx.createConstantSource();
+        offset.offset.value = 0.5;
+        lfo.connect(g);
+        g.connect(this.audioNodes.tremoloGain.gain);
+        offset.connect(this.audioNodes.tremoloGain.gain);
+        try { lfo.start(); offset.start(); } catch (e) {}
+        this.effectLFOs.tremolo = { lfo, gain: g, offset };
+      }
+    } else {
+      if (this.effectLFOs.tremolo) {
+        try { this.effectLFOs.tremolo.lfo.disconnect(); this.effectLFOs.tremolo.gain.disconnect(); this.effectLFOs.tremolo.offset.disconnect(); } catch (e) {}
+        try { this.effectLFOs.tremolo.lfo.stop(); this.effectLFOs.tremolo.offset.stop(); } catch (e) {}
+        this.effectLFOs.tremolo = null;
+        this.audioNodes.tremoloGain.gain.value = 1;
+      }
+    }
+  }
+
+  // update effect parameters when toggled
+  updateEffectParameters() {
+    const ef = this.effects;
+    // distortion
+    this.dryWet.distWet.gain.value = ef.dist ? 1 : 0;
+    this.dryWet.distDry.gain.value = ef.dist ? 0 : 1;
+    // delay
+    this.dryWet.delayWet.gain.value = ef.delay ? 0.28 : 0;
+    this.dryWet.delayDry.gain.value = ef.delay ? 0.72 : 1;
+    // reverb
+    this.dryWet.reverbWet.gain.value = ef.reverb ? 0.4 : 0;
+    this.dryWet.reverbDry.gain.value = ef.reverb ? 0.6 : 1;
+    // autoWah
+    this.enableAutoWah(ef.autoWah);
+    // flanger/chorus/tremolo
+    this.enableFlanger(ef.flanger);
+    this.enableChorus(ef.chorus);
+    this.enableTremolo(ef.tremolo);
+  }
+
+  dispose() {
+    try {
+      if (this.workletNode) {
+        try { this.workletNode.port.postMessage({ type: 'dispose' }); } catch (e) {}
+        try { this.workletNode.disconnect(); } catch (e) {}
+        this.workletNode = null;
+      }
+      // stop any LFOs and disconnect
+      ['autoWah','flanger','chorus','tremolo'].forEach(k => {
+        if (this.effectLFOs[k]) {
+          try { this.effectLFOs[k].lfo.disconnect(); } catch (e) {}
+          try { this.effectLFOs[k].gain && this.effectLFOs[k].gain.disconnect(); } catch (e) {}
+          try { this.effectLFOs[k].lfo.stop(); } catch (e) {}
+          this.effectLFOs[k] = null;
+        }
+      });
+    } catch (e) {}
+  }
+}
+
+/* ============================
+   Scheduler (integer tick to avoid floating drift)
+   ============================ */
+class LookaheadScheduler {
+  constructor() {
+    this.isRunning = false;
+    this.tempo = 120;
+    this.lookahead = 25; // ms
+    this.scheduleAheadTime = 0.1; // seconds
+    this.timerID = null;
+    this.patternUnits = 1; // in 16th units
+    this.step = 0.0; // seconds per step
+    this.tickIndex = 0;
+    this.startTime = 0;
+  }
+
+  start(callback, pattern = '16') {
+    if (!AppState.engine || !AppState.audioCtx) return;
+    this.stop();
+    this.isRunning = true;
+    this.startTime = AppState.audioCtx.currentTime + 0.05;
+    this.tickIndex = 0;
+    this._setPattern(pattern);
+    this._scheduler(callback);
+  }
+
+  stop() {
+    this.isRunning = false;
+    if (this.timerID) { clearTimeout(this.timerID); this.timerID = null; }
+  }
+
+  _setPattern(pattern) {
+    // patternUnits defines how many sixteenth-notes a step represents
+    switch (pattern) {
+      case '4': this.patternUnits = 4; break;
+      case '8': this.patternUnits = 2; break;
+      case '16': this.patternUnits = 1; break;
+      case '32': this.patternUnits = 0.5; break;
+      case 'triplet': this.patternUnits = 4/3; break;
+      case 'shuffle': this.patternUnits = 1.5; break;
+      case 'dotted': this.patternUnits = 6; break;
+      case 'stutter': this.patternUnits = 0.5; break;
+      case 'random': this.patternUnits = 1; break;
+      default: this.patternUnits = 1; break;
+    }
+    const quarter = 60.0 / this.tempo;
+    const sixteenth = quarter / 4.0;
+    this.step = sixteenth * this.patternUnits;
+  }
+
+  _scheduler(callback) {
+    if (!this.isRunning) return;
+    const currentTime = AppState.audioCtx.currentTime;
+    // schedule while next note < currentTime + scheduleAheadTime
+    while (this.startTime + this.tickIndex * this.step < currentTime + this.scheduleAheadTime) {
+      const t = this.startTime + this.tickIndex * this.step;
+      callback(t);
+      this.tickIndex++;
+      // prevent runaway tickIndex (bar reset logic can be added)
+    }
+    this.timerID = setTimeout(()=>this._scheduler(callback), this.lookahead);
+  }
+}
+
+/* ============================
+   UI and event handling
+   - Important: worklet.addModule() / engine.init called inside Start button handler (user gesture)
+   - BaseFreq & fmDepth sent via AudioParam automation instead of postMessage for handleTouch
+   - Detune array sent via postMessage only on detune changes
+   - Motion & Pan smoothing via separate lowpass smoothing
+   ============================ */
+
+const scheduler = new LookaheadScheduler();
+
+function isAudioRunning() { return AppState.audioCtx && AppState.audioCtx.state === 'running'; }
+
+function createEngineAndStart() {
+  if (AppState.isPlaying) { showStatus('Already running'); return; }
+  // Create engine and init (this call originates from user gesture - Start click)
+  AppState.engine = new AdvancedSynthEngine();
+  AppState.engine.init().then(() => {
+    AppState.audioCtx = AppState.engine.audioContext;
+    AppState.workletNode = AppState.engine.workletNode;
+    AppState.isPlaying = true;
+    // update buttons
+    updateButtonStates();
+    showStatus('Started — AudioWorklet active');
+    // ensure initial params are posted
+    AppState.engine._postInitialParams();
+    // attach event handlers that require audio context in resumed state
+  }).catch(err => {
+    console.error('Engine init failed', err);
+    // fallback: if worklet fails, consider legacy graph (not implemented here)
+    showStatus('Audio init failed');
+  });
+}
+
+function stopSynth() {
+  if (!AppState.audioCtx) { showStatus('No synth running'); return; }
+  try {
+    scheduler.stop();
+    AppState.engine.dispose();
+    AppState.audioCtx.close().then(()=> {
+      AppState.audioCtx = null;
+      AppState.engine = null;
+      AppState.workletNode = null;
+      AppState.isPlaying = false;
+      updateButtonStates();
+      showStatus('Stopped');
+    }).catch(e => {
+      console.error(e);
+      showStatus('Stop error');
+    });
+  } catch (e) {
+    console.error(e);
+    showStatus('Stop error');
+  }
+}
+
+/* Note mapping */
+function noteFromPad(y) {
+  const padHeight = window.innerHeight;
+  const ratio = 1 - (y / padHeight);
+  const notes = Object.keys(noteFrequencies);
+  const idx = Math.max(0, Math.min(notes.length - 1, Math.floor(ratio * (notes.length - 1))));
+  return noteFrequencies[notes[idx]];
+}
+
+/* apply pitch using AudioParam on worklet (avoids postMessage flooding) */
+function applyPitchToWorklet(freq) {
+  if (!AppState.engine || !AppState.engine.workletNode || !AppState.audioCtx) return;
+  try {
+    const param = AppState.engine.workletNode.parameters.get('baseFreq');
+    // smooth using linear ramp to avoid stepping
+    const t = AppState.audioCtx.currentTime;
+    param.cancelScheduledValues(t);
+    param.setValueAtTime(param.value || freq, t);
+    param.linearRampToValueAtTime(freq, t + 0.03); // smooth over ~30ms
+    // update UI
+    const noteInfo = freqToNote(freq);
+    elements.noteDisplay.textContent = noteInfo.fullName;
+    elements.octaveDisplay.textContent = `Oct:${AppState.octaveOffset}`;
+    updateThemeColor(noteInfo.name);
+  } catch (e) {}
+}
+
+/* apply FM depth via AudioParam */
+function applyFMDepthToWorklet(depth) {
+  if (!AppState.engine || !AppState.engine.workletNode || !AppState.audioCtx) return;
+  try {
+    const param = AppState.engine.workletNode.parameters.get('fmDepth');
+    const t = AppState.audioCtx.currentTime;
+    param.cancelScheduledValues(t);
+    param.setValueAtTime(depth, t);
+  } catch (e) {}
+}
+
+/* set pulse width (k-rate param) */
+function applyPulseWidthToWorklet(pw) {
+  if (!AppState.engine || !AppState.engine.workletNode || !AppState.audioCtx) return;
+  try {
+    const param = AppState.engine.workletNode.parameters.get('pulseWidth');
+    param.setValueAtTime(pw, AppState.audioCtx.currentTime);
+  } catch (e) {}
+}
+
+/* handle touch with reduced messaging (no postMessage) */
+let lastTouchTime = 0;
+function handleTouch(e) {
+  const now = performance.now();
+  if (now - lastTouchTime < 8) return; // small throttle
+  lastTouchTime = now;
+  if (!isAudioRunning()) { showStatus('Start synth first'); return; }
+  const touch = e.touches ? e.touches[0] : e;
+  const cx = touch.clientX, cy = touch.clientY;
+  const freq = noteFromPad(cy) * Math.pow(2, AppState.octaveOffset);
+  AppState.baseFreq = freq;
+  // set baseFreq via AudioParam automation
+  applyPitchToWorklet(freq);
+  // volume smoothing & masterGain setTargetAtTime (main graph)
+  const targetVolume = (cx / window.innerWidth) * 0.45;
+  AppState.lastVolume += (targetVolume - AppState.lastVolume) * 0.1;
+  try {
+    if (AppState.engine && AppState.engine.audioNodes && AppState.engine.audioNodes.masterGain) {
+      AppState.engine.audioNodes.masterGain.gain.setTargetAtTime(AppState.lastVolume, AppState.audioCtx.currentTime, 0.02);
+    }
+  } catch (e) {}
+  e.preventDefault && e.preventDefault();
+}
+
+/* pan update - apply smoothing in RAF loop */
+function updatePan(pos) {
+  AppState.pendingPan = pos;
+}
+
+/* visual click sound */
+function createClickSound(time) {
+  if (!AppState.audioCtx) return;
+  const ctx = AppState.audioCtx;
+  const t = time || ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(1000, t);
+  g.gain.setValueAtTime(0.14, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(t); osc.stop(t + 0.09);
+}
+
+/* rhythm beat scheduled */
+function rhythmBeat(time) {
+  if (!AppState.engine) return;
+  try {
+    const g = AppState.engine.audioNodes.masterGain;
+    g.gain.setTargetAtTime(0.28, time, 0.01);
+    setTimeout(()=> {
+      if (isAudioRunning()) g.gain.setTargetAtTime(AppState.lastVolume, AppState.audioCtx.currentTime, 0.02);
+    }, 55);
+  } catch (e) {}
+  triggerVisualFeedback();
+  createClickSound(time);
+}
+
+/* start/stop rhythm wrappers */
+function startRhythm(pattern) {
+  if (!isAudioRunning()) { showStatus('Start synth first'); return; }
+  scheduler.start((time) => rhythmBeat(time), pattern);
+  showStatus('Rhythm: ' + pattern);
+}
+function stopRhythm() { scheduler.stop(); showStatus('Rhythm stopped'); }
+
+/* Motion handling: aggregate both deviceorientation & devicemotion and use RAF smoothing */
+function handleOrientationEvent(e) {
+  // prefer beta/gamma if present
+  if (e.beta !== undefined && e.gamma !== undefined) {
+    AppState.pendingTilt = e.beta;
+    AppState.pendingPan = e.gamma / 90; // normalized
+  }
+}
+function handleMotionEvent(e) {
+  // fallback: use accelerationIncludingGravity to derive tilt if needed (not implemented in detail)
+  // keep minimal: do nothing special here, but set pending values if convenient
+}
+
+/* apply smoothed orientation/pan in RAF */
+function orientationRAF() {
+  // smooth tilt/pan separately
+  const alpha = 0.12; // smoothing factor
+  AppState.smoothedPan = AppState.smoothedPan + (AppState.pendingPan - AppState.smoothedPan) * alpha;
+  AppState.smoothedTilt = AppState.smoothedTilt + ((AppState.pendingTilt || 0) - AppState.smoothedTilt) * alpha;
+
+  if (AppState.motionEnabled) {
+    // map tilt -> pitch bend
+    const tilt = AppState.smoothedTilt;
+    const bend = (tilt / 45) * 12;
+    const base = 130.81 * Math.pow(2, AppState.octaveOffset);
+    const freq = base * Math.pow(2, bend / 12);
+    AppState.baseFreq = freq;
+    applyPitchToWorklet(freq);
+    elements.motionDisplay.style.display = 'block';
+    elements.motionDisplay.textContent = `Tilt:${Math.round(bend * 10) / 10}st`;
+  }
+  if (AppState.panEnabled) {
+    AppState.engine && AppState.engine.audioNodes && AppState.engine.audioNodes.panner && AppState.engine.audioNodes.panner.pan.setTargetAtTime(AppState.smoothedPan, AppState.audioCtx ? AppState.audioCtx.currentTime : 0, 0.02);
+    elements.panDisplay.style.display = 'block';
+    elements.panDisplay.textContent = `Pan:${Math.round(AppState.smoothedPan * 100)}%`;
+  }
+
+  requestAnimationFrame(orientationRAF);
+}
+requestAnimationFrame(orientationRAF);
+
+/* visual feedback */
+function triggerVisualFeedback() {
+  document.body.classList.add('flash');
+  setTimeout(()=>document.body.classList.remove('flash'),120);
+  document.querySelectorAll('button').forEach(btn => {
+    btn.classList.add('pulse');
+    setTimeout(()=>btn.classList.remove('pulse'),300);
+  });
+}
+
+/* freq -> note helper */
+function freqToNote(freq) {
+  const A4 = 440;
+  const semitonesFromA4 = 12 * Math.log2(freq / A4);
+  const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
+  const octave = Math.floor((semitonesFromA4 + 9) / 12) + 4;
+  const noteName = noteNames[(noteIndex + 12) % 12];
+  return { name: noteName, octave, fullName: `${noteName}${octave}` };
+}
+
+/* update theme color */
+let uiRAF = null;
+function updateThemeColor(noteName) {
+  if (uiRAF) cancelAnimationFrame(uiRAF);
+  uiRAF = requestAnimationFrame(()=>{
+    const map = {
+      'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],
+      'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],
+      'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]
+    };
+    const color = map[noteName] || [100,100,100];
+    document.documentElement.style.setProperty('--r', color[0]);
+    document.documentElement.style.setProperty('--g', color[1]);
+    document.documentElement.style.setProperty('--b', color[2]);
+  });
+}
+
+/* create note ruler */
+function createNoteRuler() {
+  const notes = ['D4','C#4','C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C#3','C3','B2','A#2'];
+  elements.noteRuler.innerHTML = '';
+  notes.forEach(n => {
+    const d = document.createElement('div');
+    d.className = 'ruler-note';
+    d.textContent = n;
+    elements.noteRuler.appendChild(d);
+  });
+}
+
+/* initialize event listeners */
+function initializeEventListeners() {
+  // pointer handlers
+  elements.pad.addEventListener('touchstart', handleTouch, { passive: false });
+  elements.pad.addEventListener('touchmove', handleTouch, { passive: false });
+  elements.pad.addEventListener('mousedown', handleTouch);
+  elements.pad.addEventListener('mousemove', e => { if (e.buttons === 1) handleTouch(e); });
+
+  // Start button: ensure worklet.addModule is called inside this user gesture
+  elements.startBtn.addEventListener('click', async () => {
+    // create engine/init inside user gesture to satisfy iOS
+    createEngineAndStart();
+  });
+
+  elements.stopBtn.addEventListener('click', stopSynth);
+
+  elements.toggleControls.addEventListener('click', () => {
+    elements.controls.classList.toggle('expanded');
+    elements.toggleControls.textContent = elements.controls.classList.contains('expanded') ? '✕' : '⚙️';
+  });
+
+  document.getElementById('octUp').addEventListener('click', ()=> { AppState.octaveOffset++; applyPitchToWorklet(AppState.baseFreq); createNoteRuler(); });
+  document.getElementById('octDown').addEventListener('click', ()=> { AppState.octaveOffset--; applyPitchToWorklet(AppState.baseFreq); createNoteRuler(); });
+
+  document.getElementById('waveSelect').addEventListener('change', e => {
+    AppState.waveType = e.target.value;
+    if (AppState.engine && AppState.engine.workletNode) {
+      AppState.engine.workletNode.port.postMessage({ type: 'wave', wave: AppState.waveType });
+      // if switching to FM, ensure fmDepth param present and UI visible
+    }
+    showStatus('Wave: ' + AppState.waveType);
+  });
+
+  document.getElementById('detuneRange').addEventListener('input', e => {
+    AppState.detuneAmount = parseFloat(e.target.value);
+    if (AppState.engine && AppState.engine.workletNode) {
+      const detunes = [];
+      const center = Math.floor(AppState.NUM_VOICES / 2);
+      for (let i = 0; i < AppState.NUM_VOICES; i++) detunes.push((i - center) * AppState.detuneAmount);
+      AppState.engine.workletNode.port.postMessage({ type: 'detuneArray', detuneArray: detunes });
+    }
+  });
+
+  document.getElementById('fmDepthRange').addEventListener('input', e => {
+    AppState.fmDepth = parseFloat(e.target.value);
+    if (AppState.engine && AppState.engine.workletNode && AppState.audioCtx) {
+      applyFMDepthToWorklet(AppState.fmDepth);
+    }
+  });
+
+  document.getElementById('filterFreq').addEventListener('input', e => {
+    if (AppState.engine && AppState.engine.audioNodes.filter) AppState.engine.audioNodes.filter.frequency.value = parseFloat(e.target.value);
+  });
+  document.getElementById('filterReso').addEventListener('input', e => {
+    if (AppState.engine && AppState.engine.audioNodes.filter) {
+      const safeQ = Math.min(parseFloat(e.target.value), 10);
+      AppState.engine.audioNodes.filter.Q.value = safeQ;
+    }
+  });
+
+  document.getElementById('autoWahRate').addEventListener('input', e => {
+    if (AppState.engine && AppState.engine.effectLFOs && AppState.engine.effectLFOs.autoWah) {
+      AppState.engine.effectLFOs.autoWah.lfo.frequency.value = parseFloat(e.target.value);
+    }
+  });
+
+  document.getElementById('autoWahDepth').addEventListener('input', e => {
+    if (AppState.engine) {
+      const val = parseFloat(e.target.value);
+      if (AppState.engine.effectLFOs.autoWah) AppState.engine.effectLFOs.autoWah.gain.gain.value = val;
+    }
+  });
+
+  // effect toggles
+  const toggleMap = { toggleDist:'dist', toggleAutoWah:'autoWah', toggleFlanger:'flanger', toggleChorus:'chorus', toggleTremolo:'tremolo', toggleFilter:'filter', toggleDelay:'delay', toggleReverb:'reverb' };
+  Object.entries(toggleMap).forEach(([id, effect]) => {
+    document.getElementById(id).addEventListener('click', ()=> {
+      if (!AppState.engine) { showStatus('Start first'); return; }
+      AppState.engine.effects[effect] = !AppState.engine.effects[effect];
+      document.getElementById(id).classList.toggle('active', AppState.engine.effects[effect]);
+      AppState.engine.updateEffectParameters();
+      showStatus(effect + ' ' + (AppState.engine.effects[effect] ? 'ON' : 'OFF'));
+      if (effect === 'autoWah') {
+        elements.wahDisplay.style.display = AppState.engine.effects.autoWah ? 'block' : 'none';
+        elements.wahDisplay.textContent = 'Wah:' + (AppState.engine.effects.autoWah ? 'ON' : 'OFF');
+      }
+    });
+  });
+
+  // rhythm
+  document.getElementById('rhythm4').addEventListener('click', ()=> startRhythm('4'));
+  document.getElementById('rhythm8').addEventListener('click', ()=> startRhythm('8'));
+  document.getElementById('rhythm16').addEventListener('click', ()=> startRhythm('16'));
+  document.getElementById('rhythm32').addEventListener('click', ()=> startRhythm('32'));
+  document.getElementById('rhythmTriplet').addEventListener('click', ()=> startRhythm('triplet'));
+  document.getElementById('rhythmShuffle').addEventListener('click', ()=> startRhythm('shuffle'));
+  document.getElementById('rhythmDotted').addEventListener('click', ()=> startRhythm('dotted'));
+  document.getElementById('rhythmStutter').addEventListener('click', ()=> startRhythm('stutter'));
+  document.getElementById('rhythmRandom').addEventListener('click', ()=> startRhythm('random'));
+  document.getElementById('rhythmStop').addEventListener('click', ()=> stopRhythm());
+
+  // motion & pan
+  elements.motionBtn.addEventListener('click', () => {
+    if (AppState.motionEnabled) {
+      window.removeEventListener('deviceorientation', handleOrientationEvent);
+      window.removeEventListener('devicemotion', handleMotionEvent);
+      AppState.motionEnabled = false;
+      elements.motionBtn.classList.remove('active');
+      elements.motionBtn.textContent = 'Motion';
+      elements.motionDisplay.style.display = 'none';
+      showStatus('Motion disabled');
+    } else {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        elements.permissionModal.style.display = 'flex';
+      } else {
+        window.addEventListener('deviceorientation', handleOrientationEvent, { passive: true });
+        window.addEventListener('devicemotion', handleMotionEvent, { passive: true });
+        AppState.motionEnabled = true;
+        elements.motionBtn.classList.add('active');
+        elements.motionBtn.textContent = 'Motion ON';
+        showStatus('Motion enabled');
+      }
+    }
+  });
+
+  document.getElementById('permissionAllow').addEventListener('click', ()=> {
+    DeviceOrientationEvent.requestPermission().then(res => {
+      elements.permissionModal.style.display = 'none';
+      if (res === 'granted') {
+        window.addEventListener('deviceorientation', handleOrientationEvent, { passive: true });
+        window.addEventListener('devicemotion', handleMotionEvent, { passive: true });
+        AppState.motionEnabled = true;
+        elements.motionBtn.classList.add('active');
+        elements.motionBtn.textContent = 'Motion ON';
+        showStatus('Motion enabled');
+      } else {
+        showStatus('Motion permission denied');
+      }
+    }).catch(e => {
+      elements.permissionModal.style.display = 'none';
+      showStatus('Permission error');
+    });
+  });
+  document.getElementById('permissionDeny').addEventListener('click', ()=> {
+    elements.permissionModal.style.display = 'none';
+    showStatus('Motion disabled');
+  });
+
+  elements.panBtn.addEventListener('click', ()=> {
+    AppState.panEnabled = !AppState.panEnabled;
+    elements.panBtn.classList.toggle('active', AppState.panEnabled);
+    elements.panBtn.textContent = AppState.panEnabled ? 'Pan ON' : 'Pan';
+    elements.panDisplay.style.display = AppState.panEnabled ? 'block' : 'none';
+    if (!AppState.panEnabled && AppState.engine && AppState.engine.audioNodes) {
+      AppState.engine.audioNodes.panner.pan.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.01);
+    }
+  });
+}
+
+/* helper update UI for freq */
+function updateUIForFreq(freq) {
+  const n = freqToNote(freq);
+  elements.noteDisplay.textContent = n.fullName;
+  updateThemeColor(n.name);
+}
+
+/* init */
+window.addEventListener('load', ()=> {
+  createNoteRuler();
+  initializeEventListeners();
+  updateButtonStates();
+  showStatus('Ready — Click Start');
+});
+
+/* prevent context menu */
+window.addEventListener('contextmenu', e => e.preventDefault());
 </script>
 </body>
 </html>
