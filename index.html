@@ -2,276 +2,213 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Synth v2</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Synth</title>
 <style>
 :root {
---r:100;--g:100;--b:100;
---c:rgba(var(--r),var(--g),var(--b),1);
---bg:rgba(var(--r),var(--g),var(--b),0.10);
---ui:rgba(var(--r),var(--g),var(--b),0.22);
---txt:#fff;
+--r:255;--g:100;--b:100;
+--bg-color:rgba(var(--r),var(--g),var(--b),0.3);
+--control-bg:rgba(var(--r),var(--g),var(--b),0.4);
+--text-color:rgba(255,255,255,0.95);
+--border-color:rgba(var(--r),var(--g),var(--b),0.8);
+--safe-area-inset-top:env(safe-area-inset-top);
+--safe-area-inset-bottom:env(safe-area-inset-bottom);
 }
-
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;font-family:-apple-system,sans-serif;background:var(--bg);color:var(--txt);overflow:hidden;}
-
-#pad{
-height:100vh;display:flex;align-items:center;justify-content:center;
-position:relative;background:radial-gradient(circle,var(--ui),#000);
-}
-
-.float{
-position:absolute;padding:8px 16px;border-radius:20px;
-background:rgba(0,0,0,0.45);backdrop-filter:blur(15px);
-border:1px solid var(--ui);
-}
-
-#note{top:25px;left:50%;transform:translateX(-50%);font-size:26px;font-weight:600;text-shadow:0 0 12px var(--c);}
-#tilt{bottom:120px;left:50%;transform:translateX(-50%);display:none;}
-#wah{bottom:80px;left:50%;transform:translateX(-50%);display:none;}
-#pan{bottom:40px;left:50%;transform:translateX(-50%);display:none;}
-
-#ruler{
-position:absolute;right:0;top:0;bottom:0;width:60px;
-background:rgba(0,0,0,0.2);display:flex;flex-direction:column;padding:10px 0;
-}
-
-.r{flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.1);}
-
-#controls{
-position:fixed;bottom:0;left:0;right:0;transform:translateY(calc(100% - 50px));
-background:rgba(0,0,0,0.6);backdrop-filter:blur(30px);
-padding:15px;border-top:1px solid var(--ui);transition:0.3s;
-display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-}
-
-#controls.show{transform:translateY(0);}
-
-.btn,select,input[type=range]{
-background:var(--ui);border:1px solid var(--ui);color:var(--txt);
-padding:10px;border-radius:8px;font-size:12px;cursor:pointer;
-}
-
-.btn.active{background:var(--c);color:#000;font-weight:700;}
-
-#toggle{
-position:fixed;bottom:10px;right:15px;width:50px;height:50px;
-border-radius:50%;display:flex;justify-content:center;align-items:center;
-background:var(--ui);border:2px solid var(--ui);font-size:20px;
-}
-
-.group{grid-column:1/-1;padding:10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--ui);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background-color:#111;color:var(--text-color);font-family:-apple-system,sans-serif;font-weight:400;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;overflow:hidden;}
+body{background-color:var(--bg-color);transition:background-color 0.1s ease;}
+#app-container{height:100%;display:flex;flex-direction:column;}
+#pad{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.4));cursor:crosshair;}
+#noteDisplay,#motionDisplay,#wahDisplay,#panDisplay{position:absolute;background-color:var(--control-bg);color:var(--text-color);pointer-events:none;z-index:10;border:2px solid var(--border-color);backdrop-filter:blur(20px);padding:8px 16px;border-radius:20px;font-size:14px;font-weight:500;transition:all 0.1s ease;}
+#noteDisplay{top:max(20px,var(--safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:24px;text-shadow:0 0 20px var(--border-color);}
+#motionDisplay,#wahDisplay,#panDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}
+#wahDisplay{bottom:60px;}#panDisplay{bottom:100px;}#motionDisplay{bottom:140px;}
+#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:var(--control-bg);border-left:2px solid var(--border-color);display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;pointer-events:none;z-index:5;}
+.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--text-color);border-bottom:1px solid var(--border-color);}
+#controls{position:fixed;bottom:0;left:0;right:0;max-height:70vh;background:var(--control-bg);backdrop-filter:blur(30px);border-top:2px solid var(--border-color);transform:translateY(calc(100% - 50px));transition:transform 0.3s ease;overflow-y:auto;padding:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;}
+#controls.expanded{transform:translateY(0);}
+#toggleControls{position:fixed;bottom:10px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--control-bg);border:2px solid var(--border-color);color:var(--text-color);font-size:20px;font-weight:bold;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 25px var(--border-color);transition:all 0.1s ease;}
+button,select,input[type=range],label{font-family:inherit;font-size:12px;font-weight:500;border-radius:8px;border:2px solid var(--border-color);background:var(--control-bg);color:var(--text-color);-webkit-appearance:none;appearance:none;transition:all 0.1s ease;outline:none;}
+button{padding:10px 12px;cursor:pointer;min-height:40px;}
+button.active{background:var(--border-color);color:#111;font-weight:600;box-shadow:0 0 15px var(--border-color);}
+.control-group{display:flex;flex-direction:column;align-items:center;}
+label{font-size:10px;margin-bottom:3px;text-align:center;}
+input[type=range]{width:100%;height:6px;background:var(--border-color);border:none;margin:5px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:var(--text-color);cursor:pointer;border-radius:50%;box-shadow:0 0 15px var(--border-color);}
+select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
+#statusMessage{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--control-bg);color:var(--text-color);padding:8px 16px;border-radius:8px;font-size:12px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(15px);border:2px solid var(--border-color);}
+#statusMessage.show{opacity:1;}
+.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0;padding:8px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.effect-group-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:3px;}
+.rhythm-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.rhythm-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--control-bg);z-index:1000;justify-content:center;align-items:center;}
+.modal-content{background:var(--control-bg);padding:20px;border-radius:15px;max-width:80%;text-align:center;backdrop-filter:blur(25px);border:2px solid var(--border-color);}
+.modal-buttons{display:flex;gap:8px;margin-top:15px;}
+.modal-buttons button{flex:1;}
 </style>
 </head>
-
 <body>
-
+<div id="app-container">
 <div id="pad">
-<div id="note" class="float">C4</div>
-<div id="tilt" class="float">Tilt:0</div>
-<div id="wah" class="float">Wah</div>
-<div id="pan" class="float">Pan</div>
-<div id="ruler"></div>
+<div id="noteDisplay">C4</div>
+<div id="motionDisplay">Tilt:0°</div>
+<div id="wahDisplay">Wah:ON</div>
+<div id="panDisplay">Pan:0%</div>
+<div id="noteRuler"></div>
 </div>
-
-<div id="toggle">⚙️</div>
-
+<button id="toggleControls">⚙️</button>
 <div id="controls">
-<button class="btn" id="start">Start</button>
-<button class="btn" id="stop" disabled>Stop</button>
-<button class="btn" id="motion">Motion</button>
-<button class="btn" id="panning">Pan</button>
-<button class="btn" id="oct-">Oct-</button>
-<button class="btn" id="oct+">Oct+</button>
-
-<select id="wave">
-<option>sawtooth</option><option>triangle</option><option>square</option>
-<option>sine</option><option>pulse</option><option>fm</option>
+<button id="startBtn">Start</button>
+<button id="stopBtn" disabled>Stop</button>
+<button id="motionBtn">Motion</button>
+<button id="panBtn">Pan</button>
+<button id="octDown">Oct-</button>
+<button id="octUp">Oct+</button>
+<div class="control-group">
+<label>Wave</label>
+<select id="waveSelect">
+<option value="sawtooth">Sawtooth</option>
+<option value="triangle">Triangle</option>
+<option value="square">Square</option>
+<option value="sine">Sine</option>
+<option value="pulse">Pulse</option>
+<option value="fm">FM</option>
 </select>
+</div>
+<div class="control-group">
+<label>Detune</label>
+<input type="range" id="detuneRange" min="0" max="50" value="15">
+</div>
+<div class="control-group">
+<label>Filter Freq</label>
+<input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
+</div>
+<div class="control-group">
+<label>Filter Reso</label>
+<input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
+</div>
+<div class="control-group">
+<label>Wah Rate</label>
+<input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
+</div>
+<div class="control-group">
+<label>Wah Depth</label>
+<input type="range" id="autoWahDepth" min="100" max="1500" value="800">
+</div>
 
-<input type="range" id="detune" min="0" max="50" value="15">
-<input type="range" id="ff" min="200" max="20000" value="20000">
-<input type="range" id="fq" min="0.5" max="20" value="1">
+<div class="rhythm-panel">
+<div class="rhythm-title">RHYTHM</div>
+<button id="rhythm8">1/8</button>
+<button id="rhythm16">1/16</button>
+<button id="rhythm32">1/32</button>
+<button id="rhythmTriplet">Triplet</button>
+<button id="rhythmStop">Stop</button>
+</div>
 
-<div class="group">
-<button class="btn fx" data-fx="dist">Dist</button>
-<button class="btn fx" data-fx="wah">Wah</button>
-<button class="btn fx" data-fx="flanger">Flanger</button>
-<button class="btn fx" data-fx="chorus">Chorus</button>
-<button class="btn fx" data-fx="trem">Trem</button>
-<button class="btn fx" data-fx="delay">Delay</button>
-<button class="btn fx" data-fx="rev">Reverb</button>
+<div class="effect-group">
+<div class="effect-group-title">EFFECTS</div>
+<button id="toggleDist">Distortion</button>
+<button id="toggleAutoWah">Auto Wah</button>
+<button id="toggleFlanger">Flanger</button>
+<button id="toggleChorus">Chorus</button>
+<button id="toggleTremolo">Tremolo</button>
+<button id="toggleFilter">Filter</button>
+<button id="toggleDelay">Delay</button>
+<button id="toggleReverb">Reverb</button>
 </div>
 </div>
-
+</div>
+<div id="statusMessage"></div>
+<div id="permissionModal" class="modal">
+<div class="modal-content">
+<h3>Motion Access Required</h3>
+<p>This feature needs access to your device's motion sensors for tilt control.</p>
+<div class="modal-buttons">
+<button id="permissionAllow">Allow</button>
+<button id="permissionDeny">Deny</button>
+</div>
+</div>
+</div>
 <script>
-/* ============================================================
-   S I M P L E   S Y N T H   v 2  -  O P T I M I Z E D
-   ============================================================ */
-
-const UI={
-pad:$("#pad"),note:$("#note"),tilt:$("#tilt"),wah:$("#wah"),pan:$("#pan"),
-controls:$("#controls"),toggle:$("#toggle"),ruler:$("#ruler")
-};
-
-function $(q){return document.querySelector(q);}
-function on(el,ev,cb){el.addEventListener(ev,cb);}
-
-const colors={
-C:[255,60,60],C#:[255,140,40],D:[255,255,60],D#:[140,255,80],E:[50,255,50],
-F:[50,255,180],F#:[40,255,255],G:[60,150,255],G#:[80,80,255],
-A:[160,80,255],A#:[255,60,255],B:[255,60,160]
-};
-
-function theme(n){
-let c=colors[n]||[200,200,200];
-document.documentElement.style.setProperty("--r",c[0]);
-document.documentElement.style.setProperty("--g",c[1]);
-document.documentElement.style.setProperty("--b",c[2]);
+const AppState={audioCtx:null,oscillators:[],masterGain:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5};
+const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:true,delay:false,reverb:false};
+let audioNodes={};
+let rhythmInterval=null;
+const noteColors={'C':[255,100,100],'C#':[255,150,80],'D':[255,220,80],'D#':[220,255,80],'E':[120,255,100],'F':[80,255,180],'F#':[80,220,255],'G':[100,150,255],'G#':[150,100,255],'A':[220,80,255],'A#':[255,80,220],'B':[255,80,120]};
+const elements={pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls"),noteRuler:document.getElementById("noteRuler")};
+const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
+function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Start synth first');return false;}try{op();return true}catch(e){console.error(e);showStatus('Audio error');return false;}}
+function showStatus(msg,dur=800){elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');setTimeout(()=>elements.statusMessage.classList.remove('show'),dur);}
+function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;}
+function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscillators.forEach(o=>{try{o.stop();o.disconnect();}catch(e){}});AppState.oscillators=[];}}
+function startSynth(){if(isAudioContextValid()){showStatus('Already running');return;}
+try{AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();createAudioNodes();AppState.isPlaying=true;updateButtonStates();showStatus('Started - Try effects!');}catch(e){console.error(e);showStatus('Start failed');}}
+function createAudioNodes(){
+cleanupOscillators();
+AppState.masterGain=AppState.audioCtx.createGain();AppState.masterGain.gain.value=0.2;
+audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;
+audioNodes.distortion=createWaveShaper(50);audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;
+audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";audioNodes.autoWah.frequency.value=800;audioNodes.autoWah.Q.value=5;
+audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1;audioNodes.autoWahGain=AppState.audioCtx.createGain();audioNodes.autoWahGain.gain.value=600;
+audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);audioNodes.autoWahLFO.start();
+audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);audioNodes.flangerDelay.delayTime.value=0.005;audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.frequency.value=0.2;
+audioNodes.flangerGain=AppState.audioCtx.createGain();audioNodes.flangerGain.gain.value=0.005;audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.5;
+audioNodes.flangerLFO.connect(audioNodes.flangerGain);audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);audioNodes.flangerLFO.start();
+audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);audioNodes.chorusDelay.delayTime.value=0.025;audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.frequency.value=0.5;
+audioNodes.chorusGain=AppState.audioCtx.createGain();audioNodes.chorusGain.gain.value=0.01;audioNodes.chorusLFO.connect(audioNodes.chorusGain);audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);audioNodes.chorusLFO.start();
+audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5;audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=0;
+audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);audioNodes.tremoloLFO.start();
+audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";audioNodes.filter.frequency.value=20000;audioNodes.filter.Q.value=1;
+audioNodes.delay=AppState.audioCtx.createDelay(2);audioNodes.delay.delayTime.value=0.3;audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;
+audioNodes.reverb=AppState.audioCtx.createConvolver();const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}audioNodes.reverb.buffer=buffer;
+createOscillators();connectAudioGraph();}
+function createWaveShaper(amount){const ws=AppState.audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=(3+amount)*x*20*0.0174533/(Math.PI+amount*Math.abs(x));}ws.curve=curve;ws.oversample='4x';return ws;}
+function createOscillators(){const now=AppState.audioCtx.currentTime;
+for(let i=0;i<AppState.NUM_OSC;i++){let osc;if(AppState.waveType==='fm'){osc=AppState.audioCtx.createOscillator();osc.type='sine';const modulator=AppState.audioCtx.createOscillator();modulator.type='sine';modulator.frequency.value=AppState.baseFreq*2;const modGain=AppState.audioCtx.createGain();modGain.gain.value=100;modulator.connect(modGain);modGain.connect(osc.frequency);modulator.start(now);}else if(AppState.waveType==='pulse'){osc=AppState.audioCtx.createOscillator();osc.type='square';}else{osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;}
+osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;if(AppState.waveType==='pulse'){const pulseWidth=AppState.audioCtx.createWaveShaper();const pulseCurve=new Float32Array(256);for(let j=0;j<256;j++){pulseCurve[j]=j<128*AppState.pulseWidth?-1:1;}pulseWidth.curve=pulseCurve;osc.connect(pulseWidth);pulseWidth.connect(AppState.masterGain);}else{osc.connect(AppState.masterGain);}osc.start(now);AppState.oscillators.push(osc);}}
+function connectAudioGraph(){
+AppState.masterGain.disconnect();audioNodes.distortion.disconnect();audioNodes.autoWah.disconnect();audioNodes.flangerDelay.disconnect();audioNodes.chorusDelay.disconnect();audioNodes.filter.disconnect();audioNodes.delay.disconnect();audioNodes.reverb.disconnect();audioNodes.panner.disconnect();
+let signal=AppState.masterGain;
+if(effects.dist){signal.connect(audioNodes.distortion);signal=audioNodes.distortion;}
+if(effects.autoWah){signal.connect(audioNodes.autoWah);signal=audioNodes.autoWah;}
+if(effects.flanger){signal.connect(audioNodes.flangerDelay);audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);signal=audioNodes.flangerDelay;}
+if(effects.chorus){signal.connect(audioNodes.chorusDelay);signal=audioNodes.chorusDelay;}
+signal.connect(audioNodes.filter);
+if(effects.delay){audioNodes.filter.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delay);signal=audioNodes.delay;}
+if(effects.reverb){signal.connect(audioNodes.reverb);signal=audioNodes.reverb;}
+if(effects.tremolo){audioNodes.tremoloGain.connect(signal.gain);}
+signal.connect(audioNodes.panner);audioNodes.panner.connect(AppState.audioCtx.destination);
+audioNodes.distortionGain.gain.value=effects.dist?1:0;audioNodes.autoWahGain.gain.value=effects.autoWah?1:0;audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:0;
 }
-
-let A=null,osc=[],master,panner,filter;
-let base=261.63,oct=0,tilt=0,isPlay=false;
-
-function initAudio(){
-A=new AudioContext();
-master=A.createGain();master.gain.value=.25;
-panner=A.createStereoPanner();
-
-filter=A.createBiquadFilter();filter.type="lowpass";filter.frequency.value=20000;
-
-connectChain();
-makeOsc();
-}
-
-function connectChain(){
-master.disconnect();
-master.connect(filter);
-filter.connect(panner);
-panner.connect(A.destination);
-}
-
-function makeOsc(){
-osc.forEach(o=>o.stop());
-osc=[];
-let t=A.currentTime;
-
-for(let i=0;i<7;i++){
-let o=A.createOscillator();
-o.type=$("#wave").value;
-o.frequency.value=base;
-o.detune.value=(i-3)*$("#detune").value;
-o.connect(master);
-o.start(t);
-osc.push(o);
-}
-}
-
-function setFreq(f){
-osc.forEach(o=>o.frequency.setTargetAtTime(f,A.currentTime,0.001));
-let n=nFromF(f);
-UI.note.textContent=n;
-theme(n.replace(/[0-9]/g,""));
-}
-
-function nFromF(f){
-let a=12*Math.log2(f/440)+57;
-let i=(Math.round(a)%12+12)%12;
-let o=Math.floor((Math.round(a))/12);
-return ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][i]+o;
-}
-
-function padFreq(y){
-let r=1-(y/innerHeight);
-let bf=65.41*Math.pow(2,oct);
-return bf*Math.pow(2,(r*24)/12);
-}
-
-/* TOUCH */
-on(UI.pad,"mousemove",e=>{if(e.buttons)touch(e.clientX,e.clientY)});
-on(UI.pad,"mousedown",e=>touch(e.clientX,e.clientY));
-on(UI.pad,"touchmove",e=>{
-e.preventDefault();
-let t=e.touches[0];touch(t.clientX,t.clientY);
-},{passive:false});
-
-function touch(x,y){
-if(!isPlay)return;
-let f=padFreq(y);setFreq(f);
-master.gain.setTargetAtTime((x/innerWidth)*0.5,A.currentTime,0.01);
-}
-
-/* UI */
-on(UI.toggle,"click",()=>UI.controls.classList.toggle("show"));
-
-$("#start").onclick=()=>{
-if(isPlay)return;
-initAudio();
-isPlay=true;
-$("#stop").disabled=false;
-$("#start").disabled=true;
-};
-
-$("#stop").onclick=()=>{
-isPlay=false;
-osc.forEach(o=>o.stop());
-A.close();
-$("#stop").disabled=true;
-$("#start").disabled=false;
-};
-
-$("#oct+").onclick=()=>{oct++;};
-$("#oct-").onclick=()=>{oct--;};
-
-$("#wave").onchange=()=>makeOsc();
-$("#detune").oninput=()=>makeOsc();
-$("#ff").oninput=e=>filter.frequency.value=e.target.value;
-$("#fq").oninput=e=>filter.Q.value=e.target.value;
-
-/* PANNING */
-let panOn=false;
-$("#panning").onclick=()=>{
-panOn=!panOn;
-$("#panning").classList.toggle("active",panOn);
-UI.pan.style.display=panOn?"block":"none";
-};
-
-addEventListener("deviceorientation",e=>{
-if(panOn && e.gamma!=null){
-let p=Math.max(-1,Math.min(1,e.gamma/90));
-panner.pan.setTargetAtTime(p,A.currentTime,.01);
-UI.pan.textContent=`Pan:${(p*100).toFixed(0)}%`;
-}
-});
-
-/* MOTION PITCH */
-let tiltOn=false;
-$("#motion").onclick=()=>{
-tiltOn=!tiltOn;
-$("#motion").classList.toggle("active",tiltOn);
-UI.tilt.style.display=tiltOn?"block":"none";
-};
-
-addEventListener("deviceorientation",e=>{
-if(tiltOn && e.beta!=null){
-let st=e.beta/45*12;
-tilt=st;
-let bf=padFreq(innerHeight/2);
-setFreq(bf*Math.pow(2,st/12));
-UI.tilt.textContent=`Tilt:${st.toFixed(1)}st`;
-}
-});
-
-/* RULER */
-(()=>{
-let notes=["C6","B5","A#5","A5","G#5","G5","F#5","F5",
-"E5","D#5","D5","C#5","C5","B4","A#4","A4","G#4","G4",
-"F#4","F4","E4","D#4","D4","C#4","C4"];
-UI.ruler.innerHTML=notes.map(n=>`<div class="r">${n}</div>`).join("");
-})();
+function createNoteRuler(){const notes=['C6','B5','A#5','A5','G#5','G5','F#5','F5','E5','D#5','D5','C#5','C5','B4','A#4','A4','G#4','G4','F#4','F4','E4','D#4','D4','C#4','C4'];elements.noteRuler.innerHTML='';notes.forEach(note=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=note;elements.noteRuler.appendChild(div);});}
+function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4);const noteIndex=Math.round(semitonesFromA4+9)%12;const octave=Math.floor((semitonesFromA4+9)/12);const noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};}
+function updateThemeColor(noteName){const color=noteColors[noteName]||[255,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);}
+function noteFromPad(y){const padHeight=window.innerHeight;const ratio=1-(y/padHeight);const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);return baseFreq*Math.pow(2,(ratio*24)/12);}
+function applyPitch(){if(!safeAudioOperation(()=>{const freq=AppState.baseFreq;const noteInfo=freqToNote(freq);AppState.oscillators.forEach((osc,i)=>{if(osc.frequency){osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.001);}});elements.noteDisplay.textContent=noteInfo.fullName;updateThemeColor(noteInfo.name);}))return;}
+let lastTouchTime=0;
+function handleTouch(e){const now=performance.now();if(now-lastTouchTime<1)return;lastTouchTime=now;if(!isAudioContextValid()){showStatus('Start synth first');return;}
+const clientY=e.touches?e.touches[0].clientY:e.clientY;const clientX=e.touches?e.touches[0].clientX:e.clientX;AppState.baseFreq=noteFromPad(clientY);const volume=clientX/window.innerWidth;safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.001);});applyPitch();}
+function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.001);const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;});}
+function stopSynth(){if(!AppState.audioCtx){showStatus('No synth running');return;}
+try{cleanupOscillators();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.isPlaying=false;updateButtonStates();showStatus('Stopped');}).catch(e=>{console.error(e);showStatus('Stop error');});}catch(e){console.error(e);showStatus('Stop error');}}
+function toggleControls(){elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
+function requestMotionPermission(){if(typeof DeviceOrientationEvent.requestPermission==='function'){elements.permissionModal.style.display='flex';}else{startMotionControl();}}
+function startMotionControl(){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;elements.motionBtn.textContent="Motion ON";elements.motionBtn.classList.add('active');elements.motionDisplay.style.display='block';showStatus('Motion enabled - Tilt device for pitch!');}
+function disableMotion(){window.removeEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=false;AppState.tiltBend=0;elements.motionBtn.textContent="Motion OFF";elements.motionBtn.classList.remove('active');elements.motionDisplay.style.display='none';showStatus('Motion disabled');}
+function togglePan(){AppState.panEnabled=!AppState.panEnabled;elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.panDisplay.style.display=AppState.panEnabled?'block':'none';if(!AppState.panEnabled){updatePan(0);}showStatus(AppState.panEnabled?'Pan enabled - Tilt device sideways!':'Pan disabled');}
+let lastOrientationTime=0;
+function handleOrientation(e){const now=performance.now();if(now-lastOrientationTime<4)return;lastOrientationTime=now;if(e.beta===null)return;const tilt=e.beta;const pan=e.gamma;if(AppState.motionEnabled){AppState.tiltBend=tilt/45*12;const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);elements.motionDisplay.textContent=`Tilt:${Math.round(AppState.tiltBend*10)/10}st`;applyPitch();}if(AppState.panEnabled&&pan!==null){const panValue=Math.max(-1,Math.min(1,pan/90));updatePan(panValue);}}
+function startRhythm(pattern){if(!isAudioContextValid()){showStatus('Start synth first');return;}
+stopRhythm();let interval;switch(pattern){case'8':interval=250;break;case'16':interval=125;break;case'32':interval=62;break;case'triplet':interval=167;break;}
+rhythmInterval=setInterval(()=>{safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(0.3,AppState.audioCtx.currentTime,0.001);setTimeout(()=>{if(isAudioContextValid()){AppState.masterGain.gain.setTargetAtTime(0.05,AppState.audioCtx.currentTime,0.001);}},20);});},interval);}
+function stopRhythm(){if(rhythmInterval){clearInterval(rhythmInterval);rhythmInterval=null;}}
+function initializeEventListeners(){elements.pad.addEventListener("touchstart",handleTouch,{passive:false});elements.pad.addEventListener("touchmove",handleTouch,{passive:false});elements.pad.addEventListener("mousedown",handleTouch);elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});elements.startBtn.addEventListener("click",startSynth);elements.stopBtn.addEventListener("click",stopSynth);elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():requestMotionPermission();});elements.panBtn.addEventListener("click",togglePan);elements.toggleControls.addEventListener("click",toggleControls);document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();createNoteRuler();});document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();createNoteRuler();});document.getElementById("permissionAllow").addEventListener("click",()=>{DeviceOrientationEvent.requestPermission().then(r=>{elements.permissionModal.style.display='none';if(r==='granted'){startMotionControl();}else{showStatus('Motion permission denied');}}).catch(e=>{elements.permissionModal.style.display='none';showStatus('Permission error');});});document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;cleanupOscillators();createOscillators();connectAudioGraph();showStatus('Wave: '+AppState.waveType);});document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{if(osc.detune)osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;});}});document.getElementById("filterFreq").addEventListener("input",e=>{audioNodes.filter.frequency.value=parseFloat(e.target.value);});document.getElementById("filterReso").addEventListener("input",e=>{audioNodes.filter.Q.value=parseFloat(e.target.value);});document.getElementById("autoWahRate").addEventListener("input",e=>{audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);});document.getElementById("autoWahDepth").addEventListener("input",e=>{audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);});const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleFilter:'filter',toggleDelay:'delay',toggleReverb:'reverb'};Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener("click",()=>{effects[effect]=!effects[effect];document.getElementById(id).classList.toggle('active',effects[effect]);connectAudioGraph();showStatus(effect+' '+(effects[effect]?'ON':'OFF'));if(effect==='autoWah'){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'ON':'OFF');}});});document.getElementById("rhythm8").addEventListener("click",()=>{startRhythm('8');showStatus('1/8 Rhythm');});document.getElementById("rhythm16").addEventListener("click",()=>{startRhythm('16');showStatus('1/16 Rhythm');});document.getElementById("rhythm32").addEventListener("click",()=>{startRhythm('32');showStatus('1/32 Rhythm');});document.getElementById("rhythmTriplet").addEventListener("click",()=>{startRhythm('triplet');showStatus('Triplet Rhythm');});document.getElementById("rhythmStop").addEventListener("click",()=>{stopRhythm();showStatus('Rhythm Stopped');});}
+window.addEventListener('load',()=>{updateThemeColor('C');initializeEventListeners();updateButtonStates();createNoteRuler();showStatus('Ready - Click Start then try effects!');});
+window.addEventListener("contextmenu",e=>e.preventDefault());
 </script>
-
 </body>
 </html>
