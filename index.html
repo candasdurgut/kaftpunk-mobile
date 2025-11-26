@@ -304,7 +304,7 @@ gap:10px;
 
 <div class="control-group">
 <label>Filter Freq</label>
-<input id="filterFreq" type="range" min="200" max="20000" value="20000" step="100"/>
+<input id="filterFreq" type="range" min="200" max="20000" value="5000" step="100"/>
 </div>
 
 <div class="control-group">
@@ -366,13 +366,14 @@ gap:10px;
 // Constants
 const CONSTANTS = {
 TOUCH_THROTTLE: 16,
-ORIENTATION_ALPHA: 0.12,
+ORIENTATION_ALPHA: 0.15,
 BASE_FREQ: 261.63,
 NUM_VOICES: 7,
 CLICK_DURATION: 0.08,
 CLICK_FREQ: 1000,
-BEAT_ATTACK: 0.01,
-BEAT_DURATION: 60,
+RHYTHM_ATTACK: 0.005,
+RHYTHM_RELEASE: 0.05,
+RHYTHM_VOLUME: 0.35,
 STATUS_DURATION: 1800,
 NOTE_NAMES: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
 NOTE_COLORS: {
@@ -542,7 +543,7 @@ const d = e.data;
 if (d.type === 'start') {
 isRunning = true;
 tempo = d.tempo || 120;
-startTime = d.audioTime + 0.05;
+startTime = d.audioTime + 0.02;
 workerStartTime = performance.now() / 1000;
 tickIndex = 0;
 setPattern(d.pattern || '16');
@@ -584,7 +585,7 @@ if (scheduleTime < elapsed + 0.1) {
 self.postMessage({type: 'beat', time: scheduleTime});
 tickIndex++;
 }
-setTimeout(() => scheduler(), 25);
+setTimeout(() => scheduler(), 20);
 }
 `;
 
@@ -600,7 +601,7 @@ waveType: 'sawtooth',
 detuneAmount: 15,
 fmDepth: 0,
 pulseWidth: 0.5,
-lastVolume: 0.15,
+lastVolume: 0.25,
 isPlaying: false,
 motionEnabled: false,
 panEnabled: false,
@@ -610,7 +611,8 @@ smoothedPan: 0,
 smoothedTilt: 0,
 lastDetuneKey: null,
 currentRhythmPattern: null,
-orientationRAFRunning: false
+orientationRAFRunning: false,
+rhythmGainNodes: []
 };
 
 // DOM Elements
@@ -743,8 +745,7 @@ this.reverbBuffer = null;
 
 async init() {
 this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-latencyHint: 'interactive',
-sampleRate: 44100
+latencyHint: 'interactive'
 });
 
 await this.audioContext.resume();
@@ -767,9 +768,11 @@ URL.revokeObjectURL(url);
 _createNodes() {
 const ctx = this.audioContext;
 
-// Core nodes
 this.nodes.master = ctx.createGain();
 this.nodes.master.gain.value = AppState.lastVolume;
+
+this.nodes.rhythmMixer = ctx.createGain();
+this.nodes.rhythmMixer.gain.value = 1;
 
 this.nodes.tremolo = ctx.createGain();
 this.nodes.tremolo.gain.value = 1;
@@ -779,10 +782,9 @@ this.nodes.panner.pan.value = 0;
 
 this.nodes.filter = ctx.createBiquadFilter();
 this.nodes.filter.type = 'lowpass';
-this.nodes.filter.frequency.value = 20000;
+this.nodes.filter.frequency.value = 5000;
 this.nodes.filter.Q.value = 1;
 
-// Effect nodes
 this.nodes.distortion = this._createWaveShaper(50);
 
 this.nodes.delay = ctx.createDelay(2);
@@ -800,13 +802,12 @@ this.nodes.autoWah.Q.value = 5;
 
 this.nodes.chorusDelay = ctx.createDelay(0.05);
 this.nodes.chorusFeedback = ctx.createGain();
-this.nodes.chorusFeedback.gain.value = 0.12;
+this.nodes.chorusFeedback.gain.value = 0.15;
 
 this.nodes.flangerDelay = ctx.createDelay(0.01);
 this.nodes.flangerFeedback = ctx.createGain();
-this.nodes.flangerFeedback.gain.value = 0.45;
+this.nodes.flangerFeedback.gain.value = 0.6;
 
-// Dry/Wet nodes
 const createDryWet = () => ({
 dry: ctx.createGain(),
 wet: ctx.createGain()
@@ -819,7 +820,6 @@ this.dryWet.chorus = createDryWet();
 this.dryWet.flanger = createDryWet();
 this.dryWet.merge = ctx.createGain();
 
-// Set initial values
 this.dryWet.dist.dry.gain.value = 1;
 this.dryWet.dist.wet.gain.value = 0;
 this.dryWet.delay.dry.gain.value = 1;
@@ -852,14 +852,14 @@ return;
 }
 
 const ctx = this.audioContext;
-const seconds = 0.5;
+const seconds = 1.2;
 const len = Math.floor(ctx.sampleRate * seconds);
 const buf = ctx.createBuffer(2, len, ctx.sampleRate);
 
 for (let c = 0; c < 2; c++) {
 const data = buf.getChannelData(c);
 for (let i = 0; i < len; i++) {
-data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5) * 0.6;
+data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3) * 0.5;
 }
 }
 
@@ -870,16 +870,15 @@ window._cachedReverb = buf;
 _connectGraph() {
 const ctx = this.audioContext;
 
-// Create worklet
 this.workletNode = new AudioWorkletNode(ctx, 'synth-processor', {
 outputChannelCount: [2]
 });
 
-// Main signal path
 this.workletNode.connect(this.nodes.tremolo);
 this.nodes.tremolo.connect(this.nodes.master);
 
-// Distortion
+this.nodes.rhythmMixer.connect(this.nodes.master);
+
 const master = this.nodes.master;
 master.connect(this.dryWet.dist.dry);
 master.connect(this.nodes.distortion);
@@ -889,13 +888,9 @@ const postDist = ctx.createGain();
 this.dryWet.dist.dry.connect(postDist);
 this.dryWet.dist.wet.connect(postDist);
 
-// Auto Wah
 postDist.connect(this.nodes.autoWah);
-
-// Filter
 this.nodes.autoWah.connect(this.nodes.filter);
 
-// Delay
 const filterOut = this.nodes.filter;
 filterOut.connect(this.dryWet.delay.dry);
 filterOut.connect(this.nodes.delay);
@@ -903,26 +898,22 @@ this.nodes.delay.connect(this.dryWet.delay.wet);
 this.nodes.delay.connect(this.nodes.delayFeedback);
 this.nodes.delayFeedback.connect(this.nodes.delay);
 
-// Reverb
 filterOut.connect(this.dryWet.reverb.dry);
 filterOut.connect(this.nodes.reverb);
 this.nodes.reverb.connect(this.dryWet.reverb.wet);
 
-// Chorus
 filterOut.connect(this.dryWet.chorus.dry);
 filterOut.connect(this.nodes.chorusDelay);
 this.nodes.chorusDelay.connect(this.nodes.chorusFeedback);
 this.nodes.chorusFeedback.connect(this.nodes.chorusDelay);
 this.nodes.chorusDelay.connect(this.dryWet.chorus.wet);
 
-// Flanger
 filterOut.connect(this.dryWet.flanger.dry);
 filterOut.connect(this.nodes.flangerDelay);
 this.nodes.flangerDelay.connect(this.nodes.flangerFeedback);
 this.nodes.flangerFeedback.connect(this.nodes.flangerDelay);
 this.nodes.flangerDelay.connect(this.dryWet.flanger.wet);
 
-// Merge all effects
 this.dryWet.delay.dry.connect(this.dryWet.merge);
 this.dryWet.delay.wet.connect(this.dryWet.merge);
 this.dryWet.reverb.dry.connect(this.dryWet.merge);
@@ -932,7 +923,6 @@ this.dryWet.chorus.wet.connect(this.dryWet.merge);
 this.dryWet.flanger.dry.connect(this.dryWet.merge);
 this.dryWet.flanger.wet.connect(this.dryWet.merge);
 
-// Final output
 this.dryWet.merge.connect(this.nodes.panner);
 this.nodes.panner.connect(ctx.destination);
 }
@@ -977,17 +967,17 @@ const e = this.effects;
 this.dryWet.dist.wet.gain.value = e.dist ? 1 : 0;
 this.dryWet.dist.dry.gain.value = e.dist ? 0 : 1;
 
-this.dryWet.delay.wet.gain.value = e.delay ? 0.28 : 0;
-this.dryWet.delay.dry.gain.value = e.delay ? 0.72 : 1;
+this.dryWet.delay.wet.gain.value = e.delay ? 0.45 : 0;
+this.dryWet.delay.dry.gain.value = e.delay ? 0.55 : 1;
 
-this.dryWet.reverb.wet.gain.value = e.reverb ? 0.4 : 0;
-this.dryWet.reverb.dry.gain.value = e.reverb ? 0.6 : 1;
+this.dryWet.reverb.wet.gain.value = e.reverb ? 0.55 : 0;
+this.dryWet.reverb.dry.gain.value = e.reverb ? 0.45 : 1;
 
-this.dryWet.chorus.wet.gain.value = e.chorus ? 0.5 : 0;
-this.dryWet.chorus.dry.gain.value = e.chorus ? 0.5 : 1;
+this.dryWet.chorus.wet.gain.value = e.chorus ? 0.6 : 0;
+this.dryWet.chorus.dry.gain.value = e.chorus ? 0.4 : 1;
 
-this.dryWet.flanger.wet.gain.value = e.flanger ? 0.5 : 0;
-this.dryWet.flanger.dry.gain.value = e.flanger ? 0.5 : 1;
+this.dryWet.flanger.wet.gain.value = e.flanger ? 0.65 : 0;
+this.dryWet.flanger.dry.gain.value = e.flanger ? 0.35 : 1;
 
 this._updateLFO('autoWah', e.autoWah);
 this._updateLFO('flanger', e.flanger);
@@ -1010,14 +1000,14 @@ lfo.connect(gain);
 gain.connect(this.nodes.autoWah.frequency);
 break;
 case 'flanger':
-lfo.frequency.value = 0.25;
-gain.gain.value = 0.005;
+lfo.frequency.value = 0.4;
+gain.gain.value = 0.008;
 lfo.connect(gain);
 gain.connect(this.nodes.flangerDelay.delayTime);
 break;
 case 'chorus':
-lfo.frequency.value = 0.6;
-gain.gain.value = 0.01;
+lfo.frequency.value = 0.7;
+gain.gain.value = 0.025;
 lfo.connect(gain);
 gain.connect(this.nodes.chorusDelay.delayTime);
 break;
@@ -1080,6 +1070,13 @@ node.offset.disconnect();
 });
 
 this.lfoNodes = {};
+
+AppState.rhythmGainNodes.forEach(g => {
+try {
+g.disconnect();
+} catch (e) {}
+});
+AppState.rhythmGainNodes = [];
 } catch (e) {
 console.warn('Engine disposal error:', e);
 }
@@ -1213,7 +1210,6 @@ const touch = e.touches ? e.touches[0] : e;
 const freq = Utils.noteFromPad(touch.clientY) * Math.pow(2, AppState.octaveOffset);
 AppState.baseFreq = freq;
 
-// Update pitch
 try {
 const param = AppState.workletNode.parameters.get('baseFreq');
 const t = AppState.audioCtx.currentTime;
@@ -1229,9 +1225,8 @@ Utils.updateThemeColor(noteInfo.name);
 console.warn('Pitch update error:', err);
 }
 
-// Update volume
-const targetVol = (touch.clientX / window.innerWidth) * 0.45;
-AppState.lastVolume += (targetVol - AppState.lastVolume) * 0.1;
+const targetVol = (touch.clientX / window.innerWidth) * 0.5;
+AppState.lastVolume += (targetVol - AppState.lastVolume) * 0.15;
 
 try {
 AppState.engine.nodes.master.gain.setTargetAtTime(
@@ -1243,7 +1238,6 @@ AppState.audioCtx.currentTime,
 console.warn('Volume update error:', err);
 }
 
-// Visual feedback
 DOM.pad.classList.add('touch-active');
 setTimeout(() => DOM.pad.classList.remove('touch-active'), 200);
 
@@ -1315,7 +1309,6 @@ return;
 
 AppState.currentRhythmPattern = pattern;
 
-// Update UI
 document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn => {
 btn.classList.remove('active');
 });
@@ -1334,21 +1327,51 @@ document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn => {
 btn.classList.remove('active');
 });
 
+AppState.rhythmGainNodes.forEach(g => {
+try {
+g.disconnect();
+} catch (e) {}
+});
+AppState.rhythmGainNodes = [];
+
 Utils.showStatus('Rhythm stopped');
 },
 
 rhythmBeat(time) {
+if (!AppState.isPlaying || !AppState.audioCtx) return;
+
 try {
-const g = AppState.engine.nodes.master;
-g.gain.setTargetAtTime(0.28, time, CONSTANTS.BEAT_ATTACK);
+const ctx = AppState.audioCtx;
+const now = ctx.currentTime;
+const beatTime = Math.max(time, now);
+
+const envelope = ctx.createGain();
+envelope.gain.value = 0;
+envelope.gain.setValueAtTime(0, beatTime);
+envelope.gain.linearRampToValueAtTime(CONSTANTS.RHYTHM_VOLUME, beatTime + CONSTANTS.RHYTHM_ATTACK);
+envelope.gain.linearRampToValueAtTime(0, beatTime + CONSTANTS.RHYTHM_ATTACK + CONSTANTS.RHYTHM_RELEASE);
+
+envelope.connect(AppState.engine.nodes.rhythmMixer);
+
+AppState.rhythmGainNodes.push(envelope);
+if (AppState.rhythmGainNodes.length > 10) {
+const old = AppState.rhythmGainNodes.shift();
+setTimeout(() => {
+try {
+old.disconnect();
+} catch (e) {}
+}, 200);
+}
 
 setTimeout(() => {
-if (AppState.isPlaying) {
-g.gain.setTargetAtTime(AppState.lastVolume, AppState.audioCtx.currentTime, 0.02);
-}
-}, CONSTANTS.BEAT_DURATION);
+try {
+envelope.disconnect();
+const idx = AppState.rhythmGainNodes.indexOf(envelope);
+if (idx > -1) AppState.rhythmGainNodes.splice(idx, 1);
+} catch (e) {}
+}, 300);
 
-this.createClickSound(time);
+this.createClickSound(beatTime);
 this.triggerVisualFeedback();
 } catch (e) {
 console.warn('Rhythm beat error:', e);
@@ -1366,7 +1389,7 @@ const g = ctx.createGain();
 
 osc.type = 'sine';
 osc.frequency.setValueAtTime(CONSTANTS.CLICK_FREQ, t);
-g.gain.setValueAtTime(0.14, t);
+g.gain.setValueAtTime(0.18, t);
 g.gain.exponentialRampToValueAtTime(0.001, t + CONSTANTS.CLICK_DURATION);
 
 osc.connect(g);
@@ -1452,7 +1475,6 @@ DOM.pulseWidthControl.style.display = wave === 'pulse' ? 'flex' : 'none';
 
 // Event Listeners
 function initEventListeners() {
-// Touch/Mouse events
 DOM.pad.addEventListener('touchstart', e => App.handleTouch(e), {passive: false});
 DOM.pad.addEventListener('touchmove', e => App.handleTouch(e), {passive: false});
 DOM.pad.addEventListener('mousedown', e => App.handleTouch(e));
@@ -1460,7 +1482,6 @@ DOM.pad.addEventListener('mousemove', e => {
 if (e.buttons === 1) App.handleTouch(e);
 });
 
-// Control buttons
 DOM.startBtn.addEventListener('click', () => App.start());
 DOM.stopBtn.addEventListener('click', () => App.stop());
 
@@ -1482,7 +1503,6 @@ Utils.createNoteRuler();
 Utils.showStatus(`Octave: ${AppState.octaveOffset}`);
 });
 
-// Wave select
 DOM.waveSelect.addEventListener('change', e => {
 AppState.waveType = e.target.value;
 App.updateWaveControls(AppState.waveType);
@@ -1502,7 +1522,6 @@ Utils.savePreferences();
 Utils.showStatus(`Wave: ${AppState.waveType}`);
 });
 
-// Detune
 document.getElementById('detuneRange').addEventListener('input', e => {
 AppState.detuneAmount = parseFloat(e.target.value);
 
@@ -1530,7 +1549,6 @@ console.warn('Detune update error:', err);
 Utils.savePreferences();
 });
 
-// FM Depth
 document.getElementById('fmDepthRange').addEventListener('input', e => {
 AppState.fmDepth = parseFloat(e.target.value);
 if (AppState.workletNode) {
@@ -1543,7 +1561,6 @@ AppState.audioCtx.currentTime
 }
 });
 
-// Pulse Width
 document.getElementById('pulseWidthRange').addEventListener('input', e => {
 AppState.pulseWidth = parseFloat(e.target.value);
 if (AppState.workletNode) {
@@ -1556,7 +1573,6 @@ AppState.audioCtx.currentTime
 }
 });
 
-// Filter
 document.getElementById('filterFreq').addEventListener('input', e => {
 if (AppState.engine) {
 AppState.engine.nodes.filter.frequency.value = parseFloat(e.target.value);
@@ -1570,7 +1586,6 @@ AppState.engine.nodes.filter.Q.value = q;
 }
 });
 
-// Wah controls
 document.getElementById('autoWahRate').addEventListener('input', e => {
 if (AppState.engine && AppState.engine.lfoNodes.autoWah) {
 AppState.engine.lfoNodes.autoWah.lfo.frequency.value = parseFloat(e.target.value);
@@ -1583,7 +1598,6 @@ AppState.engine.lfoNodes.autoWah.gain.gain.value = parseFloat(e.target.value);
 }
 });
 
-// Effect toggles
 document.querySelectorAll('.effect-group button[data-effect]').forEach(btn => {
 btn.addEventListener('click', () => {
 if (!AppState.isPlaying) {
@@ -1605,7 +1619,6 @@ DOM.wahDisplay.textContent = `Wah:${AppState.engine.effects.autoWah ? 'ON' : 'OF
 });
 });
 
-// Rhythm buttons
 document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn => {
 btn.addEventListener('click', () => {
 const pattern = btn.dataset.pattern;
@@ -1617,7 +1630,6 @@ document.getElementById('rhythmStop').addEventListener('click', () => {
 App.stopRhythm();
 });
 
-// Motion button
 DOM.motionBtn.addEventListener('click', () => {
 if (AppState.motionEnabled) {
 App.disableMotion();
@@ -1626,7 +1638,6 @@ App.requestMotionPermission();
 }
 });
 
-// Pan button
 DOM.panBtn.addEventListener('click', () => {
 if (AppState.panEnabled) {
 App.disablePan();
@@ -1635,7 +1646,6 @@ App.enablePan();
 }
 });
 
-// Permission modal
 document.getElementById('permissionAllow').addEventListener('click', () => {
 DeviceOrientationEvent.requestPermission()
 .then(res => {
@@ -1658,26 +1668,33 @@ DOM.permissionModal.style.display = 'none';
 Utils.showStatus('Motion disabled');
 });
 
-// Page visibility
 document.addEventListener('visibilitychange', () => {
 if (document.hidden && AppState.isPlaying) {
-Utils.showStatus('App in background');
+try {
+AppState.audioCtx.suspend();
+Utils.showStatus('Paused (background)');
+} catch (e) {}
+} else if (!document.hidden && AppState.isPlaying) {
+try {
+AppState.audioCtx.resume();
+Utils.showStatus('Resumed');
+} catch (e) {}
 }
 });
 
-// Prevent context menu
 window.addEventListener('contextmenu', e => e.preventDefault());
 
-// Cleanup on unload
 window.addEventListener('beforeunload', () => {
 Utils.savePreferences();
-if (AppState.schedulerWorker) {
-AppState.schedulerWorker.terminate();
+if (App.scheduler) {
+App.scheduler.dispose();
+}
+if (AppState.audioCtx) {
+AppState.audioCtx.close();
 }
 });
 }
 
-// Initialize
 window.addEventListener('load', () => {
 Utils.createNoteRuler();
 Utils.loadPreferences();
