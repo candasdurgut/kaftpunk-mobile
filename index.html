@@ -7,1696 +7,201 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>Synth Pro</title>
 <style>
-:root{
---r:100;--g:100;--b:100;
---bg:rgb(var(--r),var(--g),var(--b));
---control-bg:rgba(0,0,0,0.18);
---text:#f0f0f0;
---border:rgba(var(--r),var(--g),var(--b),0.45);
---safe-top:env(safe-area-inset-top);
---safe-bottom:env(safe-area-inset-bottom);
-}
+:root{--r:100;--g:100;--b:100;--bg:rgb(var(--r),var(--g),var(--b));--control-bg:rgba(0,0,0,0.18);--text:#f0f0f0;--border:rgba(var(--r),var(--g),var(--b),0.45);--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{
-height:100%;
-height:100dvh;
-background:#111;
-color:var(--text);
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-overflow:hidden;
--webkit-user-select:none;
-user-select:none;
--webkit-touch-callout:none;
-}
+html,body{height:100%;height:100dvh;background:#111;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 body{background:var(--bg);transition:background .15s ease}
-#pad{
-height:100vh;
-height:100dvh;
-display:flex;
-align-items:center;
-justify-content:center;
-position:relative;
-background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.45));
-cursor:crosshair;
-touch-action:none;
-}
-.display-badge{
-position:absolute;
-background:rgba(0,0,0,0.75);
-color:var(--text);
-padding:8px 14px;
-border-radius:18px;
-border:1px solid var(--border);
-backdrop-filter:blur(10px);
-z-index:10;
-font-size:13px;
-pointer-events:none;
-}
-#noteDisplay{
-top:max(20px,var(--safe-top));
-left:50%;
-transform:translateX(-50%);
-font-size:22px;
-font-weight:600;
-}
-#octaveDisplay{
-top:max(20px,var(--safe-top));
-right:16px;
-}
-#motionDisplay,#wahDisplay,#panDisplay{
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-display:none;
-}
-#wahDisplay{bottom:60px}
-#panDisplay{bottom:100px}
-#noteRuler{
-position:absolute;
-right:0;
-top:0;
-bottom:0;
-width:60px;
-background:rgba(0,0,0,0.3);
-border-left:1px solid var(--border);
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-padding:8px 0;
-pointer-events:none;
-}
-.ruler-note{
-display:flex;
-align-items:center;
-justify-content:center;
-flex:1;
-font-size:11px;
-color:var(--border);
-border-bottom:1px solid rgba(255,255,255,0.08);
-}
-#controls{
-position:fixed;
-left:0;
-right:0;
-bottom:0;
-padding:12px;
-padding-bottom:max(12px,var(--safe-bottom));
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-gap:8px;
-background:rgba(0,0,0,0.92);
-backdrop-filter:blur(14px);
-border-top:1px solid var(--border);
-transform:translateY(calc(100% - 50px));
-transition:transform .3s ease;
-max-height:70vh;
-overflow-y:auto;
--webkit-overflow-scrolling:touch;
-}
+#pad{height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.45));cursor:crosshair;touch-action:none;}
+.display-badge{position:absolute;background:rgba(0,0,0,0.75);color:var(--text);padding:8px 14px;border-radius:18px;border:1px solid var(--border);backdrop-filter:blur(10px);z-index:10;font-size:13px;pointer-events:none;}
+#noteDisplay{top:max(20px,var(--safe-top));left:50%;transform:translateX(-50%);font-size:22px;font-weight:600;}
+#octaveDisplay{top:max(20px,var(--safe-top));right:16px;}
+#motionDisplay,#wahDisplay,#panDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}
+#wahDisplay{bottom:60px}#panDisplay{bottom:100px}
+#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:rgba(0,0,0,0.3);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;padding:8px 0;pointer-events:none;}
+.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--border);border-bottom:1px solid rgba(255,255,255,0.08);}
+#controls{position:fixed;left:0;right:0;bottom:0;padding:12px;padding-bottom:max(12px,var(--safe-bottom));display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;background:rgba(0,0,0,0.92);backdrop-filter:blur(14px);border-top:1px solid var(--border);transform:translateY(calc(100% - 50px));transition:transform .3s ease;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #controls.expanded{transform:translateY(0)}
-#toggleControls{
-position:fixed;
-right:18px;
-bottom:max(12px,var(--safe-bottom));
-width:52px;
-height:52px;
-border-radius:50%;
-background:var(--bg);
-border:2px solid var(--border);
-display:flex;
-align-items:center;
-justify-content:center;
-cursor:pointer;
-z-index:1000;
-font-size:20px;
-box-shadow:0 4px 12px rgba(0,0,0,0.3);
-}
-button,select,input[type=range],label{
-font-family:inherit;
-font-size:12px;
-border-radius:8px;
-border:1px solid var(--border);
-background:var(--control-bg);
-color:var(--text);
-padding:10px;
-}
-button{
-cursor:pointer;
-transition:all .2s ease;
-font-weight:500;
-}
+#toggleControls{position:fixed;right:18px;bottom:max(12px,var(--safe-bottom));width:52px;height:52px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1000;font-size:20px;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+button,select,input[type=range],label{font-family:inherit;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--control-bg);color:var(--text);padding:10px;}
+button{cursor:pointer;transition:all .2s ease;font-weight:500;}
 button:active{transform:scale(.96)}
-button.active{
-background:var(--bg);
-color:#111;
-font-weight:700;
-}
-button:disabled{
-opacity:0.5;
-cursor:not-allowed;
-}
-.control-group{
-display:flex;
-flex-direction:column;
-align-items:center;
-gap:5px;
-}
-.control-group label{
-font-size:11px;
-color:#aaa;
-text-align:center;
-}
-input[type=range]{
-width:100%;
-height:6px;
-background:rgba(255,255,255,0.1);
-border:none;
-border-radius:3px;
-outline:none;
--webkit-appearance:none;
-}
-input[type=range]::-webkit-slider-thumb{
--webkit-appearance:none;
-width:18px;
-height:18px;
-background:var(--bg);
-cursor:pointer;
-border-radius:50%;
-border:2px solid var(--border);
-}
-.rhythm-panel,.effect-group{
-grid-column:1/-1;
-display:grid;
-padding:10px;
-border-radius:10px;
-border:1px solid var(--border);
-gap:8px;
-}
-.rhythm-panel{
-grid-template-columns:repeat(5,1fr);
-background:rgba(0,0,0,0.35);
-}
-.effect-group{
-grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
-background:rgba(0,0,0,0.35);
-}
-#statusMessage{
-position:fixed;
-left:50%;
-transform:translateX(-50%);
-bottom:80px;
-background:rgba(0,0,0,0.9);
-padding:10px 16px;
-border-radius:10px;
-opacity:0;
-transition:opacity .25s ease;
-color:#fff;
-font-size:13px;
-pointer-events:none;
-z-index:100;
-border:1px solid var(--border);
-}
+button.active{background:var(--bg);color:#111;font-weight:700;}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+.control-group{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.control-group label{font-size:11px;color:#aaa;text-align:center;}
+input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border:none;border-radius:3px;outline:none;-webkit-appearance:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--bg);cursor:pointer;border-radius:50%;border:2px solid var(--border);}
+.rhythm-panel,.effect-group{grid-column:1/-1;display:grid;padding:10px;border-radius:10px;border:1px solid var(--border);gap:8px;}
+.rhythm-panel{grid-template-columns:repeat(5,1fr);background:rgba(0,0,0,0.35);}
+.effect-group{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));background:rgba(0,0,0,0.35);}
+#statusMessage{position:fixed;left:50%;transform:translateX(-50%);bottom:80px;background:rgba(0,0,0,0.9);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .25s ease;color:#fff;font-size:13px;pointer-events:none;z-index:100;border:1px solid var(--border);}
 #statusMessage.show{opacity:1}
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.85);
-align-items:center;
-justify-content:center;
-z-index:2000;
-}
-.modal-content{
-background:rgba(20,20,20,0.98);
-padding:24px;
-border-radius:16px;
-border:1px solid var(--border);
-max-width:320px;
-text-align:center;
-}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:2000;}
+.modal-content{background:rgba(20,20,20,0.98);padding:24px;border-radius:16px;border:1px solid var(--border);max-width:320px;text-align:center;}
 .modal-content h3{margin-bottom:12px;font-size:18px}
 .modal-content p{margin-bottom:16px;color:#ccc;font-size:14px}
-.modal-buttons{
-display:flex;
-gap:10px;
-}
+.modal-buttons{display:flex;gap:10px;}
 .modal-buttons button{flex:1}
-@keyframes touchPulse{
-0%{transform:scale(1);opacity:0.8}
-50%{transform:scale(1.05);opacity:1}
-100%{transform:scale(1);opacity:0.8}
-}
+@keyframes touchPulse{0%{transform:scale(1);opacity:0.8}50%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:0.8}}
 .touch-active{animation:touchPulse .2s ease}
-@keyframes beatFlash{
-0%{background:var(--bg)}
-50%{filter:brightness(1.3)}
-100%{background:var(--bg)}
-}
+@keyframes beatFlash{0%{background:var(--bg)}50%{filter:brightness(1.3)}100%{background:var(--bg)}}
 .beat-flash{animation:beatFlash .15s ease}
 </style>
 </head>
 <body>
+
 <div id="pad">
-<div id="noteDisplay" class="display-badge">C4</div>
-<div id="octaveDisplay" class="display-badge">Oct:0</div>
-<div id="motionDisplay" class="display-badge">Tilt:0°</div>
-<div id="wahDisplay" class="display-badge">Wah:OFF</div>
-<div id="panDisplay" class="display-badge">Pan:0%</div>
-<div id="noteRuler"></div>
+    <div id="noteDisplay" class="display-badge">C4</div>
+    <div id="octaveDisplay" class="display-badge">Oct:0</div>
+    <div id="motionDisplay" class="display-badge">Tilt:0°</div>
+    <div id="wahDisplay" class="display-badge">Wah:OFF</div>
+    <div id="panDisplay" class="display-badge">Pan:0%</div>
+    <div id="noteRuler"></div>
 </div>
-
 <button id="toggleControls">⚙️</button>
-
 <div id="controls">
-<button id="startBtn">Start</button>
-<button id="stopBtn" disabled>Stop</button>
-<button id="motionBtn">Motion</button>
-<button id="panBtn">Pan</button>
-<button id="octDown">Oct−</button>
-<button id="octUp">Oct+</button>
-
-<div class="control-group">
-<label>Wave</label>
-<select id="waveSelect">
-<option value="sawtooth">Sawtooth</option>
-<option value="triangle">Triangle</option>
-<option value="square">Square</option>
-<option value="sine">Sine</option>
-<option value="pulse">Pulse</option>
-<option value="fm">FM</option>
-</select>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="motionBtn">Motion</button>
+    <button id="panBtn">Pan</button>
+    <button id="octDown">Oct−</button>
+    <button id="octUp">Oct+</button>
+    <div class="control-group"><label>Wave</label><select id="waveSelect"><option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option><option value="square">Square</option><option value="sine">Sine</option><option value="pulse">Pulse</option><option value="fm">FM</option></select></div>
+    <div class="control-group"><label>Detune (¢)</label><input id="detuneRange" type="range" min="0" max="50" value="15"/></div>
+    <div class="control-group" id="fmDepthControl" style="display:none"><label>FM Depth</label><input id="fmDepthRange" type="range" min="0" max="1200" value="400"/></div>
+    <div class="control-group" id="pulseWidthControl" style="display:none"><label>Pulse Width</label><input id="pulseWidthRange" type="range" min="0.01" max="0.99" value="0.5" step="0.01"/></div>
+    <div class="control-group"><label>Filter Freq</label><input id="filterFreq" type="range" min="200" max="20000" value="5000" step="100"/></div>
+    <div class="control-group"><label>Filter Q</label><input id="filterReso" type="range" min="0.5" max="10" value="2" step="0.1"/></div>
+    <div class="rhythm-panel"><button id="rhythm4" data-pattern="4">1/4</button><button id="rhythm8" data-pattern="8">1/8</button><button id="rhythm16" data-pattern="16">1/16</button><button id="rhythm32" data-pattern="32">1/32</button><button id="rhythmStop">Stop</button><button id="rhythmTriplet" data-pattern="triplet">Trip</button><button id="rhythmShuffle" data-pattern="shuffle">Shuf</button><button id="rhythmDotted" data-pattern="dotted">Dot</button><button id="rhythmStutter" data-pattern="stutter">Stut</button><button id="rhythmRandom" data-pattern="random">Rnd</button></div>
+    <div class="effect-group"><button id="toggleDist" data-effect="dist">Distortion</button><button id="toggleAutoWah" data-effect="autoWah">Auto Wah</button><button id="toggleFlanger" data-effect="flanger">Flanger</button><button id="toggleChorus" data-effect="chorus">Chorus</button><button id="toggleTremolo" data-effect="tremolo">Tremolo</button><button id="toggleFilter" data-effect="filter" class="active">Filter</button><button id="toggleDelay" data-effect="delay">Delay</button><button id="toggleReverb" data-effect="reverb">Reverb</button></div>
 </div>
-
-<div class="control-group">
-<label>Detune (¢)</label>
-<input id="detuneRange" type="range" min="0" max="50" value="15"/>
-</div>
-
-<div class="control-group" id="fmDepthControl" style="display:none">
-<label>FM Depth</label>
-<input id="fmDepthRange" type="range" min="0" max="1200" value="400"/>
-</div>
-
-<div class="control-group" id="pulseWidthControl" style="display:none">
-<label>Pulse Width</label>
-<input id="pulseWidthRange" type="range" min="0.01" max="0.99" value="0.5" step="0.01"/>
-</div>
-
-<div class="control-group">
-<label>Filter Freq</label>
-<input id="filterFreq" type="range" min="200" max="20000" value="5000" step="100"/>
-</div>
-
-<div class="control-group">
-<label>Filter Q</label>
-<input id="filterReso" type="range" min="0.5" max="10" value="2" step="0.1"/>
-</div>
-
-<div class="control-group">
-<label>Wah Rate</label>
-<input id="autoWahRate" type="range" min="0.1" max="8" value="2" step="0.1"/>
-</div>
-
-<div class="control-group">
-<label>Wah Depth</label>
-<input id="autoWahDepth" type="range" min="0" max="1200" value="700"/>
-</div>
-
-<div class="rhythm-panel">
-<button id="rhythm4" data-pattern="4">1/4</button>
-<button id="rhythm8" data-pattern="8">1/8</button>
-<button id="rhythm16" data-pattern="16">1/16</button>
-<button id="rhythm32" data-pattern="32">1/32</button>
-<button id="rhythmStop">Stop</button>
-<button id="rhythmTriplet" data-pattern="triplet">Trip</button>
-<button id="rhythmShuffle" data-pattern="shuffle">Shuf</button>
-<button id="rhythmDotted" data-pattern="dotted">Dot</button>
-<button id="rhythmStutter" data-pattern="stutter">Stut</button>
-<button id="rhythmRandom" data-pattern="random">Rnd</button>
-</div>
-
-<div class="effect-group">
-<button id="toggleDist" data-effect="dist">Distortion</button>
-<button id="toggleAutoWah" data-effect="autoWah">Auto Wah</button>
-<button id="toggleFlanger" data-effect="flanger">Flanger</button>
-<button id="toggleChorus" data-effect="chorus">Chorus</button>
-<button id="toggleTremolo" data-effect="tremolo">Tremolo</button>
-<button id="toggleFilter" data-effect="filter" class="active">Filter</button>
-<button id="toggleDelay" data-effect="delay">Delay</button>
-<button id="toggleReverb" data-effect="reverb">Reverb</button>
-</div>
-</div>
-
 <div id="statusMessage"></div>
-
-<div id="permissionModal" class="modal">
-<div class="modal-content">
-<h3>Motion Access</h3>
-<p>Enable device motion sensors for tilt control?</p>
-<div class="modal-buttons">
-<button id="permissionAllow">Allow</button>
-<button id="permissionDeny">Deny</button>
-</div>
-</div>
-</div>
+<div id="permissionModal" class="modal"><div class="modal-content"><h3>Motion Access</h3><p>Enable device motion sensors for tilt control?</p><div class="modal-buttons"><button id="permissionAllow">Allow</button><button id="permissionDeny">Deny</button></div></div></div>
 
 <script>
 'use strict';
 
-// Constants
+// --- Constants ---
 const CONSTANTS = {
-    TOUCH_THROTTLE: 16,
-    ORIENTATION_ALPHA: 0.12,
-    BASE_FREQ: 261.63,
-    NUM_VOICES: 7,
-    CLICK_DURATION: 0.08,
-    CLICK_FREQ: 1000,
-    BEAT_ATTACK: 0.01,
-    BEAT_DURATION: 0.06,
-    STATUS_DURATION: 1800,
+    TOUCH_THROTTLE: 16, ORIENTATION_ALPHA: 0.12, BASE_FREQ: 261.63, NUM_VOICES: 7,
+    CLICK_DURATION: 0.08, CLICK_FREQ: 1000, BEAT_ATTACK: 0.01, BEAT_DURATION: 0.06, STATUS_DURATION: 1800,
     NOTE_NAMES: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
-    NOTE_COLORS: {
-        'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],
-        'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],
-        'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]
-    },
-    NOTE_FREQS: {
-        'A#2':116.54,'B2':123.47,'C3':130.81,'C#3':138.59,'D3':146.83,'D#3':155.56,
-        'E3':164.81,'F3':174.61,'F#3':185,'G3':196,'G#3':207.65,'A3':220,
-        'A#3':233.08,'B3':246.94,'C4':261.63,'C#4':277.18,'D4':293.66
-    }
+    NOTE_COLORS: {'C':[255,100,100],'C#':[255,150,100],'D':[255,255,100],'D#':[150,255,100],'E':[100,255,100],'F':[100,255,150],'F#':[100,255,255],'G':[100,150,255],'G#':[100,100,255],'A':[150,100,255],'A#':[255,100,255],'B':[255,100,150]},
+    NOTE_FREQS: {'A#2':116.54,'B2':123.47,'C3':130.81,'C#3':138.59,'D3':146.83,'D#3':155.56,'E3':164.81,'F3':174.61,'F#3':185,'G3':196,'G#3':207.65,'A3':220,'A#3':233.08,'B3':246.94,'C4':261.63,'C#4':277.18,'D4':293.66}
 };
 
-// AudioWorklet Processor Code
+// --- AudioWorklet Processor Code ---
 const WORKLET_CODE = `
 class SynthProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
-        return [
-            {name:'baseFreq',defaultValue:261.63,minValue:20,maxValue:20000,automationRate:'a-rate'},
-            {name:'fmDepth',defaultValue:0,minValue:0,maxValue:5000,automationRate:'a-rate'},
-            {name:'pulseWidth',defaultValue:0.5,minValue:0.01,maxValue:0.99,automationRate:'k-rate'}
-        ];
+        return [{name:'baseFreq',defaultValue:261.63,minValue:20,maxValue:20000,automationRate:'a-rate'},{name:'fmDepth',defaultValue:0,minValue:0,maxValue:5000,automationRate:'a-rate'},{name:'pulseWidth',defaultValue:0.5,minValue:0.01,maxValue:0.99,automationRate:'k-rate'}];
     }
-    
-    constructor() {
-        super();
-        this.sr = sampleRate;
-        this.numVoices = 7;
-        this.phases = new Float32Array(this.numVoices);
-        this.detunes = new Float32Array(this.numVoices);
-        this.wave = 'sawtooth';
-        this.fmEnabled = false;
-        this.fmPhase = 0;
-        this.fmFreq = 2;
-        this.TWO_PI = 2 * Math.PI;
-        this.port.onmessage = e => this.handleMessage(e.data);
-    }
-    
-    handleMessage(data) {
-        if (data.type === 'detune' && data.values) {
-            for (let i = 0; i < Math.min(this.numVoices, data.values.length); i++) {
-                this.detunes[i] = data.values[i];
-            }
-        } else if (data.type === 'wave') {
-            this.wave = data.wave;
-            this.fmEnabled = data.wave === 'fm';
-        } else if (data.type === 'voices') {
-            const nv = Math.min(12, Math.max(1, data.count));
-            if (nv !== this.numVoices) {
-                this.numVoices = nv;
-                this.phases = new Float32Array(nv);
-                this.detunes = new Float32Array(nv);
-            }
-        }
-    }
-    
-    polyBLEP(t, dt) {
-        if (t < dt) {
-            t /= dt;
-            return t + t - t * t - 1;
-        } else if (t > 1 - dt) {
-            t = (t - 1) / dt;
-            return t * t + t + t + 1;
-        }
-        return 0;
-    }
-    
-    blSaw(phase, dt) {
-        const t = phase % 1;
-        let v = 2 * t - 1;
-        v -= this.polyBLEP(t, dt);
-        return v;
-    }
-    
-    blSquare(phase, duty, dt) {
-        const t = phase % 1;
-        let v = t < duty ? 1 : -1;
-        v += this.polyBLEP(t, dt);
-        const t2 = (t - duty + 1) % 1;
-        v -= this.polyBLEP(t2, dt);
-        return v;
-    }
-    
-    process(inputs, outputs, parameters) {
-        const out = outputs[0];
-        if (!out || !out[0]) return true;
-        
-        const chCount = out.length;
-        const frames = out[0].length;
-        const baseFreqArr = parameters.baseFreq;
-        const fmDepthArr = parameters.fmDepth;
-        const pulseArr = parameters.pulseWidth;
-        
-        const detuneFactors = new Float32Array(this.numVoices);
-        for (let v = 0; v < this.numVoices; v++) {
-            detuneFactors[v] = Math.pow(2, (this.detunes[v] || 0) / 1200);
-        }
-        
-        for (let i = 0; i < frames; i++) {
-            const baseFreq = baseFreqArr.length > 1 ? baseFreqArr[i] : baseFreqArr[0];
-            const fmDepth = fmDepthArr.length > 1 ? fmDepthArr[i] : fmDepthArr[0];
-            const pulseW = pulseArr.length > 1 ? pulseArr[i] : pulseArr[0];
-            
-            const fmInc = (this.fmFreq || 2) / this.sr;
-            this.fmPhase += fmInc;
-            if (this.fmPhase >= 1) this.fmPhase -= 1;
-            const fmMod = Math.sin(this.TWO_PI * this.fmPhase) * fmDepth;
-            
-            let maxF = baseFreq * detuneFactors[0];
-            for (let v = 1; v < this.numVoices; v++) {
-                const f = baseFreq * detuneFactors[v];
-                if (f > maxF) maxF = f;
-            }
-            maxF += Math.abs(fmMod);
-            maxF = Math.min(maxF, this.sr * 0.49);
-            const dt = Math.min(0.5, maxF / this.sr);
-            
-            let mix = 0;
-            for (let v = 0; v < this.numVoices; v++) {
-                let freq = baseFreq * detuneFactors[v];
-                if (this.fmEnabled && fmDepth !== 0) {
-                    freq += fmMod;
-                    freq = Math.max(20, Math.min(freq, this.sr * 0.49));
-                }
-                
-                const phaseInc = freq / this.sr;
-                let p = this.phases[v];
-                let s = 0;
-                
-                switch (this.wave) {
-                    case 'sine': s = Math.sin(this.TWO_PI * p); break;
-                    case 'square': s = this.blSquare(p, 0.5, dt); break;
-                    case 'pulse': s = this.blSquare(p, pulseW, dt); break;
-                    case 'sawtooth': s = this.blSaw(p, dt); break;
-                    case 'triangle': s = 2 * Math.abs(2 * (p - Math.floor(p + 0.5))) - 1; break;
-                    case 'fm': s = Math.sin(this.TWO_PI * p); break;
-                    default: s = Math.sin(this.TWO_PI * p);
-                }
-                
-                mix += s;
-                p += phaseInc;
-                if (p >= 1) p -= 1;
-                this.phases[v] = p;
-            }
-            
-            mix = (mix / this.numVoices) * 0.85;
-            for (let ch = 0; ch < chCount; ch++) {
-                out[ch][i] = mix;
-            }
-        }
-        return true;
-    }
+    constructor(){super();this.sr=sampleRate;this.numVoices=7;this.phases=new Float32Array(this.numVoices);this.detunes=new Float32Array(this.numVoices);this.wave='sawtooth';this.fmEnabled=false;this.fmPhase=0;this.fmFreq=2;this.TWO_PI=2*Math.PI;this.port.onmessage=e=>this.handleMessage(e.data);}
+    handleMessage(data){if(data.type==='detune'&&data.values){for(let i=0;i<Math.min(this.numVoices,data.values.length);i++){this.detunes[i]=data.values[i];}}else if(data.type==='wave'){this.wave=data.wave;this.fmEnabled=data.wave==='fm';}else if(data.type==='voices'){const nv=Math.min(12,Math.max(1,data.count));if(nv!==this.numVoices){this.numVoices=nv;this.phases=new Float32Array(nv);this.detunes=new Float32Array(nv);}}}
+    polyBLEP(t,dt){if(t<dt){t/=dt;return t+t-t*t-1;}else if(t>1-dt){t=(t-1)/dt;return t*t+t+t+1;}return 0;}
+    blSaw(phase,dt){const t=phase%1;let v=2*t-1;v-=this.polyBLEP(t,dt);return v;}
+    blSquare(phase,duty,dt){const t=phase%1;let v=t<duty?1:-1;v+=this.polyBLEP(t,dt);const t2=(t-duty+1)%1;v-=this.polyBLEP(t2,dt);return v;}
+    process(inputs,outputs,parameters){const out=outputs[0];if(!out||!out[0])return true;const chCount=out.length;const frames=out[0].length;const baseFreqArr=parameters.baseFreq;const fmDepthArr=parameters.fmDepth;const pulseArr=parameters.pulseWidth;const detuneFactors=new Float32Array(this.numVoices);for(let v=0;v<this.numVoices;v++){detuneFactors[v]=Math.pow(2,(this.detunes[v]||0)/1200);}for(let i=0;i<frames;i++){const baseFreq=baseFreqArr.length>1?baseFreqArr[i]:baseFreqArr[0];const fmDepth=fmDepthArr.length>1?fmDepthArr[i]:fmDepthArr[0];const pulseW=pulseArr.length>1?pulseArr[i]:pulseArr[0];const fmInc=(this.fmFreq||2)/this.sr;this.fmPhase+=fmInc;if(this.fmPhase>=1)this.fmPhase-=1;const fmMod=Math.sin(this.TWO_PI*this.fmPhase)*fmDepth;let maxF=baseFreq*detuneFactors[0];for(let v=1;v<this.numVoices;v++){const f=baseFreq*detuneFactors[v];if(f>maxF)maxF=f;}maxF+=Math.abs(fmMod);maxF=Math.min(maxF,this.sr*0.49);const dt=Math.min(0.5,maxF/this.sr);let mix=0;for(let v=0;v<this.numVoices;v++){let freq=baseFreq*detuneFactors[v];if(this.fmEnabled&&fmDepth!==0){freq+=fmMod;freq=Math.max(20,Math.min(freq,this.sr*0.49));}const phaseInc=freq/this.sr;let p=this.phases[v];let s=0;switch(this.wave){case'sine':s=Math.sin(this.TWO_PI*p);break;case'square':s=this.blSquare(p,0.5,dt);break;case'pulse':s=this.blSquare(p,pulseW,dt);break;case'sawtooth':s=this.blSaw(p,dt);break;case'triangle':s=2*Math.abs(2*(p-Math.floor(p+0.5)))-1;break;case'fm':s=Math.sin(this.TWO_PI*p);break;default:s=Math.sin(this.TWO_PI*p);}mix+=s;p+=phaseInc;if(p>=1)p-=1;this.phases[v]=p;}mix=(mix/this.numVoices)*0.85;for(let ch=0;ch<chCount;ch++){out[ch][i]=mix;}return true;}
 }
-registerProcessor('synth-processor', SynthProcessor);
+registerProcessor('synth-processor',SynthProcessor);
 `;
 
-// Scheduler Worker Code
+// --- Scheduler Worker Code ---
 const WORKER_CODE = `
-let isRunning = false;
-let tempo = 120;
-let patternUnits = 1;
-let tickIndex = 0;
-let startTime = 0;
-let workerStartTime = 0;
-let step = 0;
-
-self.onmessage = e => {
-    const d = e.data;
-    if (d.type === 'start') {
-        isRunning = true;
-        tempo = d.tempo || 120;
-        startTime = d.audioTime + 0.05;
-        workerStartTime = performance.now() / 1000;
-        tickIndex = 0;
-        setPattern(d.pattern || '16');
-        scheduler();
-    } else if (d.type === 'stop') {
-        isRunning = false;
-    } else if (d.type === 'tempo') {
-        tempo = d.tempo;
-        updateStep();
-    }
-};
-
-function setPattern(p) {
-    switch (p) {
-        case '4': patternUnits = 4; break;
-        case '8': patternUnits = 2; break;
-        case '16': patternUnits = 1; break;
-        case '32': patternUnits = 0.5; break;
-        case 'triplet': patternUnits = 4 / 3; break;
-        case 'shuffle': patternUnits = 1.5; break;
-        case 'dotted': patternUnits = 6; break;
-        case 'stutter': patternUnits = 0.5; break;
-        case 'random': patternUnits = Math.random() * 2 + 0.5; break;
-        default: patternUnits = 1;
-    }
-    updateStep();
-}
-
-function updateStep() {
-    const quarter = 60 / tempo;
-    step = (quarter / 4) * patternUnits;
-}
-
-function scheduler() {
-    if (!isRunning) return;
-    const elapsed = (performance.now() / 1000) - workerStartTime;
-    const scheduleTime = startTime + tickIndex * step;
-    
-    if (scheduleTime < elapsed + 0.1) {
-        self.postMessage({type: 'beat', time: scheduleTime});
-        tickIndex++;
-    }
-    setTimeout(() => scheduler(), 25);
-}
+let isRunning=false,tempo=120,patternUnits=1,tickIndex=0,startTime=0,workerStartTime=0,step=0;
+self.onmessage=e=>{const d=e.data;if(d.type==='start'){isRunning=true;tempo=d.tempo||120;startTime=d.audioTime+0.05;workerStartTime=performance.now()/1000;tickIndex=0;setPattern(d.pattern||'16');scheduler();}else if(d.type==='stop'){isRunning=false;}else if(d.type==='tempo'){tempo=d.tempo;updateStep();}};
+function setPattern(p){switch(p){case'4':patternUnits=4;break;case'8':patternUnits=2;break;case'16':patternUnits=1;break;case'32':patternUnits=0.5;break;case'triplet':patternUnits=4/3;break;case'shuffle':patternUnits=1.5;break;case'dotted':patternUnits=6;break;case'stutter':patternUnits=0.5;break;case'random':patternUnits=Math.random()*2+0.5;break;default:patternUnits=1;}updateStep();}
+function updateStep(){const quarter=60/tempo;step=(quarter/4)*patternUnits;}
+function scheduler(){if(!isRunning)return;const elapsed=(performance.now()/1000)-workerStartTime;const scheduleTime=startTime+tickIndex*step;if(scheduleTime<elapsed+0.1){self.postMessage({type:'beat',time:scheduleTime});tickIndex++;}setTimeout(()=>scheduler(),25);}
 `;
 
-// Application State
+// --- Application State ---
 const AppState = {
-    audioCtx: null,
-    engine: null,
-    workletNode: null,
-    schedulerWorker: null,
-    baseFreq: CONSTANTS.BASE_FREQ,
-    octaveOffset: 0,
-    waveType: 'sawtooth',
-    detuneAmount: 15,
-    fmDepth: 0,
-    pulseWidth: 0.5,
-    lastVolume: 0.3,
-    isPlaying: false,
-    motionEnabled: false,
-    panEnabled: false,
-    pendingPan: 0,
-    pendingTilt: 0,
-    smoothedPan: 0,
-    smoothedTilt: 0,
-    lastDetuneKey: null,
-    currentRhythmPattern: null,
-    orientationRAFRunning: false,
-    rhythmGain: null
+    audioCtx: null, engine: null, workletNode: null, schedulerWorker: null, baseFreq: CONSTANTS.BASE_FREQ, octaveOffset: 0, waveType: 'sawtooth', detuneAmount: 15, fmDepth: 0, pulseWidth: 0.5, lastVolume: 0.3, isPlaying: false, motionEnabled: false, panEnabled: false, pendingPan: 0, pendingTilt: 0, smoothedPan: 0, smoothedTilt: 0, lastDetuneKey: null, currentRhythmPattern: null, orientationRAFRunning: false
 };
 
-// DOM Elements
-const DOM = {
-    pad: document.getElementById('pad'),
-    noteDisplay: document.getElementById('noteDisplay'),
-    octaveDisplay: document.getElementById('octaveDisplay'),
-    motionDisplay: document.getElementById('motionDisplay'),
-    wahDisplay: document.getElementById('wahDisplay'),
-    panDisplay: document.getElementById('panDisplay'),
-    startBtn: document.getElementById('startBtn'),
-    stopBtn: document.getElementById('stopBtn'),
-    motionBtn: document.getElementById('motionBtn'),
-    panBtn: document.getElementById('panBtn'),
-    statusMessage: document.getElementById('statusMessage'),
-    controls: document.getElementById('controls'),
-    toggleControls: document.getElementById('toggleControls'),
-    noteRuler: document.getElementById('noteRuler'),
-    permissionModal: document.getElementById('permissionModal'),
-    waveSelect: document.getElementById('waveSelect'),
-    fmDepthControl: document.getElementById('fmDepthControl'),
-    pulseWidthControl: document.getElementById('pulseWidthControl')
-};
+// --- DOM Elements ---
+const DOM = {pad:document.getElementById('pad'),noteDisplay:document.getElementById('noteDisplay'),octaveDisplay:document.getElementById('octaveDisplay'),motionDisplay:document.getElementById('motionDisplay'),wahDisplay:document.getElementById('wahDisplay'),panDisplay:document.getElementById('panDisplay'),startBtn:document.getElementById('startBtn'),stopBtn:document.getElementById('stopBtn'),motionBtn:document.getElementById('motionBtn'),panBtn:document.getElementById('panBtn'),statusMessage:document.getElementById('statusMessage'),controls:document.getElementById('controls'),toggleControls:document.getElementById('toggleControls'),noteRuler:document.getElementById('noteRuler'),permissionModal:document.getElementById('permissionModal'),waveSelect:document.getElementById('waveSelect'),fmDepthControl:document.getElementById('fmDepthControl'),pulseWidthControl:document.getElementById('pulseWidthControl')};
 
-// Utility Functions
+// --- Utility Functions ---
 const Utils = {
-    showStatus(msg, duration = CONSTANTS.STATUS_DURATION) {
-        DOM.statusMessage.textContent = msg;
-        DOM.statusMessage.classList.add('show');
-        clearTimeout(Utils.showStatus._timer);
-        Utils.showStatus._timer = setTimeout(() => {
-            DOM.statusMessage.classList.remove('show');
-        }, duration);
-    },
-
-    updateButtonStates() {
-        DOM.startBtn.disabled = AppState.isPlaying;
-        DOM.stopBtn.disabled = !AppState.isPlaying;
-    },
-
-    freqToNote(freq) {
-        const A4 = 440;
-        const semitonesFromA4 = 12 * Math.log2(freq / A4);
-        const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
-        const octave = Math.floor((semitonesFromA4 + 9) / 12) + 4;
-        const noteName = CONSTANTS.NOTE_NAMES[(noteIndex + 12) % 12];
-        return {name: noteName, octave, fullName: `${noteName}${octave}`};
-    },
-
-    noteFromPad(y) {
-        const ratio = 1 - y / window.innerHeight;
-        const notes = Object.keys(CONSTANTS.NOTE_FREQS);
-        const idx = Math.max(0, Math.min(notes.length - 1, Math.floor(ratio * (notes.length - 1))));
-        return CONSTANTS.NOTE_FREQS[notes[idx]];
-    },
-
-    updateThemeColor(noteName) {
-        const color = CONSTANTS.NOTE_COLORS[noteName] || [100, 100, 100];
-        document.documentElement.style.setProperty('--r', color[0]);
-        document.documentElement.style.setProperty('--g', color[1]);
-        document.documentElement.style.setProperty('--b', color[2]);
-    },
-
-    createNoteRuler() {
-        const notes = ['D4','C#4','C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C#3','C3','B2','A#2'];
-        DOM.noteRuler.innerHTML = '';
-        notes.forEach(n => {
-            const div = document.createElement('div');
-            div.className = 'ruler-note';
-            div.textContent = n;
-            DOM.noteRuler.appendChild(div);
-        });
-    },
-
-    loadPreferences() {
-        try {
-            const prefs = localStorage.getItem('synthPrefs');
-            if (prefs) {
-                const p = JSON.parse(prefs);
-                AppState.detuneAmount = p.detune || 15;
-                AppState.waveType = p.wave || 'sawtooth';
-                document.getElementById('detuneRange').value = AppState.detuneAmount;
-                DOM.waveSelect.value = AppState.waveType;
-            }
-            const expanded = localStorage.getItem('controlsExpanded');
-            if (expanded === 'true') {
-                DOM.controls.classList.add('expanded');
-                DOM.toggleControls.textContent = '✕';
-            }
-        } catch (e) {
-            console.warn('Failed to load preferences:', e);
-        }
-    },
-
-    savePreferences() {
-        try {
-            const prefs = {
-                detune: AppState.detuneAmount,
-                wave: AppState.waveType
-            };
-            localStorage.setItem('synthPrefs', JSON.stringify(prefs));
-            const expanded = DOM.controls.classList.contains('expanded');
-            localStorage.setItem('controlsExpanded', expanded);
-        } catch (e) {
-            console.warn('Failed to save preferences:', e);
-        }
-    }
+    showStatus(msg, duration = CONSTANTS.STATUS_DURATION) { DOM.statusMessage.textContent=msg;DOM.statusMessage.classList.add('show');clearTimeout(Utils.showStatus._timer);Utils.showStatus._timer=setTimeout(()=>{DOM.statusMessage.classList.remove('show');},duration);},
+    updateButtonStates() { DOM.startBtn.disabled=AppState.isPlaying;DOM.stopBtn.disabled=!AppState.isPlaying;},
+    freqToNote(freq){const A4=440;const semitonesFromA4=12*Math.log2(freq/A4);const noteIndex=Math.round(semitonesFromA4+9)%12;const octave=Math.floor((semitonesFromA4+9)/12)+4;const noteName=CONSTANTS.NOTE_NAMES[(noteIndex+12)%12];return{name:noteName,octave,fullName:`${noteName}${octave}`};},
+    noteFromPad(y){const ratio=1-y/window.innerHeight;const notes=Object.keys(CONSTANTS.NOTE_FREQS);const idx=Math.max(0,Math.min(notes.length-1,Math.floor(ratio*(notes.length-1))));return CONSTANTS.NOTE_FREQS[notes[idx]];},
+    updateThemeColor(noteName){const color=CONSTANTS.NOTE_COLORS[noteName]||[100,100,100];document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);},
+    createNoteRuler(){const notes=['D4','C#4','C4','B3','A#3','A3','G#3','G3','F#3','F3','E3','D#3','D3','C#3','C3','B2','A#2'];DOM.noteRuler.innerHTML='';notes.forEach(n=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=n;DOM.noteRuler.appendChild(div);});},
+    loadPreferences(){try{const prefs=localStorage.getItem('synthPrefs');if(prefs){const p=JSON.parse(prefs);AppState.detuneAmount=p.detune||15;AppState.waveType=p.wave||'sawtooth';document.getElementById('detuneRange').value=AppState.detuneAmount;DOM.waveSelect.value=AppState.waveType;}const expanded=localStorage.getItem('controlsExpanded');if(expanded==='true'){DOM.controls.classList.add('expanded');DOM.toggleControls.textContent='✕';}}catch(e){console.warn('Failed to load preferences:',e);}},
+    savePreferences(){try{const prefs={detune:AppState.detuneAmount,wave:AppState.waveType};localStorage.setItem('synthPrefs',JSON.stringify(prefs));const expanded=DOM.controls.classList.contains('expanded');localStorage.setItem('controlsExpanded',expanded);}catch(e){console.warn('Failed to save preferences:',e);}}
 };
 
-// Audio Engine Class
+// --- Audio Engine Class ---
 class SynthEngine {
-    constructor() {
-        this.audioContext = null;
-        this.workletNode = null;
-        this.nodes = {};
-        this.dryWet = {};
-        this.effects = {
-            dist: false,
-            autoWah: false,
-            flanger: false,
-            chorus: false,
-            tremolo: false,
-            filter: true,
-            delay: false,
-            reverb: false
-        };
-        this.lfoNodes = {};
-        this.reverbBuffer = null;
-    }
-
-    async init() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            latencyHint: 'interactive',
-            sampleRate: 44100
-        });
-
-        await this.audioContext.resume();
-        await this._loadWorklet();
-        this._createNodes();
-        this._connectGraph();
-        this._sendInitialParams();
-        
-        // Set default frequency immediately
-        this.setFrequency(CONSTANTS.BASE_FREQ);
-    }
-
-    async _loadWorklet() {
-        const blob = new Blob([WORKLET_CODE], {type: 'application/javascript'});
-        const url = URL.createObjectURL(blob);
-        try {
-            await this.audioContext.audioWorklet.addModule(url);
-        } finally {
-            URL.revokeObjectURL(url);
-        }
-    }
-
-    _createNodes() {
-        const ctx = this.audioContext;
-
-        // Core nodes
-        this.nodes.master = ctx.createGain();
-        this.nodes.master.gain.value = AppState.lastVolume;
-
-        // Rhythm gain node
-        AppState.rhythmGain = ctx.createGain();
-        AppState.rhythmGain.gain.value = 0;
-
-        this.nodes.tremolo = ctx.createGain();
-        this.nodes.tremolo.gain.value = 1;
-
-        this.nodes.panner = ctx.createStereoPanner();
-        this.nodes.panner.pan.value = 0;
-
-        // Effect nodes with optimized parameters
-        this.nodes.filter = ctx.createBiquadFilter();
-        this.nodes.filter.type = 'lowpass';
-        this.nodes.filter.frequency.value = 5000;
-        this.nodes.filter.Q.value = 2;
-
-        this.nodes.distortion = this._createWaveShaper(50);
-
-        this.nodes.delay = ctx.createDelay(2);
-        this.nodes.delay.delayTime.value = 0.3;
-        this.nodes.delayFeedback = ctx.createGain();
-        this.nodes.delayFeedback.gain.value = 0.45;
-
-        this.nodes.reverb = ctx.createConvolver();
-        this._createReverbBuffer();
-
-        this.nodes.autoWah = ctx.createBiquadFilter();
-        this.nodes.autoWah.type = 'bandpass';
-        this.nodes.autoWah.frequency.value = 800;
-        this.nodes.autoWah.Q.value = 5;
-
-        this.nodes.chorusDelay = ctx.createDelay(0.05);
-        this.nodes.chorusFeedback = ctx.createGain();
-        this.nodes.chorusFeedback.gain.value = 0.12;
-
-        this.nodes.flangerDelay = ctx.createDelay(0.01);
-        this.nodes.flangerFeedback = ctx.createGain();
-        this.nodes.flangerFeedback.gain.value = 0.45;
-
-        // Dry/Wet nodes with better balance
-        const createDryWet = () => ({
-            dry: ctx.createGain(),
-            wet: ctx.createGain()
-        });
-
-        this.dryWet.dist = createDryWet();
-        this.dryWet.delay = createDryWet();
-        this.dryWet.reverb = createDryWet();
-        this.dryWet.chorus = createDryWet();
-        this.dryWet.flanger = createDryWet();
-        this.dryWet.merge = ctx.createGain();
-
-        // Set initial values with better wet/dry mix
-        this.dryWet.dist.dry.gain.value = 1;
-        this.dryWet.dist.wet.gain.value = 0;
-        this.dryWet.delay.dry.gain.value = 0.7;
-        this.dryWet.delay.wet.gain.value = 0.3;
-        this.dryWet.reverb.dry.gain.value = 0.6;
-        this.dryWet.reverb.wet.gain.value = 0.4;
-        this.dryWet.chorus.dry.gain.value = 0.5;
-        this.dryWet.chorus.wet.gain.value = 0.5;
-        this.dryWet.flanger.dry.gain.value = 0.5;
-        this.dryWet.flanger.wet.gain.value = 0.5;
-    }
-
-    _createWaveShaper(amount) {
-        const ws = this.audioContext.createWaveShaper();
-        const n = 2048;
-        const curve = new Float32Array(n);
-        for (let i = 0; i < n; i++) {
-            const x = (i / (n - 1)) * 2 - 1;
-            curve[i] = Math.tanh(x * (1 + amount / 50));
-        }
-        ws.curve = curve;
-        ws.oversample = '4x';
-        return ws;
-    }
-
-    async _createReverbBuffer() {
-        if (window._cachedReverb) {
-            this.nodes.reverb.buffer = window._cachedReverb;
-            return;
-        }
-
-        const ctx = this.audioContext;
-        const seconds = 2.0; // Longer reverb
-        const len = Math.floor(ctx.sampleRate * seconds);
-        const buf = ctx.createBuffer(2, len, ctx.sampleRate);
-
-        for (let c = 0; c < 2; c++) {
-            const data = buf.getChannelData(c);
-            for (let i = 0; i < len; i++) {
-                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5) * 0.6;
-            }
-        }
-
-        this.nodes.reverb.buffer = buf;
-        window._cachedReverb = buf;
-    }
-
-    _connectGraph() {
-        const ctx = this.audioContext;
-
-        // Create worklet
-        this.workletNode = new AudioWorkletNode(ctx, 'synth-processor', {
-            outputChannelCount: [2]
-        });
-
-        // Main signal path with rhythm gain
-        this.workletNode.connect(AppState.rhythmGain);
-        AppState.rhythmGain.connect(this.nodes.tremolo);
-        this.nodes.tremolo.connect(this.nodes.master);
-
-        // Effects chain
-        const master = this.nodes.master;
-        master.connect(this.dryWet.dist.dry);
-        master.connect(this.nodes.distortion);
-        this.nodes.distortion.connect(this.dryWet.dist.wet);
-
-        const postDist = ctx.createGain();
-        this.dryWet.dist.dry.connect(postDist);
-        this.dryWet.dist.wet.connect(postDist);
-
-        // Auto Wah
-        postDist.connect(this.nodes.autoWah);
-
-        // Filter
-        this.nodes.autoWah.connect(this.nodes.filter);
-
-        // Delay
-        const filterOut = this.nodes.filter;
-        filterOut.connect(this.dryWet.delay.dry);
-        filterOut.connect(this.nodes.delay);
-        this.nodes.delay.connect(this.dryWet.delay.wet);
-        this.nodes.delay.connect(this.nodes.delayFeedback);
-        this.nodes.delayFeedback.connect(this.nodes.delay);
-
-        // Reverb
-        filterOut.connect(this.dryWet.reverb.dry);
-        filterOut.connect(this.nodes.reverb);
-        this.nodes.reverb.connect(this.dryWet.reverb.wet);
-
-        // Chorus
-        filterOut.connect(this.dryWet.chorus.dry);
-        filterOut.connect(this.nodes.chorusDelay);
-        this.nodes.chorusDelay.connect(this.nodes.chorusFeedback);
-        this.nodes.chorusFeedback.connect(this.nodes.chorusDelay);
-        this.nodes.chorusDelay.connect(this.dryWet.chorus.wet);
-
-        // Flanger
-        filterOut.connect(this.dryWet.flanger.dry);
-        filterOut.connect(this.nodes.flangerDelay);
-        this.nodes.flangerDelay.connect(this.nodes.flangerFeedback);
-        this.nodes.flangerFeedback.connect(this.nodes.flangerDelay);
-        this.nodes.flangerDelay.connect(this.dryWet.flanger.wet);
-
-        // Merge all effects
-        this.dryWet.delay.dry.connect(this.dryWet.merge);
-        this.dryWet.delay.wet.connect(this.dryWet.merge);
-        this.dryWet.reverb.dry.connect(this.dryWet.merge);
-        this.dryWet.reverb.wet.connect(this.dryWet.merge);
-        this.dryWet.chorus.dry.connect(this.dryWet.merge);
-        this.dryWet.chorus.wet.connect(this.dryWet.merge);
-        this.dryWet.flanger.dry.connect(this.dryWet.merge);
-        this.dryWet.flanger.wet.connect(this.dryWet.merge);
-
-        // Final output
-        this.dryWet.merge.connect(this.nodes.panner);
-        this.nodes.panner.connect(ctx.destination);
-    }
-
-    _sendInitialParams() {
-        if (!this.workletNode) return;
-
-        try {
-            const detunes = [];
-            const center = Math.floor(CONSTANTS.NUM_VOICES / 2);
-            for (let i = 0; i < CONSTANTS.NUM_VOICES; i++) {
-                detunes.push((i - center) * AppState.detuneAmount);
-            }
-
-            this.workletNode.port.postMessage({
-                type: 'detune',
-                values: detunes
-            });
-
-            this.workletNode.port.postMessage({
-                type: 'wave',
-                wave: AppState.waveType
-            });
-
-            this.workletNode.port.postMessage({
-                type: 'voices',
-                count: CONSTANTS.NUM_VOICES
-            });
-
-            this.setFrequency(AppState.baseFreq);
-            this.workletNode.parameters.get('fmDepth').setValueAtTime(AppState.fmDepth, this.audioContext.currentTime);
-            this.workletNode.parameters.get('pulseWidth').setValueAtTime(AppState.pulseWidth, this.audioContext.currentTime);
-        } catch (e) {
-            console.warn('Failed to send initial params:', e);
-        }
-    }
-
-    setFrequency(freq) {
-        if (!this.workletNode) return;
-        
-        try {
-            const param = this.workletNode.parameters.get('baseFreq');
-            const t = this.audioContext.currentTime;
-            param.cancelScheduledValues(t);
-            param.setValueAtTime(freq, t);
-            AppState.baseFreq = freq;
-        } catch (e) {
-            console.warn('Frequency set error:', e);
-        }
-    }
-
-    updateEffects() {
-        const e = this.effects;
-
-        this.dryWet.dist.wet.gain.value = e.dist ? 1 : 0;
-        this.dryWet.dist.dry.gain.value = e.dist ? 0 : 1;
-
-        this.dryWet.delay.wet.gain.value = e.delay ? 0.3 : 0;
-        this.dryWet.delay.dry.gain.value = e.delay ? 0.7 : 1;
-
-        this.dryWet.reverb.wet.gain.value = e.reverb ? 0.4 : 0;
-        this.dryWet.reverb.dry.gain.value = e.reverb ? 0.6 : 1;
-
-        this.dryWet.chorus.wet.gain.value = e.chorus ? 0.5 : 0;
-        this.dryWet.chorus.dry.gain.value = e.chorus ? 0.5 : 1;
-
-        this.dryWet.flanger.wet.gain.value = e.flanger ? 0.5 : 0;
-        this.dryWet.flanger.dry.gain.value = e.flanger ? 0.5 : 1;
-
-        this._updateLFO('autoWah', e.autoWah);
-        this._updateLFO('flanger', e.flanger);
-        this._updateLFO('chorus', e.chorus);
-        this._updateLFO('tremolo', e.tremolo);
-    }
-
-    _updateLFO(name, enabled) {
-        const ctx = this.audioContext;
-
-        if (enabled && !this.lfoNodes[name]) {
-            const lfo = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            switch (name) {
-                case 'autoWah':
-                    lfo.frequency.value = parseFloat(document.getElementById('autoWahRate').value || 2);
-                    gain.gain.value = parseFloat(document.getElementById('autoWahDepth').value || 700);
-                    lfo.connect(gain);
-                    gain.connect(this.nodes.autoWah.frequency);
-                    break;
-                case 'flanger':
-                    lfo.frequency.value = 0.8; // Faster LFO
-                    gain.gain.value = 0.008; // More modulation
-                    lfo.connect(gain);
-                    gain.connect(this.nodes.flangerDelay.delayTime);
-                    break;
-                case 'chorus':
-                    lfo.frequency.value = 0.6;
-                    gain.gain.value = 0.025; // More modulation
-                    lfo.connect(gain);
-                    gain.connect(this.nodes.chorusDelay.delayTime);
-                    break;
-                case 'tremolo':
-                    const offset = ctx.createConstantSource();
-                    lfo.frequency.value = 5;
-                    gain.gain.value = 0.5;
-                    offset.offset.value = 0.5;
-                    lfo.connect(gain);
-                    gain.connect(this.nodes.tremolo.gain);
-                    offset.connect(this.nodes.tremolo.gain);
-                    offset.start();
-                    this.lfoNodes[name] = {lfo, gain, offset};
-                    lfo.start();
-                    return;
-            }
-
-            lfo.start();
-            this.lfoNodes[name] = {lfo, gain};
-
-        } else if (!enabled && this.lfoNodes[name]) {
-            try {
-                const node = this.lfoNodes[name];
-                node.lfo.stop();
-                node.lfo.disconnect();
-                node.gain.disconnect();
-                if (node.offset) {
-                    node.offset.stop();
-                    node.offset.disconnect();
-                }
-                if (name === 'tremolo') {
-                    this.nodes.tremolo.gain.value = 1;
-                }
-            } catch (e) {
-                console.warn('LFO cleanup error:', e);
-            }
-            this.lfoNodes[name] = null;
-        }
-    }
-
-    dispose() {
-        try {
-            if (this.workletNode) {
-                this.workletNode.disconnect();
-                this.workletNode = null;
-            }
-
-            Object.values(this.lfoNodes).forEach(node => {
-                if (node) {
-                    try {
-                        node.lfo.stop();
-                        node.lfo.disconnect();
-                        node.gain.disconnect();
-                        if (node.offset) {
-                            node.offset.stop();
-                            node.offset.disconnect();
-                        }
-                    } catch (e) {}
-                }
-            });
-
-            this.lfoNodes = {};
-        } catch (e) {
-            console.warn('Engine disposal error:', e);
-        }
-    }
+    constructor(){this.audioContext=null;this.workletNode=null;this.nodes={};this.dryWet={};this.effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,filter:true,delay:false,reverb:false};this.lfoNodes={};}
+    async init(){this.audioContext=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive',sampleRate:44100});await this.audioContext.resume();await this._loadWorklet();this._createNodes();this._connectGraph();this._sendInitialParams();this.setFrequency(CONSTANTS.BASE_FREQ);}
+    async _loadWorklet(){const blob=new Blob([WORKLET_CODE],{type:'application/javascript'});const url=URL.createObjectURL(blob);try{await this.audioContext.audioWorklet.addModule(url);}finally{URL.revokeObjectURL(url);}}
+    _createNodes(){const ctx=this.audioContext;this.nodes.master=ctx.createGain();this.nodes.master.gain.value=AppState.lastVolume;this.nodes.tremolo=ctx.createGain();this.nodes.tremolo.gain.value=1;this.nodes.panner=ctx.createStereoPanner();this.nodes.panner.pan.value=0;this.nodes.filter=ctx.createBiquadFilter();this.nodes.filter.type='lowpass';this.nodes.filter.frequency.value=5000;this.nodes.filter.Q.value=2;this.nodes.distortion=this._createWaveShaper(50);this.nodes.delay=ctx.createDelay(2);this.nodes.delay.delayTime.value=0.3;this.nodes.delayFeedback=ctx.createGain();this.nodes.delayFeedback.gain.value=0.45;this.nodes.reverb=ctx.createConvolver();this._createReverbBuffer();this.nodes.autoWah=ctx.createBiquadFilter();this.nodes.autoWah.type='bandpass';this.nodes.autoWah.frequency.value=800;this.nodes.autoWah.Q.value=5;this.nodes.chorusDelay=ctx.createDelay(0.05);this.nodes.chorusFeedback=ctx.createGain();this.nodes.chorusFeedback.gain.value=0.12;this.nodes.flangerDelay=ctx.createDelay(0.01);this.nodes.flangerFeedback=ctx.createGain();this.nodes.flangerFeedback.gain.value=0.45;const createDryWet=()=>({dry:ctx.createGain(),wet:ctx.createGain()});this.dryWet.dist=createDryWet();this.dryWet.delay=createDryWet();this.dryWet.reverb=createDryWet();this.dryWet.chorus=createDryWet();this.dryWet.flanger=createDryWet();this.dryWet.merge=ctx.createGain();this.dryWet.dist.dry.gain.value=1;this.dryWet.dist.wet.gain.value=0;this.dryWet.delay.dry.gain.value=0.7;this.dryWet.delay.wet.gain.value=0.3;this.dryWet.reverb.dry.gain.value=0.6;this.dryWet.reverb.wet.gain.value=0.4;this.dryWet.chorus.dry.gain.value=0.5;this.dryWet.chorus.wet.gain.value=0.5;this.dryWet.flanger.dry.gain.value=0.5;this.dryWet.flanger.wet.gain.value=0.5;}
+    _createWaveShaper(amount){const ws=this.audioContext.createWaveShaper();const n=2048;const curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i/(n-1))*2-1;curve[i]=Math.tanh(x*(1+amount/50));}ws.curve=curve;ws.oversample='4x';return ws;}
+    async _createReverbBuffer(){if(window._cachedReverb){this.nodes.reverb.buffer=window._cachedReverb;return;}const ctx=this.audioContext;const seconds=2.0;const len=Math.floor(ctx.sampleRate*seconds);const buf=ctx.createBuffer(2,len,ctx.sampleRate);for(let c=0;c<2;c++){const data=buf.getChannelData(c);for(let i=0;i<len;i++){data[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5)*0.6;}}this.nodes.reverb.buffer=buf;window._cachedReverb=buf;}
+    _connectGraph(){const ctx=this.audioContext;this.workletNode=new AudioWorkletNode(ctx,'synth-processor',{outputChannelCount:[2]});this.workletNode.connect(this.nodes.tremolo);this.nodes.tremolo.connect(this.nodes.master);const master=this.nodes.master;master.connect(this.dryWet.dist.dry);master.connect(this.nodes.distortion);this.nodes.distortion.connect(this.dryWet.dist.wet);const postDist=ctx.createGain();this.dryWet.dist.dry.connect(postDist);this.dryWet.dist.wet.connect(postDist);postDist.connect(this.nodes.autoWah);this.nodes.autoWah.connect(this.nodes.filter);const filterOut=this.nodes.filter;filterOut.connect(this.dryWet.delay.dry);filterOut.connect(this.nodes.delay);this.nodes.delay.connect(this.dryWet.delay.wet);this.nodes.delay.connect(this.nodes.delayFeedback);this.nodes.delayFeedback.connect(this.nodes.delay);filterOut.connect(this.dryWet.reverb.dry);filterOut.connect(this.nodes.reverb);this.nodes.reverb.connect(this.dryWet.reverb.wet);filterOut.connect(this.dryWet.chorus.dry);filterOut.connect(this.nodes.chorusDelay);this.nodes.chorusDelay.connect(this.nodes.chorusFeedback);this.nodes.chorusFeedback.connect(this.nodes.chorusDelay);this.nodes.chorusDelay.connect(this.dryWet.chorus.wet);filterOut.connect(this.dryWet.flanger.dry);filterOut.connect(this.nodes.flangerDelay);this.nodes.flangerDelay.connect(this.nodes.flangerFeedback);this.nodes.flangerFeedback.connect(this.nodes.flangerDelay);this.nodes.flangerDelay.connect(this.dryWet.flanger.wet);this.dryWet.delay.dry.connect(this.dryWet.merge);this.dryWet.delay.wet.connect(this.dryWet.merge);this.dryWet.reverb.dry.connect(this.dryWet.merge);this.dryWet.reverb.wet.connect(this.dryWet.merge);this.dryWet.chorus.dry.connect(this.dryWet.merge);this.dryWet.chorus.wet.connect(this.dryWet.merge);this.dryWet.flanger.dry.connect(this.dryWet.merge);this.dryWet.flanger.wet.connect(this.dryWet.merge);this.dryWet.merge.connect(this.nodes.panner);this.nodes.panner.connect(ctx.destination);}
+    _sendInitialParams(){if(!this.workletNode)return;try{const detunes=[];const center=Math.floor(CONSTANTS.NUM_VOICES/2);for(let i=0;i<CONSTANTS.NUM_VOICES;i++){detunes.push((i-center)*AppState.detuneAmount);}this.workletNode.port.postMessage({type:'detune',values:detunes});this.workletNode.port.postMessage({type:'wave',wave:AppState.waveType});this.workletNode.port.postMessage({type:'voices',count:CONSTANTS.NUM_VOICES});this.setFrequency(AppState.baseFreq);this.workletNode.parameters.get('fmDepth').setValueAtTime(AppState.fmDepth,this.audioContext.currentTime);this.workletNode.parameters.get('pulseWidth').setValueAtTime(AppState.pulseWidth,this.audioContext.currentTime);}catch(e){console.warn('Failed to send initial params:',e);}}
+    setFrequency(freq){if(!this.workletNode)return;try{const param=this.workletNode.parameters.get('baseFreq');const t=this.audioContext.currentTime;param.cancelScheduledValues(t);param.setValueAtTime(freq,t);AppState.baseFreq=freq;}catch(e){console.warn('Frequency set error:',e);}}
+    updateEffects(){const e=this.effects;this.dryWet.dist.wet.gain.value=e.dist?1:0;this.dryWet.dist.dry.gain.value=e.dist?0:1;this.dryWet.delay.wet.gain.value=e.delay?0.3:0;this.dryWet.delay.dry.gain.value=e.delay?0.7:1;this.dryWet.reverb.wet.gain.value=e.reverb?0.4:0;this.dryWet.reverb.dry.gain.value=e.reverb?0.6:1;this.dryWet.chorus.wet.gain.value=e.chorus?0.5:0;this.dryWet.chorus.dry.gain.value=e.chorus?0.5:1;this.dryWet.flanger.wet.gain.value=e.flanger?0.5:0;this.dryWet.flanger.dry.gain.value=e.flanger?0.5:1;this._updateLFO('autoWah',e.autoWah);this._updateLFO('flanger',e.flanger);this._updateLFO('chorus',e.chorus);this._updateLFO('tremolo',e.tremolo);}
+    _updateLFO(name,enabled){const ctx=this.audioContext;if(enabled&&!this.lfoNodes[name]){const lfo=ctx.createOscillator();const gain=ctx.createGain();switch(name){case'autoWah':lfo.frequency.value=parseFloat(document.getElementById('autoWahRate').value||2);gain.gain.value=parseFloat(document.getElementById('autoWahDepth').value||700);lfo.connect(gain);gain.connect(this.nodes.autoWah.frequency);break;case'flanger':lfo.frequency.value=0.8;gain.gain.value=0.008;lfo.connect(gain);gain.connect(this.nodes.flangerDelay.delayTime);break;case'chorus':lfo.frequency.value=0.6;gain.gain.value=0.025;lfo.connect(gain);gain.connect(this.nodes.chorusDelay.delayTime);break;case'tremolo':const offset=ctx.createConstantSource();lfo.frequency.value=5;gain.gain.value=0.5;offset.offset.value=0.5;lfo.connect(gain);gain.connect(this.nodes.tremolo.gain);offset.connect(this.nodes.tremolo.gain);offset.start();this.lfoNodes[name]={lfo,gain,offset};lfo.start();return;}lfo.start();this.lfoNodes[name]={lfo,gain};}else if(!enabled&&this.lfoNodes[name]){try{const node=this.lfoNodes[name];node.lfo.stop();node.lfo.disconnect();node.gain.disconnect();if(node.offset){node.offset.stop();node.offset.disconnect();}if(name==='tremolo'){this.nodes.tremolo.gain.value=1;}}catch(e){console.warn('LFO cleanup error:',e);}this.lfoNodes[name]=null;}}
+    dispose(){try{if(this.workletNode){this.workletNode.disconnect();this.workletNode=null;}Object.values(this.lfoNodes).forEach(node=>{if(node){try{node.lfo.stop();node.lfo.disconnect();node.gain.disconnect();if(node.offset){node.offset.stop();node.offset.disconnect();}}catch(e){}}});this.lfoNodes={};}catch(e){console.warn('Engine disposal error:',e);}}
 }
 
-// Scheduler Class
-class Scheduler {
-    constructor() {
-        this.worker = null;
-        this.isRunning = false;
-        this.callback = null;
-    }
+// --- Scheduler Class ---
+class Scheduler{constructor(){this.worker=null;this.isRunning=false;this.callback=null;}start(callback,pattern='16'){if(!AppState.audioCtx)return;this.stop();this.isRunning=true;this.callback=callback;if(!this.worker){const blob=new Blob([WORKER_CODE],{type:'application/javascript'});const url=URL.createObjectURL(blob);this.worker=new Worker(url);URL.revokeObjectURL(url);this.worker.onmessage=e=>{if(e.data.type==='beat'&&this.callback){this.callback(e.data.time);}};this.worker.onerror=e=>{console.error('Scheduler worker error:',e);Utils.showStatus('Rhythm error');this.stop();};}this.worker.postMessage({type:'start',audioTime:AppState.audioCtx.currentTime,pattern:pattern,tempo:120});}stop(){this.isRunning=false;if(this.worker){this.worker.postMessage({type:'stop'});}}dispose(){this.stop();if(this.worker){this.worker.terminate();this.worker=null;}}}
 
-    start(callback, pattern = '16') {
-        if (!AppState.audioCtx) return;
-
-        this.stop();
-        this.isRunning = true;
-        this.callback = callback;
-
-        if (!this.worker) {
-            const blob = new Blob([WORKER_CODE], {type: 'application/javascript'});
-            const url = URL.createObjectURL(blob);
-            this.worker = new Worker(url);
-            URL.revokeObjectURL(url);
-
-            this.worker.onmessage = e => {
-                if (e.data.type === 'beat' && this.callback) {
-                    this.callback(e.data.time);
-                }
-            };
-
-            this.worker.onerror = e => {
-                console.error('Scheduler worker error:', e);
-                Utils.showStatus('Rhythm error');
-                this.stop();
-            };
-        }
-
-        this.worker.postMessage({
-            type: 'start',
-            audioTime: AppState.audioCtx.currentTime,
-            pattern: pattern,
-            tempo: 120
-        });
-    }
-
-    stop() {
-        this.isRunning = false;
-        if (this.worker) {
-            this.worker.postMessage({type: 'stop'});
-        }
-    }
-
-    dispose() {
-        this.stop();
-        if (this.worker) {
-            this.worker.terminate();
-            this.worker = null;
-        }
-    }
-}
-
-// Main Application Logic
-const App = {
-    scheduler: new Scheduler(),
-    lastTouchTime: 0,
-    themeUpdateRAF: null,
-
-    async start() {
-        if (AppState.isPlaying) {
-            Utils.showStatus('Already running');
-            return;
-        }
-
-        try {
-            AppState.engine = new SynthEngine();
-            await AppState.engine.init();
-            AppState.audioCtx = AppState.engine.audioContext;
-            AppState.workletNode = AppState.engine.workletNode;
-            AppState.isPlaying = true;
-
-            Utils.updateButtonStates();
-            Utils.showStatus('Started ✓');
-        } catch (err) {
-            console.error('Failed to start:', err);
-            Utils.showStatus('Failed to start audio');
-        }
-    },
-
-    stop() {
-        if (!AppState.audioCtx) {
-            Utils.showStatus('Not running');
-            return;
-        }
-
-        try {
-            this.scheduler.stop();
-            AppState.engine.dispose();
-
-            AppState.audioCtx.close().then(() => {
-                AppState.audioCtx = null;
-                AppState.engine = null;
-                AppState.workletNode = null;
-                AppState.isPlaying = false;
-
-                Utils.updateButtonStates();
-                Utils.showStatus('Stopped');
-            }).catch(e => {
-                console.error('Stop error:', e);
-                Utils.showStatus('Error stopping');
-            });
-        } catch (e) {
-            console.error('Stop error:', e);
-            Utils.showStatus('Error stopping');
-        }
-    },
-
-    handleTouch(e) {
-        const now = performance.now();
-        if (now - App.lastTouchTime < CONSTANTS.TOUCH_THROTTLE) return;
-        App.lastTouchTime = now;
-
-        if (!AppState.isPlaying) {
-            Utils.showStatus('Start synth first');
-            return;
-        }
-
-        const touch = e.touches ? e.touches[0] : e;
-        const freq = Utils.noteFromPad(touch.clientY) * Math.pow(2, AppState.octaveOffset);
-        
-        // Update frequency
-        AppState.engine.setFrequency(freq);
-
-        // Update volume
-        const targetVol = (touch.clientX / window.innerWidth) * 0.45;
-        AppState.lastVolume = targetVol;
-
-        try {
-            AppState.engine.nodes.master.gain.setTargetAtTime(
-                AppState.lastVolume,
-                AppState.audioCtx.currentTime,
-                0.02
-            );
-        } catch (err) {
-            console.warn('Volume update error:', err);
-        }
-
-        const noteInfo = Utils.freqToNote(freq);
-        DOM.noteDisplay.textContent = noteInfo.fullName;
-        DOM.octaveDisplay.textContent = `Oct:${AppState.octaveOffset}`;
-        Utils.updateThemeColor(noteInfo.name);
-
-        // Visual feedback
-        DOM.pad.classList.add('touch-active');
-        setTimeout(() => DOM.pad.classList.remove('touch-active'), 200);
-
-        if (e.preventDefault) e.preventDefault();
-    },
-
-    handleOrientation(e) {
-        if (e.beta !== null && e.gamma !== null) {
-            AppState.pendingTilt = e.beta;
-            AppState.pendingPan = e.gamma / 90;
-        }
-    },
-
-    startOrientationLoop() {
-        if (AppState.orientationRAFRunning) return;
-        AppState.orientationRAFRunning = true;
-
-        const loop = () => {
-            if (!AppState.orientationRAFRunning) return;
-
-            const alpha = CONSTANTS.ORIENTATION_ALPHA;
-            AppState.smoothedPan += (AppState.pendingPan - AppState.smoothedPan) * alpha;
-            AppState.smoothedTilt += (AppState.pendingTilt - AppState.smoothedTilt) * alpha;
-
-            if (AppState.motionEnabled && AppState.isPlaying) {
-                const bend = (AppState.smoothedTilt / 45) * 12;
-                const base = 130.81 * Math.pow(2, AppState.octaveOffset);
-                const freq = base * Math.pow(2, bend / 12);
-                AppState.engine.setFrequency(freq);
-
-                const noteInfo = Utils.freqToNote(freq);
-                DOM.noteDisplay.textContent = noteInfo.fullName;
-                DOM.motionDisplay.textContent = `Tilt:${Math.round(bend * 10) / 10}st`;
-                Utils.updateThemeColor(noteInfo.name);
-            }
-
-            if (AppState.panEnabled && AppState.isPlaying) {
-                try {
-                    AppState.engine.nodes.panner.pan.setTargetAtTime(
-                        AppState.smoothedPan,
-                        AppState.audioCtx.currentTime,
-                        0.02
-                    );
-                    DOM.panDisplay.textContent = `Pan:${Math.round(AppState.smoothedPan * 100)}%`;
-                } catch (e) {}
-            }
-
-            requestAnimationFrame(loop);
-        };
-
-        loop();
-    },
-
-    stopOrientationLoop() {
-        AppState.orientationRAFRunning = false;
-    },
-
-    startRhythm(pattern) {
-        if (!AppState.isPlaying) {
-            Utils.showStatus('Start synth first');
-            return;
-        }
-
-        AppState.currentRhythmPattern = pattern;
-
-        // Update UI
-        document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        const btn = document.querySelector(`.rhythm-panel button[data-pattern="${pattern}"]`);
-        if (btn) btn.classList.add('active');
-
-        this.scheduler.start(time => this.rhythmBeat(time), pattern);
-        Utils.showStatus(`Rhythm: ${pattern}`);
-    },
-
-    stopRhythm() {
-        this.scheduler.stop();
-        AppState.currentRhythmPattern = null;
-
-        document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        Utils.showStatus('Rhythm stopped');
-    },
-
-    rhythmBeat(time) {
-        try {
-            const ctx = AppState.audioCtx;
-            const t = time || ctx.currentTime;
-            
-            // Rhythm envelope - fast attack, quick release
-            AppState.rhythmGain.gain.cancelScheduledValues(t);
-            AppState.rhythmGain.gain.setValueAtTime(0, t);
-            AppState.rhythmGain.gain.linearRampToValueAtTime(1, t + 0.01);
-            AppState.rhythmGain.gain.linearRampToValueAtTime(0, t + CONSTANTS.BEAT_DURATION);
-
-            this.createClickSound(time);
-            this.triggerVisualFeedback();
-        } catch (e) {
-            console.warn('Rhythm beat error:', e);
-        }
-    },
-
-    createClickSound(time) {
-        if (!AppState.audioCtx) return;
-
-        try {
-            const ctx = AppState.audioCtx;
-            const t = time || ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(CONSTANTS.CLICK_FREQ, t);
-            g.gain.setValueAtTime(0.1, t);
-            g.gain.exponentialRampToValueAtTime(0.001, t + CONSTANTS.CLICK_DURATION);
-
-            osc.connect(g);
-            g.connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + CONSTANTS.CLICK_DURATION + 0.01);
-        } catch (e) {
-            console.warn('Click sound error:', e);
-        }
-    },
-
-    triggerVisualFeedback() {
-        document.body.classList.add('beat-flash');
-        setTimeout(() => document.body.classList.remove('beat-flash'), 150);
-    },
-
-    requestMotionPermission() {
-        if (typeof DeviceOrientationEvent !== 'undefined' &&
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DOM.permissionModal.style.display = 'flex';
-        } else {
-            this.enableMotion();
-        }
-    },
-
-    enableMotion() {
-        window.addEventListener('deviceorientation', e => App.handleOrientation(e), {passive: true});
-        AppState.motionEnabled = true;
-        DOM.motionBtn.classList.add('active');
-        DOM.motionBtn.textContent = 'Motion ON';
-        DOM.motionDisplay.style.display = 'block';
-        this.startOrientationLoop();
-        Utils.showStatus('Motion enabled');
-    },
-
-    disableMotion() {
-        window.removeEventListener('deviceorientation', e => App.handleOrientation(e));
-        AppState.motionEnabled = false;
-        DOM.motionBtn.classList.remove('active');
-        DOM.motionBtn.textContent = 'Motion';
-        DOM.motionDisplay.style.display = 'none';
-
-        if (!AppState.panEnabled) {
-            this.stopOrientationLoop();
-        }
-
-        Utils.showStatus('Motion disabled');
-    },
-
-    enablePan() {
-        AppState.panEnabled = true;
-        DOM.panBtn.classList.add('active');
-        DOM.panBtn.textContent = 'Pan ON';
-        DOM.panDisplay.style.display = 'block';
-        this.startOrientationLoop();
-        Utils.showStatus('Pan enabled');
-    },
-
-    disablePan() {
-        AppState.panEnabled = false;
-        DOM.panBtn.classList.remove('active');
-        DOM.panBtn.textContent = 'Pan';
-        DOM.panDisplay.style.display = 'none';
-
-        if (AppState.isPlaying) {
-            try {
-                AppState.engine.nodes.panner.pan.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.01);
-            } catch (e) {}
-        }
-
-        if (!AppState.motionEnabled) {
-            this.stopOrientationLoop();
-        }
-
-        Utils.showStatus('Pan disabled');
-    },
-
-    updateWaveControls(wave) {
-        DOM.fmDepthControl.style.display = wave === 'fm' ? 'flex' : 'none';
-        DOM.pulseWidthControl.style.display = wave === 'pulse' ? 'flex' : 'none';
-    }
+// --- Main Application Logic ---
+const App={scheduler:new Scheduler(),lastTouchTime:0,themeUpdateRAF:null,
+    async start(){if(AppState.isPlaying){Utils.showStatus('Already running');return;}try{AppState.engine=new SynthEngine();await AppState.engine.init();AppState.audioCtx=AppState.engine.audioContext;AppState.workletNode=AppState.engine.workletNode;AppState.isPlaying=true;Utils.updateButtonStates();Utils.showStatus('Started ✓');}catch(err){console.error('Failed to start:',err);Utils.showStatus('Failed to start audio');}},
+    stop(){if(!AppState.audioCtx){Utils.showStatus('Not running');return;}try{this.scheduler.stop();AppState.engine.dispose();AppState.audioCtx.close().then(()=>{AppState.audioCtx=null;AppState.engine=null;AppState.workletNode=null;AppState.isPlaying=false;Utils.updateButtonStates();Utils.showStatus('Stopped');}).catch(e=>{console.error('Stop error:',e);Utils.showStatus('Error stopping');});}catch(e){console.error('Stop error:',e);Utils.showStatus('Error stopping');}},
+    handleTouch(e){const now=performance.now();if(now-App.lastTouchTime<CONSTANTS.TOUCH_THROTTLE)return;App.lastTouchTime=now;if(!AppState.isPlaying){Utils.showStatus('Start synth first');return;}const touch=e.touches?e.touches[0]:e;const freq=Utils.noteFromPad(touch.clientY)*Math.pow(2,AppState.octaveOffset);AppState.engine.setFrequency(freq);const targetVol=(touch.clientX/window.innerWidth)*0.45;AppState.lastVolume=targetVol;try{AppState.engine.nodes.master.gain.setTargetAtTime(AppState.lastVolume,AppState.audioCtx.currentTime,0.02);}catch(err){console.warn('Volume update error:',err);}const noteInfo=Utils.freqToNote(freq);DOM.noteDisplay.textContent=noteInfo.fullName;DOM.octaveDisplay.textContent=`Oct:${AppState.octaveOffset}`;Utils.updateThemeColor(noteInfo.name);DOM.pad.classList.add('touch-active');setTimeout(()=>DOM.pad.classList.remove('touch-active'),200);if(e.preventDefault)e.preventDefault();},
+    handleOrientation(e){if(e.beta!==null&&e.gamma!==null){AppState.pendingTilt=e.beta;AppState.pendingPan=e.gamma/90;}},
+    startOrientationLoop(){if(AppState.orientationRAFRunning)return;AppState.orientationRAFRunning=true;const loop=()=>{if(!AppState.orientationRAFRunning)return;const alpha=CONSTANTS.ORIENTATION_ALPHA;AppState.smoothedPan+=(AppState.pendingPan-AppState.smoothedPan)*alpha;AppState.smoothedTilt+=(AppState.pendingTilt-AppState.smoothedTilt)*alpha;if(AppState.motionEnabled&&AppState.isPlaying){const bend=(AppState.smoothedTilt/45)*12;const base=130.81*Math.pow(2,AppState.octaveOffset);const freq=base*Math.pow(2,bend/12);AppState.engine.setFrequency(freq);const noteInfo=Utils.freqToNote(freq);DOM.noteDisplay.textContent=noteInfo.fullName;DOM.motionDisplay.textContent=`Tilt:${Math.round(bend*10)/10}st`;Utils.updateThemeColor(noteInfo.name);}if(AppState.panEnabled&&AppState.isPlaying){try{AppState.engine.nodes.panner.pan.setTargetAtTime(AppState.smoothedPan,AppState.audioCtx.currentTime,0.02);DOM.panDisplay.textContent=`Pan:${Math.round(AppState.smoothedPan*100)}%`;}catch(e){}}requestAnimationFrame(loop);};loop();},
+    stopOrientationLoop(){AppState.orientationRAFRunning=false;},
+    startRhythm(pattern){if(!AppState.isPlaying){Utils.showStatus('Start synth first');return;}AppState.currentRhythmPattern=pattern;document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn=>{btn.classList.remove('active');});const btn=document.querySelector(`.rhythm-panel button[data-pattern="${pattern}"]`);if(btn)btn.classList.add('active');this.scheduler.start(time=>this.rhythmBeat(time),pattern);Utils.showStatus(`Rhythm: ${pattern}`);},
+    stopRhythm(){this.scheduler.stop();AppState.currentRhythmPattern=null;document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn=>{btn.classList.remove('active');});Utils.showStatus('Rhythm stopped');},
+    rhythmBeat(time){try{const ctx=AppState.audioCtx;const t=time||ctx.currentTime;const masterGain=AppState.engine.nodes.master.gain;masterGain.cancelScheduledValues(t);masterGain.setValueAtTime(AppState.lastVolume,t);masterGain.linearRampToValueAtTime(AppState.lastVolume*1.5,t+CONSTANTS.BEAT_ATTACK);masterGain.linearRampToValueAtTime(AppState.lastVolume,t+CONSTANTS.BEAT_DURATION);this.createClickSound(time);this.triggerVisualFeedback();}catch(e){console.warn('Rhythm beat error:',e);}},
+    createClickSound(time){if(!AppState.audioCtx)return;try{const ctx=AppState.audioCtx;const t=time||ctx.currentTime;const osc=ctx.createOscillator();const g=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(CONSTANTS.CLICK_FREQ,t);g.gain.setValueAtTime(0.1,t);g.gain.exponentialRampToValueAtTime(0.001,t+CONSTANTS.CLICK_DURATION);osc.connect(g);g.connect(ctx.destination);osc.start(t);osc.stop(t+CONSTANTS.CLICK_DURATION+0.01);}catch(e){console.warn('Click sound error:',e);}},
+    triggerVisualFeedback(){document.body.classList.add('beat-flash');setTimeout(()=>document.body.classList.remove('beat-flash'),150);},
+    requestMotionPermission(){if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){DOM.permissionModal.style.display='flex';}else{this.enableMotion();}},
+    enableMotion(){window.addEventListener('deviceorientation',e=>App.handleOrientation(e),{passive:true});AppState.motionEnabled=true;DOM.motionBtn.classList.add('active');DOM.motionBtn.textContent='Motion ON';DOM.motionDisplay.style.display='block';this.startOrientationLoop();Utils.showStatus('Motion enabled');},
+    disableMotion(){window.removeEventListener('deviceorientation',e=>App.handleOrientation(e));AppState.motionEnabled=false;DOM.motionBtn.classList.remove('active');DOM.motionBtn.textContent='Motion';DOM.motionDisplay.style.display='none';if(!AppState.panEnabled){this.stopOrientationLoop();}Utils.showStatus('Motion disabled');},
+    enablePan(){AppState.panEnabled=true;DOM.panBtn.classList.add('active');DOM.panBtn.textContent='Pan ON';DOM.panDisplay.style.display='block';this.startOrientationLoop();Utils.showStatus('Pan enabled');},
+    disablePan(){AppState.panEnabled=false;DOM.panBtn.classList.remove('active');DOM.panBtn.textContent='Pan';DOM.panDisplay.style.display='none';if(AppState.isPlaying){try{AppState.engine.nodes.panner.pan.setTargetAtTime(0,AppState.audioCtx.currentTime,0.01);}catch(e){}}if(!AppState.motionEnabled){this.stopOrientationLoop();}Utils.showStatus('Pan disabled');},
+    updateWaveControls(wave){DOM.fmDepthControl.style.display=wave==='fm'?'flex':'none';DOM.pulseWidthControl.style.display=wave==='pulse'?'flex':'none';}
 };
 
-// Event Listeners
-function initEventListeners() {
-    // Touch/Mouse events
-    DOM.pad.addEventListener('touchstart', e => App.handleTouch(e), {passive: false});
-    DOM.pad.addEventListener('touchmove', e => App.handleTouch(e), {passive: false});
-    DOM.pad.addEventListener('mousedown', e => App.handleTouch(e));
-    DOM.pad.addEventListener('mousemove', e => {
-        if (e.buttons === 1) App.handleTouch(e);
-    });
-
-    // Control buttons
-    DOM.startBtn.addEventListener('click', () => App.start());
-    DOM.stopBtn.addEventListener('click', () => App.stop());
-
-    DOM.toggleControls.addEventListener('click', () => {
-        DOM.controls.classList.toggle('expanded');
-        DOM.toggleControls.textContent = DOM.controls.classList.contains('expanded') ? '✕' : '⚙️';
-        Utils.savePreferences();
-    });
-
-    document.getElementById('octUp').addEventListener('click', () => {
-        AppState.octaveOffset++;
-        Utils.createNoteRuler();
-        Utils.showStatus(`Octave: ${AppState.octaveOffset}`);
-    });
-
-    document.getElementById('octDown').addEventListener('click', () => {
-        AppState.octaveOffset--;
-        Utils.createNoteRuler();
-        Utils.showStatus(`Octave: ${AppState.octaveOffset}`);
-    });
-
-    // Wave select
-    DOM.waveSelect.addEventListener('change', e => {
-        AppState.waveType = e.target.value;
-        App.updateWaveControls(AppState.waveType);
-
-        if (AppState.workletNode) {
-            try {
-                AppState.workletNode.port.postMessage({
-                    type: 'wave',
-                    wave: AppState.waveType
-                });
-            } catch (err) {
-                console.warn('Wave change error:', err);
-            }
-        }
-
-        Utils.savePreferences();
-        Utils.showStatus(`Wave: ${AppState.waveType}`);
-    });
-
-    // Detune
-    document.getElementById('detuneRange').addEventListener('input', e => {
-        AppState.detuneAmount = parseFloat(e.target.value);
-
-        if (AppState.workletNode) {
-            const detunes = [];
-            const center = Math.floor(CONSTANTS.NUM_VOICES / 2);
-            for (let i = 0; i < CONSTANTS.NUM_VOICES; i++) {
-                detunes.push((i - center) * AppState.detuneAmount);
-            }
-
-            const key = detunes.join(',');
-            if (AppState.lastDetuneKey !== key) {
-                try {
-                    AppState.workletNode.port.postMessage({
-                        type: 'detune',
-                        values: detunes
-                    });
-                    AppState.lastDetuneKey = key;
-                } catch (err) {
-                    console.warn('Detune update error:', err);
-                }
-            }
-        }
-
-        Utils.savePreferences();
-    });
-
-    // FM Depth
-    document.getElementById('fmDepthRange').addEventListener('input', e => {
-        AppState.fmDepth = parseFloat(e.target.value);
-        if (AppState.workletNode) {
-            try {
-                AppState.workletNode.parameters.get('fmDepth').setValueAtTime(
-                    AppState.fmDepth,
-                    AppState.audioCtx.currentTime
-                );
-            } catch (err) {}
-        }
-    });
-
-    // Pulse Width
-    document.getElementById('pulseWidthRange').addEventListener('input', e => {
-        AppState.pulseWidth = parseFloat(e.target.value);
-        if (AppState.workletNode) {
-            try {
-                AppState.workletNode.parameters.get('pulseWidth').setValueAtTime(
-                    AppState.pulseWidth,
-                    AppState.audioCtx.currentTime
-                );
-            } catch (err) {}
-        }
-    });
-
-    // Filter
-    document.getElementById('filterFreq').addEventListener('input', e => {
-        if (AppState.engine) {
-            AppState.engine.nodes.filter.frequency.value = parseFloat(e.target.value);
-        }
-    });
-
-    document.getElementById('filterReso').addEventListener('input', e => {
-        if (AppState.engine) {
-            const q = Math.min(parseFloat(e.target.value), 10);
-            AppState.engine.nodes.filter.Q.value = q;
-        }
-    });
-
-    // Wah controls
-    document.getElementById('autoWahRate').addEventListener('input', e => {
-        if (AppState.engine && AppState.engine.lfoNodes.autoWah) {
-            AppState.engine.lfoNodes.autoWah.lfo.frequency.value = parseFloat(e.target.value);
-        }
-    });
-
-    document.getElementById('autoWahDepth').addEventListener('input', e => {
-        if (AppState.engine && AppState.engine.lfoNodes.autoWah) {
-            AppState.engine.lfoNodes.autoWah.gain.gain.value = parseFloat(e.target.value);
-        }
-    });
-
-    // Effect toggles
-    document.querySelectorAll('.effect-group button[data-effect]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (!AppState.isPlaying) {
-                Utils.showStatus('Start synth first');
-                return;
-            }
-
-            const effect = btn.dataset.effect;
-            AppState.engine.effects[effect] = !AppState.engine.effects[effect];
-            btn.classList.toggle('active', AppState.engine.effects[effect]);
-            AppState.engine.updateEffects();
-
-            Utils.showStatus(`${effect}: ${AppState.engine.effects[effect] ? 'ON' : 'OFF'}`);
-
-            if (effect === 'autoWah') {
-                DOM.wahDisplay.style.display = AppState.engine.effects.autoWah ? 'block' : 'none';
-                DOM.wahDisplay.textContent = `Wah:${AppState.engine.effects.autoWah ? 'ON' : 'OFF'}`;
-            }
-        });
-    });
-
-    // Rhythm buttons
-    document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const pattern = btn.dataset.pattern;
-            App.startRhythm(pattern);
-        });
-    });
-
-    document.getElementById('rhythmStop').addEventListener('click', () => {
-        App.stopRhythm();
-    });
-
-    // Motion button
-    DOM.motionBtn.addEventListener('click', () => {
-        if (AppState.motionEnabled) {
-            App.disableMotion();
-        } else {
-            App.requestMotionPermission();
-        }
-    });
-
-    // Pan button
-    DOM.panBtn.addEventListener('click', () => {
-        if (AppState.panEnabled) {
-            App.disablePan();
-        } else {
-            App.enablePan();
-        }
-    });
-
-    // Permission modal
-    document.getElementById('permissionAllow').addEventListener('click', () => {
-        DeviceOrientationEvent.requestPermission()
-        .then(res => {
-            DOM.permissionModal.style.display = 'none';
-            if (res === 'granted') {
-                App.enableMotion();
-            } else {
-                Utils.showStatus('Permission denied');
-            }
-        })
-        .catch(e => {
-            DOM.permissionModal.style.display = 'none';
-            Utils.showStatus('Permission error');
-            console.error('Permission error:', e);
-        });
-    });
-
-    document.getElementById('permissionDeny').addEventListener('click', () => {
-        DOM.permissionModal.style.display = 'none';
-        Utils.showStatus('Motion disabled');
-    });
-
-    // Page visibility
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden && AppState.isPlaying) {
-            Utils.showStatus('App in background');
-        }
-    });
-
-    // Prevent context menu
-    window.addEventListener('contextmenu', e => e.preventDefault());
-
-    // Cleanup on unload
-    window.addEventListener('beforeunload', () => {
-        Utils.savePreferences();
-        if (AppState.schedulerWorker) {
-            AppState.schedulerWorker.terminate();
-        }
-    });
+// --- Event Listeners ---
+function initEventListeners(){
+    DOM.pad.addEventListener('touchstart',e=>App.handleTouch(e),{passive:false});DOM.pad.addEventListener('touchmove',e=>App.handleTouch(e),{passive:false});DOM.pad.addEventListener('mousedown',e=>App.handleTouch(e));DOM.pad.addEventListener('mousemove',e=>{if(e.buttons===1)App.handleTouch(e);});
+    DOM.startBtn.addEventListener('click',()=>App.start());DOM.stopBtn.addEventListener('click',()=>App.stop());
+    DOM.toggleControls.addEventListener('click',()=>{DOM.controls.classList.toggle('expanded');DOM.toggleControls.textContent=DOM.controls.classList.contains('expanded')?'✕':'⚙️';Utils.savePreferences();});
+    document.getElementById('octUp').addEventListener('click',()=>{AppState.octaveOffset++;Utils.createNoteRuler();Utils.showStatus(`Octave: ${AppState.octaveOffset}`);});
+    document.getElementById('octDown').addEventListener('click',()=>{AppState.octaveOffset--;Utils.createNoteRuler();Utils.showStatus(`Octave: ${AppState.octaveOffset}`);});
+    DOM.waveSelect.addEventListener('change',e=>{AppState.waveType=e.target.value;App.updateWaveControls(AppState.waveType);if(AppState.workletNode){try{AppState.workletNode.port.postMessage({type:'wave',wave:AppState.waveType});}catch(err){console.warn('Wave change error:',err);}}Utils.savePreferences();Utils.showStatus(`Wave: ${AppState.waveType}`);});
+    document.getElementById('detuneRange').addEventListener('input',e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.workletNode){const detunes=[];const center=Math.floor(CONSTANTS.NUM_VOICES/2);for(let i=0;i<CONSTANTS.NUM_VOICES;i++){detunes.push((i-center)*AppState.detuneAmount);}const key=detunes.join(',');if(AppState.lastDetuneKey!==key){try{AppState.workletNode.port.postMessage({type:'detune',values:detunes});AppState.lastDetuneKey=key;}catch(err){console.warn('Detune update error:',err);}}}Utils.savePreferences();});
+    document.getElementById('fmDepthRange').addEventListener('input',e=>{AppState.fmDepth=parseFloat(e.target.value);if(AppState.workletNode){try{AppState.workletNode.parameters.get('fmDepth').setValueAtTime(AppState.fmDepth,AppState.audioCtx.currentTime);}catch(err){}}});
+    document.getElementById('pulseWidthRange').addEventListener('input',e=>{AppState.pulseWidth=parseFloat(e.target.value);if(AppState.workletNode){try{AppState.workletNode.parameters.get('pulseWidth').setValueAtTime(AppState.pulseWidth,AppState.audioCtx.currentTime);}catch(err){}}});
+    document.getElementById('filterFreq').addEventListener('input',e=>{if(AppState.engine){AppState.engine.nodes.filter.frequency.value=parseFloat(e.target.value);}});
+    document.getElementById('filterReso').addEventListener('input',e=>{if(AppState.engine){const q=Math.min(parseFloat(e.target.value),10);AppState.engine.nodes.filter.Q.value=q;}});
+    document.getElementById('autoWahRate').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.lfoNodes.autoWah){AppState.engine.lfoNodes.autoWah.lfo.frequency.value=parseFloat(e.target.value);}});
+    document.getElementById('autoWahDepth').addEventListener('input',e=>{if(AppState.engine&&AppState.engine.lfoNodes.autoWah){AppState.engine.lfoNodes.autoWah.gain.gain.value=parseFloat(e.target.value);}});
+    document.querySelectorAll('.effect-group button[data-effect]').forEach(btn=>{btn.addEventListener('click',()=>{if(!AppState.isPlaying){Utils.showStatus('Start synth first');return;}const effect=btn.dataset.effect;AppState.engine.effects[effect]=!AppState.engine.effects[effect];btn.classList.toggle('active',AppState.engine.effects[effect]);AppState.engine.updateEffects();Utils.showStatus(`${effect}: ${AppState.engine.effects[effect]?'ON':'OFF'}`);if(effect==='autoWah'){DOM.wahDisplay.style.display=AppState.engine.effects.autoWah?'block':'none';DOM.wahDisplay.textContent=`Wah:${AppState.engine.effects.autoWah?'ON':'OFF'}`;}});});
+    document.querySelectorAll('.rhythm-panel button[data-pattern]').forEach(btn=>{btn.addEventListener('click',()=>{const pattern=btn.dataset.pattern;App.startRhythm(pattern);});});
+    document.getElementById('rhythmStop').addEventListener('click',()=>{App.stopRhythm();});
+    DOM.motionBtn.addEventListener('click',()=>{if(AppState.motionEnabled){App.disableMotion();}else{App.requestMotionPermission();}});
+    DOM.panBtn.addEventListener('click',()=>{if(AppState.panEnabled){App.disablePan();}else{App.enablePan();}});
+    document.getElementById('permissionAllow').addEventListener('click',()=>{DeviceOrientationEvent.requestPermission().then(res=>{DOM.permissionModal.style.display='none';if(res==='granted'){App.enableMotion();}else{Utils.showStatus('Permission denied');}}).catch(e=>{DOM.permissionModal.style.display='none';Utils.showStatus('Permission error');console.error('Permission error:',e);});});
+    document.getElementById('permissionDeny').addEventListener('click',()=>{DOM.permissionModal.style.display='none';Utils.showStatus('Motion disabled');});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden&&AppState.isPlaying){Utils.showStatus('App in background');}});
+    window.addEventListener('contextmenu',e=>e.preventDefault());
+    window.addEventListener('beforeunload',()=>{Utils.savePreferences();if(AppState.schedulerWorker){AppState.schedulerWorker.terminate();}});
 }
-
-// Initialize
-window.addEventListener('load', () => {
-    Utils.createNoteRuler();
-    Utils.loadPreferences();
-    initEventListeners();
-    Utils.updateButtonStates();
-    App.updateWaveControls(AppState.waveType);
-    Utils.showStatus('Ready — Click Start');
-});
+window.addEventListener('load',()=>{Utils.createNoteRuler();Utils.loadPreferences();initEventListeners();Utils.updateButtonStates();App.updateWaveControls(AppState.waveType);Utils.showStatus('Ready — Click Start');});
 </script>
 </body>
 </html>
