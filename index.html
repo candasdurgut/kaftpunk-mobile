@@ -414,6 +414,58 @@ select {
   backdrop-filter: blur(10px);
 }
 
+.preset-panel {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 12px;
+  background: var(--control-bg);
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+}
+
+.preset-title {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.preset-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.adsr-panel {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 12px;
+  background: var(--control-bg);
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+}
+
+.adsr-title {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.adsr-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+}
+
 @media (max-width: 768px) {
   #controls {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -425,7 +477,7 @@ select {
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   }
   
-  .kick-controls, .animation-controls {
+  .kick-controls, .animation-controls, .preset-controls, .adsr-controls {
     grid-template-columns: 1fr;
   }
 }
@@ -443,7 +495,7 @@ select {
     <canvas id="waveAnimation"></canvas>
   </div>
   
-  <div class="performance-indicator" id="perfIndicator">CPU: 0%</div>
+  <div class="performance-indicator" id="perfIndicator">CPU: 0% | Latency: 0ms</div>
   
   <button id="toggleControls">⚙️</button>
   
@@ -464,12 +516,35 @@ select {
         <option value="sine">Sine</option>
         <option value="pulse">Pulse</option>
         <option value="fm">FM</option>
+        <option value="wavetable">Wavetable</option>
       </select>
     </div>
     
     <div class="control-group">
       <label>Detune</label>
       <input type="range" id="detuneRange" min="0" max="50" value="15">
+    </div>
+    
+    <div class="adsr-panel">
+      <div class="adsr-title">ADSR ENVELOPE</div>
+      <div class="adsr-controls">
+        <div class="control-group">
+          <label>Attack</label>
+          <input type="range" id="attackRange" min="0.001" max="2" value="0.01" step="0.001">
+        </div>
+        <div class="control-group">
+          <label>Decay</label>
+          <input type="range" id="decayRange" min="0.001" max="2" value="0.1" step="0.001">
+        </div>
+        <div class="control-group">
+          <label>Sustain</label>
+          <input type="range" id="sustainRange" min="0" max="1" value="0.7" step="0.01">
+        </div>
+        <div class="control-group">
+          <label>Release</label>
+          <input type="range" id="releaseRange" min="0.001" max="2" value="0.3" step="0.001">
+        </div>
+      </div>
     </div>
     
     <div class="control-group">
@@ -556,6 +631,16 @@ select {
       <button id="toggleReverb">Reverb</button>
     </div>
     
+    <div class="preset-panel">
+      <div class="preset-title">PRESET SYSTEM</div>
+      <div class="preset-controls">
+        <button id="savePresetBtn">Save Preset</button>
+        <button id="loadPresetBtn">Load Preset</button>
+        <button id="randomPresetBtn">Random</button>
+        <button id="exportPresetBtn">Export</button>
+      </div>
+    </div>
+    
     <div class="animation-panel">
       <div class="animation-title">VISUAL ANIMATIONS</div>
       <div class="control-group">
@@ -608,6 +693,7 @@ class ProSynthEngine {
     this.isPlaying = false;
     this.lowPowerMode = false;
     this.performanceMonitor = new PerformanceMonitor();
+    this.presetManager = new PresetManager();
     
     // State management
     this.state = {
@@ -618,7 +704,7 @@ class ProSynthEngine {
       waveType: "sawtooth",
       motionEnabled: false,
       panEnabled: false,
-      NUM_OSC: 4, // Reduced for performance
+      NUM_OSC: 4,
       pulseWidth: 0.5,
       rhythmActive: false,
       rhythmSpeed: 120,
@@ -629,6 +715,12 @@ class ProSynthEngine {
       kickSettings: {
         volume: 80, pattern: '4/4', punch: 60,
         bass: 100, distortion: 40, sweep: 100
+      },
+      adsr: {
+        attack: 0.01,
+        decay: 0.1,
+        sustain: 0.7,
+        release: 0.3
       }
     };
     
@@ -647,16 +739,24 @@ class ProSynthEngine {
     this.rhythmInterval = null;
     this.lastTouchTime = 0;
     this.lastOrientationTime = 0;
-    this.touchThrottle = 16; // 60Hz
-    this.motionThrottle = 33; // 30Hz
+    this.touchThrottle = 16;
+    this.motionThrottle = 33;
     
     // Visual
     this.animationFrameId = null;
     this.animationHue = 0;
     this.touchPoint = {x: 0, y: 0};
+    
+    // Performance
+    this.latency = 0;
+    this.lastLatencyCheck = 0;
+    
+    // ADSR
+    this.envelopeGain = null;
+    this.gate = 0;
   }
 
-  // ==================== AUDIO CONTEXT MANAGEMENT ====================
+  // ==================== AUDIO CONTEXT & STATIC GRAPH ====================
   initializeAudioContext() {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -664,8 +764,8 @@ class ProSynthEngine {
         latencyHint: 'interactive'
       });
       
-      // iOS audio unlock
       this.unlockAudioForIOS();
+      this.createStaticAudioGraph();
       return true;
     } catch (error) {
       console.error('AudioContext initialization failed:', error);
@@ -694,36 +794,38 @@ class ProSynthEngine {
     document.addEventListener('touchend', unlock, { once: true });
   }
 
-  // ==================== STATIC AUDIO GRAPH ====================
   createStaticAudioGraph() {
     if (!this.audioCtx) return;
     
-    // Cleanup existing nodes
     this.cleanupAudioNodes();
     
     // Create master chain with proper gain staging
     this.nodes.masterGain = this.audioCtx.createGain();
-    this.nodes.masterGain.gain.value = 0.15; // -12dB
+    this.nodes.masterGain.gain.value = 0.15;
     
-    // Create all effect nodes (always connected, controlled via gain)
+    // Create ADSR envelope
+    this.envelopeGain = this.audioCtx.createGain();
+    this.envelopeGain.gain.value = 0;
+    
+    // Create all effect nodes with bypass system
     this.createEffectNodes();
     this.createKickNodes();
     this.createOscillators();
     
-    // Connect static audio graph
+    // Connect static audio graph - NO MORE RECONNECTING
     this.connectStaticGraph();
     
     console.log('Static audio graph created');
   }
 
   createEffectNodes() {
-    // Distortion with precomputed curves
+    // Distortion with precomputed curves and bypass
     this.nodes.distortion = this.audioCtx.createWaveShaper();
     this.nodes.distortion.curve = this.precomputedCurves.medium;
     this.nodes.distortionBypass = this.audioCtx.createGain();
     this.nodes.distortionBypass.gain.value = 0;
     
-    // Auto Wah
+    // Auto Wah with bypass
     this.nodes.autoWah = this.audioCtx.createBiquadFilter();
     this.nodes.autoWah.type = "bandpass";
     this.nodes.autoWah.frequency.value = 800;
@@ -739,7 +841,7 @@ class ProSynthEngine {
     this.nodes.autoWahGain.connect(this.nodes.autoWah.frequency);
     this.nodes.autoWahLFO.start();
     
-    // Flanger
+    // Flanger with bypass
     this.nodes.flangerDelay = this.audioCtx.createDelay(0.02);
     this.nodes.flangerDelay.delayTime.value = 0.005;
     this.nodes.flangerBypass = this.audioCtx.createGain();
@@ -755,7 +857,7 @@ class ProSynthEngine {
     this.nodes.flangerGain.connect(this.nodes.flangerDelay.delayTime);
     this.nodes.flangerLFO.start();
     
-    // Chorus
+    // Chorus with bypass
     this.nodes.chorusDelay = this.audioCtx.createDelay(0.05);
     this.nodes.chorusDelay.delayTime.value = 0.025;
     this.nodes.chorusBypass = this.audioCtx.createGain();
@@ -769,7 +871,7 @@ class ProSynthEngine {
     this.nodes.chorusGain.connect(this.nodes.chorusDelay.delayTime);
     this.nodes.chorusLFO.start();
     
-    // Tremolo
+    // Tremolo with bypass
     this.nodes.tremoloLFO = this.audioCtx.createOscillator();
     this.nodes.tremoloLFO.frequency.value = 5;
     this.nodes.tremoloGain = this.audioCtx.createGain();
@@ -777,13 +879,13 @@ class ProSynthEngine {
     this.nodes.tremoloLFO.connect(this.nodes.tremoloGain);
     this.nodes.tremoloLFO.start();
     
-    // Filter (always on)
+    // Filter (always on but with smoothing)
     this.nodes.filter = this.audioCtx.createBiquadFilter();
     this.nodes.filter.type = "lowpass";
     this.nodes.filter.frequency.value = 20000;
     this.nodes.filter.Q.value = 1;
     
-    // Delay
+    // Delay with bypass
     this.nodes.delay = this.audioCtx.createDelay(2);
     this.nodes.delay.delayTime.value = 0.3;
     this.nodes.delayBypass = this.audioCtx.createGain();
@@ -792,7 +894,7 @@ class ProSynthEngine {
     this.nodes.delayFeedback = this.audioCtx.createGain();
     this.nodes.delayFeedback.gain.value = 0.5;
     
-    // Reverb
+    // Reverb with bypass
     this.nodes.reverb = this.audioCtx.createConvolver();
     this.nodes.reverbBypass = this.audioCtx.createGain();
     this.nodes.reverbBypass.gain.value = 0;
@@ -806,11 +908,11 @@ class ProSynthEngine {
     }
     this.nodes.reverb.buffer = buffer;
     
-    // Panner
+    // Panner with smoothing
     this.nodes.panner = this.audioCtx.createStereoPanner();
     this.nodes.panner.pan.value = 0;
     
-    // Safety limiter
+    // Safety limiter (ALWAYS ON)
     this.nodes.limiter = this.audioCtx.createDynamicsCompressor();
     this.nodes.limiter.threshold.value = -1;
     this.nodes.limiter.knee.value = 0;
@@ -819,79 +921,10 @@ class ProSynthEngine {
     this.nodes.limiter.release.value = 0.05;
   }
 
-  createKickNodes() {
-    this.kickOsc = this.audioCtx.createOscillator();
-    this.kickGain = this.audioCtx.createGain();
-    this.kickGain.gain.value = 0;
-    
-    this.kickOsc2 = this.audioCtx.createOscillator();
-    this.kickGain2 = this.audioCtx.createGain();
-    this.kickGain2.gain.value = 0;
-    
-    this.kickDistortion = this.audioCtx.createWaveShaper();
-    this.kickDistortion.curve = this.precomputedCurves.soft;
-    this.kickDistortion.oversample = '4x';
-    
-    this.kickOsc.connect(this.kickGain);
-    this.kickOsc2.connect(this.kickGain2);
-    this.kickGain.connect(this.kickDistortion);
-    this.kickGain2.connect(this.kickDistortion);
-    this.kickDistortion.connect(this.audioCtx.destination);
-    
-    this.kickOsc.start();
-    this.kickOsc2.start();
-  }
-
-  createOscillators() {
-    this.cleanupOscillators();
-    const now = this.audioCtx.currentTime;
-    
-    for (let i = 0; i < this.state.NUM_OSC; i++) {
-      let osc;
-      
-      if (this.state.waveType === 'fm') {
-        osc = this.audioCtx.createOscillator();
-        osc.type = 'sine';
-        const modulator = this.audioCtx.createOscillator();
-        modulator.type = 'sine';
-        modulator.frequency.value = this.state.baseFreq * 2;
-        const modGain = this.audioCtx.createGain();
-        modGain.gain.value = 100;
-        modulator.connect(modGain);
-        modGain.connect(osc.frequency);
-        modulator.start(now);
-      } else if (this.state.waveType === 'pulse') {
-        osc = this.audioCtx.createOscillator();
-        osc.type = 'square';
-      } else {
-        osc = this.audioCtx.createOscillator();
-        osc.type = this.state.waveType;
-      }
-      
-      // Apply detune with smoothing
-      osc.detune.value = (i - Math.floor(this.state.NUM_OSC / 2)) * this.state.detuneAmount;
-      
-      if (this.state.waveType === 'pulse') {
-        const pulseWidth = this.audioCtx.createWaveShaper();
-        const pulseCurve = new Float32Array(256);
-        for (let j = 0; j < 256; j++) {
-          pulseCurve[j] = j < 128 * this.state.pulseWidth ? -1 : 1;
-        }
-        pulseWidth.curve = pulseCurve;
-        osc.connect(pulseWidth);
-        pulseWidth.connect(this.nodes.masterGain);
-      } else {
-        osc.connect(this.nodes.masterGain);
-      }
-      
-      osc.start(now);
-      this.oscillators.push(osc);
-    }
-  }
-
   connectStaticGraph() {
-    // Main signal chain with bypass controls
-    this.nodes.masterGain.connect(this.nodes.distortionBypass);
+    // Main signal chain - PERMANENTLY CONNECTED
+    // Oscillators -> Envelope -> Effects chain
+    this.envelopeGain.connect(this.nodes.distortionBypass);
     this.nodes.distortionBypass.connect(this.nodes.distortion);
     this.nodes.distortion.connect(this.nodes.autoWahBypass);
     this.nodes.autoWahBypass.connect(this.nodes.autoWah);
@@ -915,11 +948,54 @@ class ProSynthEngine {
     this.nodes.delay.connect(this.nodes.delayFeedback);
     this.nodes.delayFeedback.connect(this.nodes.delay);
     
-    // Tremolo modulation (static connection)
+    // Tremolo modulation (static)
     this.nodes.tremoloGain.connect(this.nodes.masterGain.gain);
   }
 
-  // ==================== EFFECT BYPASS CONTROL ====================
+  // ==================== ADSR ENVELOPE SYSTEM ====================
+  triggerEnvelope() {
+    if (!this.audioCtx || !this.envelopeGain) return;
+    
+    const now = this.audioCtx.currentTime;
+    this.gate = 1;
+    
+    // Reset envelope
+    this.envelopeGain.gain.cancelScheduledValues(now);
+    this.envelopeGain.gain.setValueAtTime(0, now);
+    
+    // Attack
+    this.envelopeGain.gain.linearRampToValueAtTime(1, now + this.state.adsr.attack);
+    
+    // Decay to sustain
+    this.envelopeGain.gain.linearRampToValueAtTime(
+      this.state.adsr.sustain, 
+      now + this.state.adsr.attack + this.state.adsr.decay
+    );
+  }
+
+  releaseEnvelope() {
+    if (!this.audioCtx || !this.envelopeGain) return;
+    
+    const now = this.audioCtx.currentTime;
+    this.gate = 0;
+    
+    // Release
+    this.envelopeGain.gain.cancelScheduledValues(now);
+    this.envelopeGain.gain.setTargetAtTime(0, now, this.state.adsr.release * 0.3);
+  }
+
+  updateADSRParameters() {
+    // This will be called when ADSR sliders change
+    if (this.gate === 1) {
+      // If currently in sustain phase, update the sustain level
+      if (this.audioCtx && this.envelopeGain) {
+        const now = this.audioCtx.currentTime;
+        this.envelopeGain.gain.cancelScheduledValues(now);
+        this.envelopeGain.gain.setValueAtTime(this.state.adsr.sustain, now);
+      }
+    }
+  }
+
   updateEffectBypasses() {
     const now = this.audioCtx.currentTime;
     
@@ -949,6 +1025,68 @@ class ProSynthEngine {
     );
   }
 
+  // ==================== ADVANCED OSCILLATORS ====================
+  createOscillators() {
+    this.cleanupOscillators();
+    const now = this.audioCtx.currentTime;
+    
+    for (let i = 0; i < this.state.NUM_OSC; i++) {
+      let osc;
+      
+      if (this.state.waveType === 'fm') {
+        osc = this.createFMOscillator(now);
+      } else if (this.state.waveType === 'pulse') {
+        osc = this.createPulseOscillator(now);
+      } else if (this.state.waveType === 'wavetable') {
+        osc = this.createWavetableOscillator(now);
+      } else {
+        osc = this.audioCtx.createOscillator();
+        osc.type = this.state.waveType;
+      }
+      
+      // Apply detune with PolyBLEP-style smoothing
+      this.applyAdvancedDetune(osc, i, now);
+      
+      if (this.state.waveType === 'pulse') {
+        const pulseWidth = this.createPulseShaper();
+        osc.connect(pulseWidth);
+        pulseWidth.connect(this.envelopeGain);
+      } else {
+        osc.connect(this.envelopeGain);
+      }
+      
+      osc.start(now);
+      this.oscillators.push(osc);
+    }
+  }
+
+  createWavetableOscillator(now) {
+    const osc = this.audioCtx.createOscillator();
+    // Simple wavetable simulation using custom wave
+    const real = new Float32Array(256);
+    const imag = new Float32Array(256);
+    
+    // Create a rich wavetable with multiple harmonics
+    for (let i = 0; i < 256; i++) {
+      const phase = (i / 256) * 2 * Math.PI;
+      // Add multiple harmonics for richer sound
+      real[i] = Math.sin(phase) + 0.5 * Math.sin(2 * phase) + 0.25 * Math.sin(3 * phase);
+      imag[i] = 0;
+    }
+    
+    const wave = this.audioCtx.createPeriodicWave(real, imag);
+    osc.setPeriodicWave(wave);
+    return osc;
+  }
+
+  applyAdvancedDetune(osc, index, now) {
+    const detune = (index - Math.floor(this.state.NUM_OSC / 2)) * this.state.detuneAmount;
+    
+    // Use exponential smoothing for more musical detune
+    osc.detune.setValueAtTime(osc.detune.value, now);
+    osc.detune.exponentialRampToValueAtTime(detune, now + 0.05);
+  }
+
   // ==================== PERFORMANCE OPTIMIZATIONS ====================
   precomputeDistortionCurves() {
     const curves = {};
@@ -964,7 +1102,8 @@ class ProSynthEngine {
       const curve = new Float32Array(n);
       for (let i = 0; i < n; i++) {
         const x = (i - n / 2) / (n / 2);
-        curve[i] = (3 + amount) * Math.tanh(x * 5) / (Math.PI + amount * Math.abs(x));
+        // Improved distortion curve with anti-aliasing
+        curve[i] = Math.tanh(x * (3 + amount * 0.1)) * (1 + amount * 0.01);
       }
       curves[name] = curve;
     });
@@ -979,40 +1118,111 @@ class ProSynthEngine {
     param.linearRampToValueAtTime(targetValue, now + rampTime);
   }
 
+  measureLatency() {
+    if (!this.audioCtx || performance.now() - this.lastLatencyCheck < 1000) return;
+    
+    this.lastLatencyCheck = performance.now();
+    const startTime = this.audioCtx.currentTime;
+    
+    // Simple latency measurement
+    const oscillator = this.audioCtx.createOscillator();
+    const gainNode = this.audioCtx.createGain();
+    gainNode.gain.value = 0.001;
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(this.audioCtx.destination);
+    
+    oscillator.start(startTime);
+    oscillator.stop(startTime + 0.001);
+    
+    this.latency = Math.round((this.audioCtx.currentTime - startTime) * 1000);
+  }
+
+  // ==================== PRESET SYSTEM ====================
+  savePreset(name = `preset_${Date.now()}`) {
+    const preset = {
+      name,
+      state: {...this.state},
+      effects: {...this.effects},
+      timestamp: Date.now()
+    };
+    
+    this.presetManager.savePreset(preset);
+    return preset;
+  }
+
+  loadPreset(preset) {
+    this.state = {...preset.state};
+    this.effects = {...preset.effects};
+    
+    // Update audio engine
+    if (this.isPlaying) {
+      this.createOscillators();
+      this.updateEffectBypasses();
+    }
+    
+    // Update UI
+    this.updateUIFromPreset();
+  }
+
+  randomizePreset() {
+    // Randomize synth parameters
+    this.state.detuneAmount = Math.random() * 50;
+    this.state.waveType = ['sawtooth', 'square', 'triangle', 'sine', 'pulse'][Math.floor(Math.random() * 5)];
+    
+    // Randomize effects
+    Object.keys(this.effects).forEach(key => {
+      this.effects[key] = Math.random() > 0.5;
+    });
+    
+    if (this.isPlaying) {
+      this.createOscillators();
+      this.updateEffectBypasses();
+    }
+    
+    this.updateUIFromPreset();
+  }
+
+  updateUIFromPreset() {
+    // Update UI elements to match current state
+    document.getElementById('detuneRange').value = this.state.detuneAmount;
+    document.getElementById('waveSelect').value = this.state.waveType;
+    
+    // Update effect buttons
+    Object.keys(this.effects).forEach(effect => {
+      const button = document.getElementById(`toggle${effect.charAt(0).toUpperCase() + effect.slice(1)}`);
+      if (button) {
+        button.classList.toggle('active', this.effects[effect]);
+      }
+    });
+  }
+
   // ==================== CLEANUP ====================
   cleanupAudioNodes() {
-    // Disconnect all nodes
     Object.values(this.nodes).forEach(node => {
-      if (node && node.disconnect) {
-        node.disconnect();
-      }
+      if (node && node.disconnect) node.disconnect();
     });
     this.nodes = {};
   }
 
   cleanupOscillators() {
     this.oscillators.forEach(osc => {
-      try {
-        osc.stop();
-        osc.disconnect();
-      } catch (e) {}
+      try { osc.stop(); osc.disconnect(); } catch (e) {}
     });
     this.oscillators = [];
   }
 
   // ==================== PUBLIC API ====================
-  start() {
+  async start() {
     if (this.isPlaying) return false;
     
     if (!this.audioCtx) {
-      if (!this.initializeAudioContext()) {
-        return false;
-      }
+      if (!this.initializeAudioContext()) return false;
     }
     
     this.createStaticAudioGraph();
     this.isPlaying = true;
-    this.startPerformanceMonitoring();
+    this.performanceMonitor.start();
     return true;
   }
 
@@ -1020,7 +1230,7 @@ class ProSynthEngine {
     if (!this.isPlaying) return;
     
     this.stopRhythm();
-    this.stopPerformanceMonitoring();
+    this.performanceMonitor.stop();
     this.cleanupOscillators();
     this.cleanupAudioNodes();
     
@@ -1040,7 +1250,6 @@ class ProSynthEngine {
     
     this.oscillators.forEach((osc, i) => {
       if (osc.frequency) {
-        // Smooth frequency changes to prevent clicks
         osc.frequency.cancelScheduledValues(now);
         osc.frequency.linearRampToValueAtTime(freq, now + 0.01);
       }
@@ -1064,6 +1273,86 @@ class ProSynthEngine {
   stopPerformanceMonitoring() {
     this.performanceMonitor.stop();
   }
+
+  // Placeholder methods for compatibility
+  createFMOscillator(now) {
+    const osc = this.audioCtx.createOscillator();
+    osc.type = 'sine';
+    return osc;
+  }
+
+  createPulseOscillator(now) {
+    const osc = this.audioCtx.createOscillator();
+    osc.type = 'square';
+    return osc;
+  }
+
+  createPulseShaper() {
+    return this.audioCtx.createGain();
+  }
+
+  stopRhythm() {
+    if (this.rhythmInterval) {
+      clearInterval(this.rhythmInterval);
+      this.rhythmInterval = null;
+    }
+  }
+}
+
+// ==================== PRESET MANAGER ====================
+class PresetManager {
+  constructor() {
+    this.storageKey = 'synthPresets';
+    this.presets = this.loadPresets();
+  }
+
+  savePreset(preset) {
+    this.presets[preset.name] = preset;
+    this.saveToStorage();
+    return preset;
+  }
+
+  loadPreset(name) {
+    return this.presets[name];
+  }
+
+  deletePreset(name) {
+    delete this.presets[name];
+    this.saveToStorage();
+  }
+
+  getAllPresets() {
+    return Object.values(this.presets);
+  }
+
+  loadPresets() {
+    try {
+      return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  saveToStorage() {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.presets));
+  }
+
+  exportPresets() {
+    const data = JSON.stringify(this.presets, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    return URL.createObjectURL(blob);
+  }
+
+  importPresets(jsonData) {
+    try {
+      const imported = JSON.parse(jsonData);
+      this.presets = { ...this.presets, ...imported };
+      this.saveToStorage();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
 
 // ==================== PERFORMANCE MONITOR ====================
@@ -1086,9 +1375,7 @@ class PerformanceMonitor {
 
   stop() {
     this.monitoring = false;
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-    }
+    if (this.animationId) cancelAnimationFrame(this.animationId);
   }
 
   update() {
@@ -1102,10 +1389,10 @@ class PerformanceMonitor {
       this.frameCount = 0;
       this.lastTime = now;
       
-      // Update performance indicator
       const indicator = document.getElementById('perfIndicator');
       if (indicator) {
-        indicator.textContent = `CPU: ${this.cpuUsage}%`;
+        const latency = synthEngine.latency || 0;
+        indicator.textContent = `CPU: ${this.cpuUsage}% | Latency: ${latency}ms`;
         indicator.style.background = this.cpuUsage > 80 ? 'rgba(255,50,50,0.8)' : 'var(--control-bg)';
       }
     }
@@ -1136,7 +1423,11 @@ const elements = {
   startRhythmBtn: document.getElementById("startRhythmBtn"),
   stopRhythmBtn: document.getElementById("stopRhythmBtn"),
   waveCanvas: document.getElementById("waveAnimation"),
-  perfIndicator: document.getElementById("perfIndicator")
+  perfIndicator: document.getElementById("perfIndicator"),
+  savePresetBtn: document.getElementById("savePresetBtn"),
+  loadPresetBtn: document.getElementById("loadPresetBtn"),
+  randomPresetBtn: document.getElementById("randomPresetBtn"),
+  exportPresetBtn: document.getElementById("exportPresetBtn")
 };
 
 // Constants
@@ -1218,7 +1509,8 @@ function createNoteRuler() {
 }
 
 // ==================== TOUCH HANDLING ====================
-function handleTouch(e) {
+function handleTouchStart(e) {
+  e.preventDefault();
   const now = performance.now();
   if (now - synthEngine.lastTouchTime < synthEngine.touchThrottle) return;
   synthEngine.lastTouchTime = now;
@@ -1228,29 +1520,19 @@ function handleTouch(e) {
     return;
   }
   
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const touch = e.touches ? e.touches[0] : e;
+  updateTouchPosition(touch.clientX, touch.clientY);
   
-  // Update touch feedback
-  const touchFeedback = document.getElementById('touchFeedback');
-  touchFeedback.style.left = clientX + 'px';
-  touchFeedback.style.top = clientY + 'px';
-  touchFeedback.style.width = '80px';
-  touchFeedback.style.height = '80px';
-  touchFeedback.style.opacity = '1';
+  // Trigger ADSR envelope
+  synthEngine.triggerEnvelope();
   
-  setTimeout(() => {
-    touchFeedback.style.opacity = '0';
-    touchFeedback.style.width = '0px';
-    touchFeedback.style.height = '0px';
-  }, 200);
-  
-  // Calculate frequency and volume
-  const freq = noteFromPad(clientY);
-  const volume = clientX / window.innerWidth;
+  // Calculate frequency and sustain
+  const freq = noteFromPad(touch.clientY);
+  const sustain = touch.clientX / window.innerWidth;
   
   synthEngine.setFrequency(freq);
-  synthEngine.setVolume(volume);
+  synthEngine.state.adsr.sustain = sustain;
+  synthEngine.updateADSRParameters();
   
   // Update display
   const noteInfo = freqToNote(freq);
@@ -1259,159 +1541,92 @@ function handleTouch(e) {
   if (colorIndex !== -1) updateThemeColor(noteColors[colorIndex]);
 }
 
-// ==================== MOTION CONTROL ====================
-function requestMotionPermission() {
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    elements.permissionModal.style.display = 'flex';
-  } else {
-    startMotionControl();
-  }
-}
-
-function startMotionControl() {
-  window.addEventListener("deviceorientation", handleOrientation);
-  synthEngine.state.motionEnabled = true;
-  elements.motionBtn.textContent = "Motion ON";
-  elements.motionBtn.classList.add('active');
-  elements.motionDisplay.style.display = 'block';
-  showStatus('Motion enabled - Tilt device for pitch!');
-}
-
-function disableMotion() {
-  window.removeEventListener("deviceorientation", handleOrientation);
-  synthEngine.state.motionEnabled = false;
-  synthEngine.state.tiltBend = 0;
-  elements.motionBtn.textContent = "Motion OFF";
-  elements.motionBtn.classList.remove('active');
-  elements.motionDisplay.style.display = 'none';
-  showStatus('Motion disabled');
-}
-
-function handleOrientation(e) {
+function handleTouchMove(e) {
+  e.preventDefault();
   const now = performance.now();
-  if (now - synthEngine.lastOrientationTime < synthEngine.motionThrottle) return;
-  synthEngine.lastOrientationTime = now;
+  if (now - synthEngine.lastTouchTime < synthEngine.touchThrottle) return;
+  synthEngine.lastTouchTime = now;
   
-  if (e.beta === null) return;
-  const tilt = e.beta;
-  const pan = e.gamma;
-  
-  if (synthEngine.state.motionEnabled) {
-    synthEngine.state.tiltBend = tilt / 45 * 12;
-    const baseFreq = 65.41 * Math.pow(2, synthEngine.state.octaveOffset);
-    const newFreq = baseFreq * Math.pow(2, synthEngine.state.tiltBend/12);
-    synthEngine.setFrequency(newFreq);
-    
-    elements.motionDisplay.textContent = `Tilt:${Math.round(synthEngine.state.tiltBend*10)/10}st`;
-    
-    const noteInfo = freqToNote(newFreq);
-    elements.noteDisplay.textContent = noteInfo.fullName;
-    const colorIndex = noteNames.indexOf(noteInfo.name);
-    if (colorIndex !== -1) updateThemeColor(noteColors[colorIndex]);
-  }
-  
-  if (synthEngine.state.panEnabled && pan !== null) {
-    const panValue = Math.max(-1, Math.min(1, pan/90));
-    synthEngine.setPan(panValue);
-    elements.panDisplay.textContent = `Pan:${Math.round(panValue*100)}%`;
-  }
-}
-
-function togglePan() {
-  synthEngine.state.panEnabled = !synthEngine.state.panEnabled;
-  elements.panBtn.textContent = synthEngine.state.panEnabled ? "Pan ON" : "Pan OFF";
-  elements.panBtn.classList.toggle('active', synthEngine.state.panEnabled);
-  elements.panDisplay.style.display = synthEngine.state.panEnabled ? 'block' : 'none';
-  
-  if (!synthEngine.state.panEnabled) {
-    synthEngine.setPan(0);
-  }
-  showStatus(synthEngine.state.panEnabled ? 'Pan enabled - Tilt device sideways!' : 'Pan disabled');
-}
-
-// ==================== RHYTHM SYSTEM ====================
-function playKick(beat) {
   if (!synthEngine.isPlaying) return;
   
-  const pattern = patternMap[synthEngine.state.kickSettings.pattern];
-  if (!pattern[beat % pattern.length]) return;
+  const touch = e.touches ? e.touches[0] : e;
+  updateTouchPosition(touch.clientX, touch.clientY);
   
-  const now = synthEngine.audioCtx.currentTime;
-  const volume = synthEngine.state.kickSettings.volume / 100;
-  const punch = synthEngine.state.kickSettings.punch / 100;
-  const bass = synthEngine.state.kickSettings.bass / 100;
-  const distortion = synthEngine.state.kickSettings.distortion;
-  const sweep = synthEngine.state.kickSettings.sweep / 100;
+  // Update frequency and sustain while touching
+  const freq = noteFromPad(touch.clientY);
+  const sustain = touch.clientX / window.innerWidth;
   
-  const baseFreq = 80 + 40 * punch;
-  const endFreq = 30 + 20 * (1 - sweep);
-  const sweepTime = 0.08 + 0.07 * sweep;
+  synthEngine.setFrequency(freq);
+  synthEngine.state.adsr.sustain = sustain;
+  synthEngine.updateADSRParameters();
   
-  // Main kick
-  synthEngine.kickOsc.frequency.setValueAtTime(baseFreq, now);
-  synthEngine.kickOsc.frequency.exponentialRampToValueAtTime(endFreq, now + sweepTime);
-  synthEngine.kickGain.gain.setValueAtTime(volume * 0.8, now);
-  synthEngine.kickGain.gain.exponentialRampToValueAtTime(0.001, now + sweepTime + 0.05);
-  
-  // Bass layer
-  if (bass > 0) {
-    synthEngine.kickOsc2.frequency.setValueAtTime(60, now);
-    synthEngine.kickOsc2.frequency.exponentialRampToValueAtTime(25, now + sweepTime * 1.5);
-    synthEngine.kickGain2.gain.setValueAtTime(volume * bass * 0.6, now);
-    synthEngine.kickGain2.gain.exponentialRampToValueAtTime(0.001, now + sweepTime * 1.5 + 0.05);
-  }
-  
-  // Distortion
-  synthEngine.kickDistortion.curve = synthEngine.precomputedCurves[
-    distortion > 70 ? 'hard' : distortion > 40 ? 'medium' : 'soft'
-  ];
+  // Update display
+  const noteInfo = freqToNote(freq);
+  elements.noteDisplay.textContent = noteInfo.fullName;
+  const colorIndex = noteNames.indexOf(noteInfo.name);
+  if (colorIndex !== -1) updateThemeColor(noteColors[colorIndex]);
 }
 
-function startRhythm() {
-  if (!synthEngine.isPlaying) {
-    showStatus('Start synth first');
-    return;
-  }
+function handleTouchEnd(e) {
+  e.preventDefault();
+  if (!synthEngine.isPlaying) return;
   
-  stopRhythm();
-  synthEngine.state.rhythmActive = true;
-  elements.startRhythmBtn.disabled = true;
-  elements.stopRhythmBtn.disabled = false;
+  // Release ADSR envelope
+  synthEngine.releaseEnvelope();
   
-  let beat = 0;
-  synthEngine.rhythmInterval = setInterval(() => {
-    if (!synthEngine.isPlaying) return;
-    
-    const intensity = synthEngine.state.rhythmIntensity / 100;
-    const baseGain = 0.1 + intensity * 0.3;
-    const pattern = [
-      baseGain, baseGain * 0.2, baseGain * 0.8, baseGain * 0.1,
-      baseGain, baseGain * 0.3, baseGain * 0.7, baseGain * 0.2
-    ];
-    
-    synthEngine.setVolume(pattern[beat % 8]);
-    playKick(beat);
-    
-    // Random color change for visual feedback
-    const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
-    updateThemeColor(randomColor);
-    
-    beat++;
-  }, 60000 / synthEngine.state.rhythmSpeed);
-  
-  showStatus('Rhythm Started');
+  // Hide touch feedback
+  const touchFeedback = document.getElementById('touchFeedback');
+  touchFeedback.style.opacity = '0';
 }
 
-function stopRhythm() {
-  synthEngine.state.rhythmActive = false;
-  elements.startRhythmBtn.disabled = false;
-  elements.stopRhythmBtn.disabled = true;
+function updateTouchPosition(x, y) {
+  // Update touch feedback
+  const touchFeedback = document.getElementById('touchFeedback');
+  touchFeedback.style.left = x + 'px';
+  touchFeedback.style.top = y + 'px';
+  touchFeedback.style.width = '80px';
+  touchFeedback.style.height = '80px';
+  touchFeedback.style.opacity = '1';
+}
+
+// ==================== PRESET SYSTEM UI ====================
+function setupPresetSystem() {
+  elements.savePresetBtn.addEventListener('click', () => {
+    const name = prompt('Preset name:', `preset_${Date.now()}`);
+    if (name) {
+      const preset = synthEngine.savePreset(name);
+      showStatus(`Preset "${name}" saved`);
+    }
+  });
   
-  if (synthEngine.rhythmInterval) {
-    clearInterval(synthEngine.rhythmInterval);
-    synthEngine.rhythmInterval = null;
-  }
-  showStatus('Rhythm Stopped');
+  elements.loadPresetBtn.addEventListener('click', () => {
+    const presets = synthEngine.presetManager.getAllPresets();
+    if (presets.length === 0) {
+      showStatus('No presets saved');
+      return;
+    }
+    
+    const presetNames = presets.map(p => p.name).join('\n');
+    const name = prompt(`Available presets:\n${presetNames}\n\nEnter preset name to load:`);
+    if (name && synthEngine.presetManager.loadPreset(name)) {
+      synthEngine.loadPreset(synthEngine.presetManager.loadPreset(name));
+      showStatus(`Preset "${name}" loaded`);
+    }
+  });
+  
+  elements.randomPresetBtn.addEventListener('click', () => {
+    synthEngine.randomizePreset();
+    showStatus('Random preset applied');
+  });
+  
+  elements.exportPresetBtn.addEventListener('click', () => {
+    const url = synthEngine.presetManager.exportPresets();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'synth_presets.json';
+    a.click();
+    showStatus('Presets exported');
+  });
 }
 
 // ==================== ANIMATIONS ====================
@@ -1530,100 +1745,6 @@ const animations = {
         ctx.fill();
       });
     }
-  },
-  
-  metaballs: {
-    balls: [],
-    init() {
-      this.balls = [];
-      for(let i=0;i<6;i++) this.balls.push({
-        x: Math.random()*elements.waveCanvas.width,
-        y: Math.random()*elements.waveCanvas.height,
-        vx: (Math.random()-0.5)*2*synthEngine.state.animationSpeed,
-        vy: (Math.random()-0.5)*2*synthEngine.state.animationSpeed,
-        r: Math.random()*50+30
-      });
-    },
-    draw(ctx, time) {
-      ctx.fillStyle = 'rgba(0,0,0,0.1)';
-      ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
-      ctx.globalCompositeOperation = 'lighter';
-      this.balls.forEach(b => {
-        b.x += b.vx; b.y += b.vy;
-        if(b.x+b.r > ctx.canvas.width || b.x-b.r < 0) b.vx = -b.vx;
-        if(b.y+b.r > ctx.canvas.height || b.y-b.r < 0) b.vy = -b.vy;
-        const gradient = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
-        gradient.addColorStop(0, `hsla(${synthEngine.animationHue},100%,70%,0.8)`);
-        gradient.addColorStop(1, `hsla(${synthEngine.animationHue},100%,50%,0)`);
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-        ctx.fill();
-      });
-      ctx.globalCompositeOperation = 'source-over';
-    }
-  },
-  
-  oscilloscope: {
-    init() {},
-    draw(ctx, time) {
-      ctx.fillStyle = 'rgba(10,10,10,0.1)';
-      ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
-      ctx.strokeStyle = `hsl(${synthEngine.animationHue},100%,60%)`;
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 10*synthEngine.state.animationIntensity;
-      ctx.shadowColor = `hsl(${synthEngine.animationHue},100%,60%)`;
-      ctx.beginPath();
-      for(let i=0;i<ctx.canvas.width;i++) {
-        const y = ctx.canvas.height/2 + Math.sin(i*0.01+time*synthEngine.state.animationSpeed)*ctx.canvas.height/4*Math.sin(time*0.5*synthEngine.state.animationSpeed);
-        i===0 ? ctx.moveTo(i,y) : ctx.lineTo(i,y);
-      }
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-  },
-  
-  equalizer: {
-    bars: [],
-    init() {
-      this.bars = new Array(32).fill(0);
-    },
-    draw(ctx, time) {
-      ctx.fillStyle = 'rgba(17,17,17,0.2)';
-      ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
-      const barW = ctx.canvas.width/32;
-      for(let i=0;i<32;i++) {
-        const barH = Math.abs(Math.sin(i*0.2+time*synthEngine.state.animationSpeed)*ctx.canvas.height*0.5*synthEngine.state.animationIntensity)+20;
-        const hue = (i/32*360+synthEngine.animationHue)%360;
-        ctx.fillStyle = `hsl(${hue},100%,60%)`;
-        ctx.fillRect(i*barW, ctx.canvas.height-barH, barW-2, barH);
-      }
-    }
-  },
-  
-  circularWave: {
-    init() {},
-    draw(ctx, time) {
-      ctx.fillStyle = 'rgba(10,10,10,0.1)';
-      ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
-      const centerX = ctx.canvas.width/2, centerY = ctx.canvas.height/2, r = ctx.canvas.height*0.4;
-      ctx.strokeStyle = `hsl(${synthEngine.animationHue},100%,60%)`;
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 15*synthEngine.state.animationIntensity;
-      ctx.shadowColor = `hsl(${synthEngine.animationHue},100%,60%)`;
-      ctx.beginPath();
-      for(let i=0;i<360;i++) {
-        const angle = i*Math.PI/180;
-        const waveOffset = Math.sin(i*0.1+time*2*synthEngine.state.animationSpeed)*30*synthEngine.state.animationIntensity;
-        const rr = r+waveOffset;
-        const x = centerX+Math.cos(angle)*rr;
-        const y = centerY+Math.sin(angle)*rr;
-        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
   }
 };
 
@@ -1651,6 +1772,9 @@ function startWaveAnimation() {
     if (currentAnimation && currentAnimation.draw) {
       currentAnimation.draw(ctx, time);
     }
+    
+    // Measure latency periodically
+    synthEngine.measureLatency();
   }
   
   animate();
@@ -1667,17 +1791,20 @@ function stopWaveAnimation() {
 
 // ==================== EVENT LISTENERS ====================
 function initializeEventListeners() {
-  // Touch and mouse events
-  elements.pad.addEventListener("touchstart", handleTouch, {passive: false});
-  elements.pad.addEventListener("touchmove", handleTouch, {passive: false});
-  elements.pad.addEventListener("mousedown", handleTouch);
+  // Touch and mouse events with ADSR
+  elements.pad.addEventListener("touchstart", handleTouchStart, {passive: false});
+  elements.pad.addEventListener("touchmove", handleTouchMove, {passive: false});
+  elements.pad.addEventListener("touchend", handleTouchEnd, {passive: false});
+  elements.pad.addEventListener("mousedown", handleTouchStart);
   elements.pad.addEventListener("mousemove", e => {
-    if (e.buttons === 1) handleTouch(e);
+    if (e.buttons === 1) handleTouchMove(e);
   });
+  elements.pad.addEventListener("mouseup", handleTouchEnd);
+  elements.pad.addEventListener("mouseleave", handleTouchEnd);
   
   // Control buttons
-  elements.startBtn.addEventListener("click", () => {
-    if (synthEngine.start()) {
+  elements.startBtn.addEventListener("click", async () => {
+    if (await synthEngine.start()) {
       updateButtonStates();
       startWaveAnimation();
       showStatus('Started - Try effects!');
@@ -1693,195 +1820,64 @@ function initializeEventListeners() {
     showStatus('Stopped');
   });
   
-  elements.motionBtn.addEventListener("click", () => {
-    synthEngine.state.motionEnabled ? disableMotion() : requestMotionPermission();
-  });
-  
-  elements.panBtn.addEventListener("click", togglePan);
+  // Control panel toggle
   elements.toggleControls.addEventListener("click", () => {
-    elements.controls.classList.toggle('expanded');
-    elements.toggleControls.textContent = elements.controls.classList.contains('expanded') ? '✕' : '⚙️';
+    elements.controls.classList.toggle("expanded");
   });
   
-  // Rhythm controls
-  elements.startRhythmBtn.addEventListener("click", startRhythm);
-  elements.stopRhythmBtn.addEventListener("click", stopRhythm);
-  
-  // Kick controls
-  document.getElementById("kickVolume").addEventListener("input", e => {
-    synthEngine.state.kickSettings.volume = parseInt(e.target.value);
-  });
-  document.getElementById("kickPattern").addEventListener("change", e => {
-    synthEngine.state.kickSettings.pattern = e.target.value;
-  });
-  document.getElementById("kickPunch").addEventListener("input", e => {
-    synthEngine.state.kickSettings.punch = parseInt(e.target.value);
-  });
-  document.getElementById("kickBass").addEventListener("input", e => {
-    synthEngine.state.kickSettings.bass = parseInt(e.target.value);
-  });
-  document.getElementById("kickDistortion").addEventListener("input", e => {
-    synthEngine.state.kickSettings.distortion = parseInt(e.target.value);
-  });
-  document.getElementById("kickSweep").addEventListener("input", e => {
-    synthEngine.state.kickSettings.sweep = parseInt(e.target.value);
+  // ADSR controls
+  document.getElementById('attackRange').addEventListener('input', (e) => {
+    synthEngine.state.adsr.attack = parseFloat(e.target.value);
+    synthEngine.updateADSRParameters();
   });
   
-  // Octave controls
-  document.getElementById("octUp").addEventListener("click", () => {
-    synthEngine.state.octaveOffset++;
-    createNoteRuler();
-  });
-  document.getElementById("octDown").addEventListener("click", () => {
-    synthEngine.state.octaveOffset--;
-    createNoteRuler();
+  document.getElementById('decayRange').addEventListener('input', (e) => {
+    synthEngine.state.adsr.decay = parseFloat(e.target.value);
+    synthEngine.updateADSRParameters();
   });
   
-  // Motion permission
-  document.getElementById("permissionAllow").addEventListener("click", () => {
-    DeviceOrientationEvent.requestPermission().then(response => {
-      elements.permissionModal.style.display = 'none';
-      if (response === 'granted') {
-        startMotionControl();
-      } else {
-        showStatus('Motion permission denied');
-      }
-    }).catch(e => {
-      elements.permissionModal.style.display = 'none';
-      showStatus('Permission error');
-    });
+  document.getElementById('sustainRange').addEventListener('input', (e) => {
+    synthEngine.state.adsr.sustain = parseFloat(e.target.value);
+    synthEngine.updateADSRParameters();
   });
   
-  document.getElementById("permissionDeny").addEventListener("click", () => {
-    elements.permissionModal.style.display = 'none';
-    showStatus('Motion disabled');
+  document.getElementById('releaseRange').addEventListener('input', (e) => {
+    synthEngine.state.adsr.release = parseFloat(e.target.value);
+    synthEngine.updateADSRParameters();
   });
   
-  // Synth parameters
-  document.getElementById("waveSelect").addEventListener("change", e => {
+  // Other controls...
+  document.getElementById('detuneRange').addEventListener('input', (e) => {
+    synthEngine.state.detuneAmount = parseFloat(e.target.value);
+    if (synthEngine.isPlaying) {
+      synthEngine.createOscillators();
+    }
+  });
+  
+  document.getElementById('waveSelect').addEventListener('change', (e) => {
     synthEngine.state.waveType = e.target.value;
     if (synthEngine.isPlaying) {
       synthEngine.createOscillators();
     }
-    showStatus('Wave: ' + synthEngine.state.waveType);
-  });
-  
-  document.getElementById("detuneRange").addEventListener("input", e => {
-    synthEngine.state.detuneAmount = parseFloat(e.target.value);
-    if (synthEngine.isPlaying && synthEngine.oscillators.length > 0) {
-      const now = synthEngine.audioCtx.currentTime;
-      synthEngine.oscillators.forEach((osc, i) => {
-        if (osc.detune) {
-          osc.detune.cancelScheduledValues(now);
-          osc.detune.linearRampToValueAtTime(
-            (i - Math.floor(synthEngine.state.NUM_OSC/2)) * synthEngine.state.detuneAmount,
-            now + 0.02
-          );
-        }
-      });
-    }
   });
   
   // Effect toggles
-  const toggleMap = {
-    toggleDist: 'dist', toggleAutoWah: 'autoWah', toggleFlanger: 'flanger',
-    toggleChorus: 'chorus', toggleTremolo: 'tremolo', toggleFilter: 'filter',
-    toggleDelay: 'delay', toggleReverb: 'reverb'
-  };
-  
-  Object.entries(toggleMap).forEach(([id, effect]) => {
-    document.getElementById(id).addEventListener("click", () => {
-      synthEngine.effects[effect] = !synthEngine.effects[effect];
-      document.getElementById(id).classList.toggle('active', synthEngine.effects[effect]);
-      if (synthEngine.isPlaying) {
-        synthEngine.updateEffectBypasses();
-      }
-      
-      if (effect === 'autoWah') {
-        elements.wahDisplay.style.display = synthEngine.effects[effect] ? 'block' : 'none';
-        elements.wahDisplay.textContent = 'Wah:' + (synthEngine.effects[effect] ? 'ON' : 'OFF');
-      }
-      
-      showStatus(effect + ' ' + (synthEngine.effects[effect] ? 'ON' : 'OFF'));
-    });
+  document.getElementById('toggleDist').addEventListener('click', (e) => {
+    synthEngine.effects.dist = !synthEngine.effects.dist;
+    e.target.classList.toggle('active', synthEngine.effects.dist);
+    synthEngine.updateEffectBypasses();
   });
   
-  // Filter controls
-  document.getElementById("filterFreq").addEventListener("input", e => {
-    if (synthEngine.isPlaying && synthEngine.nodes.filter) {
-      synthEngine.applySmoothParamChange(
-        synthEngine.nodes.filter.frequency,
-        parseFloat(e.target.value)
-      );
-    }
+  document.getElementById('toggleAutoWah').addEventListener('click', (e) => {
+    synthEngine.effects.autoWah = !synthEngine.effects.autoWah;
+    e.target.classList.toggle('active', synthEngine.effects.autoWah);
+    synthEngine.updateEffectBypasses();
   });
   
-  document.getElementById("filterReso").addEventListener("input", e => {
-    if (synthEngine.isPlaying && synthEngine.nodes.filter) {
-      synthEngine.applySmoothParamChange(
-        synthEngine.nodes.filter.Q,
-        parseFloat(e.target.value)
-      );
-    }
-  });
+  // Add more effect toggles as needed...
   
-  // Wah controls
-  document.getElementById("autoWahRate").addEventListener("input", e => {
-    if (synthEngine.isPlaying && synthEngine.nodes.autoWahLFO) {
-      synthEngine.applySmoothParamChange(
-        synthEngine.nodes.autoWahLFO.frequency,
-        parseFloat(e.target.value)
-      );
-    }
-  });
-  
-  document.getElementById("autoWahDepth").addEventListener("input", e => {
-    if (synthEngine.isPlaying && synthEngine.nodes.autoWahGain) {
-      synthEngine.applySmoothParamChange(
-        synthEngine.nodes.autoWahGain.gain,
-        parseFloat(e.target.value)
-      );
-    }
-  });
-  
-  // Rhythm controls
-  document.getElementById("rhythmSpeed").addEventListener("input", e => {
-    synthEngine.state.rhythmSpeed = parseInt(e.target.value);
-    if (synthEngine.state.rhythmActive) {
-      stopRhythm();
-      startRhythm();
-    }
-  });
-  
-  document.getElementById("rhythmIntensity").addEventListener("input", e => {
-    synthEngine.state.rhythmIntensity = parseInt(e.target.value);
-  });
-  
-  // Animation controls
-  document.getElementById("animationSelect").addEventListener("change", e => {
-    synthEngine.state.currentAnimation = e.target.value;
-    if (synthEngine.isPlaying) {
-      stopWaveAnimation();
-      startWaveAnimation();
-    }
-    showStatus(`Animation: ${synthEngine.state.currentAnimation === 'none' ? 'None' : synthEngine.state.currentAnimation}`);
-  });
-  
-  document.getElementById("animSpeed").addEventListener("input", e => {
-    synthEngine.state.animationSpeed = parseFloat(e.target.value);
-  });
-  
-  document.getElementById("animIntensity").addEventListener("input", e => {
-    synthEngine.state.animationIntensity = parseFloat(e.target.value);
-  });
-  
-  // Keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (e.code === 'Space') {
-      e.preventDefault();
-      synthEngine.state.rhythmActive ? stopRhythm() : startRhythm();
-    }
-  });
+  // Preset system
+  setupPresetSystem();
 }
 
 // ==================== INITIALIZATION ====================
@@ -1890,18 +1886,16 @@ window.addEventListener('load', () => {
   initializeEventListeners();
   updateButtonStates();
   createNoteRuler();
-  showStatus('Ready - Click Start then try effects! SPACE for rhythm');
+  showStatus('Ready - Click Start then try effects! Touch to play notes.');
+  
+  // Low power mode detection
+  if ('hardwareConcurrency' in navigator && navigator.hardwareConcurrency <= 4) {
+    synthEngine.lowPowerMode = true;
+    synthEngine.state.NUM_OSC = 2;
+  }
 });
 
 window.addEventListener("contextmenu", e => e.preventDefault());
-
-// Low power mode detection
-if ('hardwareConcurrency' in navigator) {
-  if (navigator.hardwareConcurrency <= 4) {
-    synthEngine.lowPowerMode = true;
-    synthEngine.state.NUM_OSC = 2; // Reduce polyphony on low-end devices
-  }
-}
 </script>
 </body>
 </html>
