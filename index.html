@@ -1,17 +1,3 @@
-
-
-Elbette, kick sesinin daha temiz ve kontrollü olması için mevcut sistemi temelden yeniden tasarlayabiliriz. "Patlama" ve yüksek distorsiyonun temel nedenleri, sesin çok ani ve yüksek bir genlikle başlaması, distorsiyonun aşırı zorlanması ve harmoniklerin filtrelenmemesi olabilir.
-
-Aşağıdaki değişiklikleri yaparak çok daha profesyonel bir kick sesi elde edebiliriz:
-
-1.  **Daha Profesyonel Sinyal Yolu:** Kick sesi için osilatör -> gain zarfı -> filtre -> distorsiyon öncesi kazanç (pre-gain) -> distorsiyon -> ana kazanç (master gain) -> çıkış şeklinde bir zincir kuracağız. Bu, her adımı ayrı ayrı kontrol etmemizi sağlar.
-2.  **Daha İyi Zarflar (Envelopes):** Kick'in "vuruluş" (attack) ve "solan" (decay) kısımlarını daha ince ayarlayabilmek için parametreleri yeniden düzenleyeceğiz. `Volume` (Ses Seviyesi) ve `Punch` (Vuruluş) ayarlarını daha anlamlı hale getireceğiz.
-3.  **Daha Kontrollü Distorsiyon:** Distorsiyonu doğrudan artırmak yerine, distorsiyondan önceki sinyalin seviyesini (pre-gain) artırarak daha "sıcak" ve "patlamayan" bir harmonik zenginleşme elde edeceğiz. Ayrıca, distorsiyonun tiz harmoniklerini kesmek için bir filtre ekleyeceğiz.
-4.  **UI Etiketlerini Güncelleme:** Kullanıcı deneyimini iyileştirmek için `Volume` -> `Level` ve `Punch` -> `Attack` olarak değiştireceğiz.
-
-Aşağıda, bu yeni kick sistemi entegre edilmiş ve tüm önceki düzeltmelerin korunduğu, çalışan tam kodu bulabilirsiniz.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -472,4 +458,3 @@ window.addEventListener("contextmenu",e=>e.preventDefault());
 </script>
 </body>
 </html>
-```
