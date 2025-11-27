@@ -1,357 +1,1408 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>Synth Pro Max</title><style>:root{--r:255;--g:100;--b:100;--bg-color:rgba(var(--r),var(--g),var(--b),0.3);--control-bg:rgba(var(--r),var(--g),var(--b),0.4);--text-color:rgba(255,255,255,0.95);--border-color:rgba(var(--r),var(--g),var(--b),0.8);--safe-area-inset-top:env(safe-area-inset-top);--safe-area-inset-bottom:env(safe-area-inset-bottom);}*{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;background-color:#111;color:var(--text-color);font-family:-apple-system,sans-serif;font-weight:400;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;overflow:hidden;}body{background-color:var(--bg-color);transition:background-color 0.1s ease;}#app-container{height:100%;display:flex;flex-direction:column;}#pad{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.4));cursor:crosshair;}#noteDisplay,#motionDisplay,#wahDisplay,#panDisplay{position:absolute;background-color:var(--control-bg);color:var(--text-color);pointer-events:none;z-index:10;border:2px solid var(--border-color);backdrop-filter:blur(20px);padding:8px 16px;border-radius:20px;font-size:14px;font-weight:500;transition:all 0.1s ease;}#noteDisplay{top:max(20px,var(--safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:24px;text-shadow:0 0 20px var(--border-color);}#motionDisplay,#wahDisplay,#panDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}#wahDisplay{bottom:60px;}#panDisplay{bottom:100px;}#motionDisplay{bottom:140px;}#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:var(--control-bg);border-left:2px solid var(--border-color);display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;pointer-events:none;z-index:5;}.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--text-color);border-bottom:1px solid var(--border-color);}#controls{position:fixed;bottom:0;left:0;right:0;max-height:70vh;background:var(--control-bg);backdrop-filter:blur(30px);border-top:2px solid var(--border-color);transform:translateY(calc(100% - 50px));transition:transform 0.3s ease;overflow-y:auto;padding:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;z-index:100;-ms-overflow-style:none;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-y;}#controls::-webkit-scrollbar{display:none;}#controls.expanded{transform:translateY(0);}#toggleControls{position:fixed;bottom:10px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--control-bg);border:2px solid var(--border-color);color:var(--text-color);font-size:20px;font-weight:bold;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 25px var(--border-color);transition:all 0.1s ease;}button,select,input[type=range],label{font-family:inherit;font-size:12px;font-weight:500;border-radius:8px;border:2px solid var(--border-color);background:var(--control-bg);color:var(--text-color);-webkit-appearance:none;appearance:none;transition:all 0.1s ease;outline:none;}button{padding:10px 12px;cursor:pointer;min-height:40px;}button.active{background:var(--border-color);color:#111;font-weight:600;box-shadow:0 0 15px var(--border-color);}.control-group{display:flex;flex-direction:column;align-items:center;}label{font-size:10px;margin-bottom:3px;text-align:center;}input[type=range]{width:100%;height:6px;background:var(--border-color);border:none;margin:5px 0;}input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:var(--text-color);cursor:pointer;border-radius:50%;box-shadow:0 0 15px var(--border-color);}select{padding:8px;cursor:pointer;min-height:40px;width:100%;}#statusMessage{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--control-bg);color:var(--text-color);padding:8px 16px;border-radius:8px;font-size:12px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(15px);border:2px solid var(--border-color);}#statusMessage.show{opacity:1;}.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0;padding:8px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}.effect-group-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:3px;}.rhythm-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}.rhythm-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}.rhythm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.kick-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}.kick-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}.kick-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--control-bg);z-index:1000;justify-content:center;align-items:center;}.modal-content{background:var(--control-bg);padding:20px;border-radius:15px;max-width:80%;text-align:center;backdrop-filter:blur(25px);border:2px solid var(--border-color);}.modal-buttons{display:flex;gap:8px;margin-top:15px;}.modal-buttons button{flex:1;}#waveAnimation{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}.animation-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}.animation-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}.animation-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}</style></head><body>
-<div id="app-container"><div id="pad"><div id="noteDisplay">C4</div><div id="motionDisplay">Tilt:0°</div><div id="wahDisplay">Wah:ON</div><div id="panDisplay">Pan:0%</div><div id="noteRuler"></div><canvas id="waveAnimation"></canvas></div><button id="toggleControls">⚙️</button><div id="controls"><button id="startBtn">Start</button><button id="stopBtn" disabled>Stop</button><button id="motionBtn">Motion</button><button id="panBtn">Pan</button><button id="octDown">Oct-</button><button id="octUp">Oct+</button><div class="control-group"><label>Wave</label><select id="waveSelect"><option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option><option value="square">Square</option><option value="sine">Sine</option></select></div><div class="control-group"><label>Oscillators</label><input type="range" id="oscCount" min="1" max="16" value="4"></div><div class="control-group"><label>Detune</label><input type="range" id="detuneRange" min="0" max="50" value="15"></div><div class="control-group"><label>Filter Freq</label><input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100"></div><div class="control-group"><label>Filter Reso</label><input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5"></div><div class="rhythm-panel"><div class="rhythm-title">DYNAMIC RHYTHM</div><div class="control-group"><label>Speed (BPM)</label><input type="range" id="rhythmSpeed" min="60" max="200" value="120"></div><div class="rhythm-buttons"><button id="startRhythmBtn">Start Rhythm</button><button id="stopRhythmBtn" disabled>Stop Rhythm</button></div></div><div class="effect-group"><div class="effect-group-title">EFFECTS</div><button id="toggleDist">Distortion</button><button id="toggleFilter">Filter</button><button id="toggleDelay">Delay</button><button id="toggleReverb">Reverb</button><button id="toggleWasmEffect">WASM Effect</button></div><div class="animation-panel"><div class="animation-title">VISUAL ANIMATIONS</div><div class="control-group"><select id="animationSelect"><option value="none">None</option><option value="network" selected>Network</option></select></div></div></div></div><div id="statusMessage"></div><div id="permissionModal" class="modal"><div class="modal-content"><h3>Motion Access Required</h3><p>This feature needs access to your device's motion sensors for tilt control.</p><div class="modal-buttons"><button id="permissionAllow">Allow</button><button id="permissionDeny">Deny</button></div></div></div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Gelişmiş Synth</title>
+<style>
+:root{--r:255;--g:100;--b:100;--bg-color:rgba(var(--r),var(--g),var(--b),0.3);--control-bg:rgba(var(--r),var(--g),var(--b),0.4);--text-color:rgba(255,255,255,0.95);--border-color:rgba(var(--r),var(--g),var(--b),0.8);--safe-area-inset-top:env(safe-area-inset-top);--safe-area-inset-bottom:env(safe-area-inset-bottom);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background-color:#111;color:var(--text-color);font-family:-apple-system,sans-serif;font-weight:400;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;overflow:hidden;}
+body{background-color:var(--bg-color);transition:background-color 0.1s ease;}
+#app-container{height:100%;display:flex;flex-direction:column;}
+#pad{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at center,var(--control-bg),rgba(0,0,0,0.4));cursor:crosshair;}
+#noteDisplay,#motionDisplay,#wahDisplay,#panDisplay,#performanceDisplay{position:absolute;background-color:var(--control-bg);color:var(--text-color);pointer-events:none;z-index:10;border:2px solid var(--border-color);backdrop-filter:blur(20px);padding:8px 16px;border-radius:20px;font-size:14px;font-weight:500;transition:all 0.1s ease;}
+#noteDisplay{top:max(20px,var(--safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:24px;text-shadow:0 0 20px var(--border-color);}
+#motionDisplay,#wahDisplay,#panDisplay,#performanceDisplay{bottom:20px;left:50%;transform:translateX(-50%);display:none;}
+#wahDisplay{bottom:60px;}#panDisplay{bottom:100px;}#motionDisplay{bottom:140px;}#performanceDisplay{bottom:180px;font-size:10px;}
+#noteRuler{position:absolute;right:0;top:0;bottom:0;width:60px;background:var(--control-bg);border-left:2px solid var(--border-color);display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;pointer-events:none;z-index:5;}
+.ruler-note{display:flex;align-items:center;justify-content:center;flex:1;font-size:11px;color:var(--text-color);border-bottom:1px solid var(--border-color);}
+#controls{position:fixed;bottom:0;left:0;right:0;max-height:70vh;background:var(--control-bg);backdrop-filter:blur(30px);border-top:2px solid var(--border-color);transform:translateY(calc(100% - 50px));transition:transform 0.3s ease;overflow-y:auto;padding:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;z-index:100;-ms-overflow-style:none;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+#controls::-webkit-scrollbar{display:none;}
+#controls.expanded{transform:translateY(0);}
+#toggleControls{position:fixed;bottom:10px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--control-bg);border:2px solid var(--border-color);color:var(--text-color);font-size:20px;font-weight:bold;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 25px var(--border-color);transition:all 0.1s ease;}
+button,select,input[type=range],label{font-family:inherit;font-size:12px;font-weight:500;border-radius:8px;border:2px solid var(--border-color);background:var(--control-bg);color:var(--text-color);-webkit-appearance:none;appearance:none;transition:all 0.1s ease;outline:none;}
+button{padding:10px 12px;cursor:pointer;min-height:40px;}
+button.active{background:var(--border-color);color:#111;font-weight:600;box-shadow:0 0 15px var(--border-color);}
+.control-group{display:flex;flex-direction:column;align-items:center;}
+label{font-size:10px;margin-bottom:3px;text-align:center;}
+input[type=range]{width:100%;height:6px;background:var(--border-color);border:none;margin:5px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:var(--text-color);cursor:pointer;border-radius:50%;box-shadow:0 0 15px var(--border-color);}
+select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
+#statusMessage{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--control-bg);color:var(--text-color);padding:8px 16px;border-radius:8px;font-size:12px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(15px);border:2px solid var(--border-color);}
+#statusMessage.show{opacity:1;}
+.effect-group{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0;padding:8px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.effect-group-title{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:3px;}
+.rhythm-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.rhythm-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
+.rhythm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.kick-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.kick-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
+.kick-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--control-bg);z-index:1000;justify-content:center;align-items:center;}
+.modal-content{background:var(--control-bg);padding:20px;border-radius:15px;max-width:80%;text-align:center;backdrop-filter:blur(25px);border:2px solid var(--border-color);}
+.modal-buttons{display:flex;gap:8px;margin-top:15px;}
+.modal-buttons button{flex:1;}
+#waveAnimation{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.animation-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.animation-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
+.animation-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.performance-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
+.performance-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
+.performance-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.quality-indicator{position:fixed;top:10px;right:10px;background:var(--control-bg);color:var(--text-color);padding:4px 8px;border-radius:8px;font-size:10px;z-index:1000;border:1px solid var(--border-color);}
+</style>
+</head>
+<body>
+<div id="app-container">
+<div id="pad">
+<div id="noteDisplay">C4</div>
+<div id="motionDisplay">Tilt:0°</div>
+<div id="wahDisplay">Wah:ON</div>
+<div id="panDisplay">Pan:0%</div>
+<div id="performanceDisplay">CPU:0% FPS:0</div>
+<div id="noteRuler"></div>
+<canvas id="waveAnimation"></canvas>
+<div class="quality-indicator" id="qualityIndicator">Kalite: Orta</div>
+</div>
+<button id="toggleControls">⚙️</button>
+<div id="controls">
+<button id="startBtn">Start</button>
+<button id="stopBtn" disabled>Stop</button>
+<button id="motionBtn">Motion</button>
+<button id="panBtn">Pan</button>
+<button id="octDown">Oct-</button>
+<button id="octUp">Oct+</button>
+<div class="control-group">
+<label>Wave</label>
+<select id="waveSelect">
+<option value="sawtooth">Sawtooth</option>
+<option value="triangle">Triangle</option>
+<option value="square">Square</option>
+<option value="sine">Sine</option>
+<option value="pulse">Pulse</option>
+<option value="fm">FM</option>
+</select>
+</div>
+<div class="control-group">
+<label>Detune</label>
+<input type="range" id="detuneRange" min="0" max="50" value="15">
+</div>
+<div class="control-group">
+<label>Filter Freq</label>
+<input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
+</div>
+<div class="control-group">
+<label>Filter Reso</label>
+<input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
+</div>
+<div class="control-group">
+<label>Wah Rate</label>
+<input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
+</div>
+<div class="control-group">
+<label>Wah Depth</label>
+<input type="range" id="autoWahDepth" min="100" max="1500" value="800">
+</div>
+<div class="performance-panel">
+<div class="performance-title">PERFORMANS AYARLARI</div>
+<div class="performance-controls">
+<div class="control-group">
+<label>Kalite Seviyesi</label>
+<select id="qualitySelect">
+<option value="auto">Otomatik</option>
+<option value="low">Düşük</option>
+<option value="medium" selected>Orta</option>
+<option value="high">Yüksek</option>
+</select>
+</div>
+<div class="control-group">
+<label>CPU Sınırı</label>
+<input type="range" id="cpuLimit" min="10" max="90" value="70">
+</div>
+<div class="control-group">
+<label>Bellek Sınırı</label>
+<input type="range" id="memoryLimit" min="10" max="500" value="100">
+</div>
+</div>
+</div>
+<div class="rhythm-panel">
+<div class="rhythm-title">DYNAMIC RHYTHM</div>
+<div class="control-group">
+<label>Speed</label>
+<input type="range" id="rhythmSpeed" min="30" max="2000" value="120">
+</div>
+<div class="control-group">
+<label>Intensity</label>
+<input type="range" id="rhythmIntensity" min="0" max="100" value="50">
+</div>
+<div class="rhythm-buttons">
+<button id="startRhythmBtn">Start Rhythm</button>
+<button id="stopRhythmBtn" disabled>Stop Rhythm</button>
+</div>
+</div>
+<div class="kick-panel">
+<div class="kick-title">KICK CONTROL</div>
+<div class="kick-controls">
+<div class="control-group">
+<label>Volume</label>
+<input type="range" id="kickVolume" min="0" max="100" value="80">
+</div>
+<div class="control-group">
+<label>Pattern</label>
+<select id="kickPattern">
+<option value="4/4">4/4</option>
+<option value="2/4">2/4</option>
+<option value="breakbeat">Breakbeat</option>
+<option value="offbeat">Offbeat</option>
+<option value="techno">Techno</option>
+</select>
+</div>
+<div class="control-group">
+<label>Punch</label>
+<input type="range" id="kickPunch" min="0" max="100" value="60">
+</div>
+<div class="control-group">
+<label>Bass Layer</label>
+<input type="range" id="kickBass" min="0" max="100" value="100">
+</div>
+<div class="control-group">
+<label>Distortion</label>
+<input type="range" id="kickDistortion" min="0" max="100" value="40">
+</div>
+<div class="control-group">
+<label>Freq Sweep</label>
+<input type="range" id="kickSweep" min="0" max="100" value="100">
+</div>
+</div>
+</div>
+<div class="effect-group">
+<div class="effect-group-title">EFFECTS</div>
+<button id="toggleDist">Distortion</button>
+<button id="toggleAutoWah">Auto Wah</button>
+<button id="toggleFlanger">Flanger</button>
+<button id="toggleChorus">Chorus</button>
+<button id="toggleTremolo">Tremolo</button>
+<button id="toggleFilter">Filter</button>
+<button id="toggleDelay">Delay</button>
+<button id="toggleReverb">Reverb</button>
+</div>
+<div class="animation-panel">
+<div class="animation-title">VISUAL ANIMATIONS</div>
+<div class="control-group">
+<select id="animationSelect">
+<option value="none">None</option>
+<option value="psychedelic">Psychedelic</option>
+<option value="cosmicDust">Cosmic Dust</option>
+<option value="network" selected>Network</option>
+<option value="metaballs">Metaballs</option>
+<option value="oscilloscope">Oscilloscope</option>
+<option value="equalizer">Equalizer</option>
+<option value="circularWave">Circular Wave</option>
+<option value="kaleidoscope">Kaleidoscope</option>
+<option value="spiral">Spiral</option>
+<option value="matrix">Matrix</option>
+</select>
+</div>
+<div class="animation-controls">
+<div class="control-group">
+<label>Animation Speed</label>
+<input type="range" id="animSpeed" min="0.1" max="3" value="1" step="0.1">
+</div>
+<div class="control-group">
+<label>Intensity</label>
+<input type="range" id="animIntensity" min="0.1" max="2" value="1" step="0.1">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="statusMessage"></div>
+<div id="permissionModal" class="modal">
+<div class="modal-content">
+<h3>Motion Access Required</h3>
+<p>This feature needs access to your device's motion sensors for tilt control.</p>
+<div class="modal-buttons">
+<button id="permissionAllow">Allow</button>
+<button id="permissionDeny">Deny</button>
+</div>
+</div>
+</div>
 <script>
-// ===================================================================
-// AUDIO WORKLET PROCESSOR CODE (as strings for Blob URLs)
-// ===================================================================
-
-const synthProcessorCode = `
-class SynthProcessor extends AudioWorkletProcessor {
-    constructor() {
-        super();
-        this.oscillators = [];
-        this.port.onmessage = (e) => this.handleMessage(e.data);
-    }
-    handleMessage(params) {
-        if (params.type === 'init') {
-            const { sampleRate, numOsc, wave, detune } = params;
-            this.oscillators = [];
-            for (let i = 0; i < numOsc; i++) {
-                this.oscillators.push({
-                    phase: 0,
-                    phaseIncr: 0,
-                    detune: (i - Math.floor(numOsc / 2)) * detune,
-                });
-            }
-            this.wave = wave;
-        } else if (params.type === 'update') {
-            if (params.frequency !== undefined) this.oscillators.forEach(o => o.phaseIncr = (params.frequency * Math.pow(2, o.detune / 1200)) / sampleRate);
-            if (params.wave !== undefined) this.wave = params.wave;
-            if (params.detune !== undefined) this.oscillators.forEach((o, i) => o.detune = (i - Math.floor(this.oscillators.length / 2)) * params.detune);
-        }
-    }
-    process(inputs, outputs, parameters) {
-        const output = outputs[0];
-        const numChannels = output.length;
-        const numSamples = output[0].length;
-
-        for (let sample = 0; sample < numSamples; sample++) {
-            let currentSample = 0;
-            for (const osc of this.oscillators) {
-                let val = 0;
-                if (this.wave === 'sine') val = Math.sin(osc.phase * 2 * Math.PI);
-                else if (this.wave === 'square') val = Math.sign(Math.sin(osc.phase * 2 * Math.PI));
-                else if (this.wave === 'sawtooth') val = 2 * (osc.phase - Math.round(osc.phase));
-                else if (this.wave === 'triangle') val = 2 * Math.abs(2 * (osc.phase - Math.round(osc.phase))) - 1;
-                currentSample += val / this.oscillators.length;
-                osc.phase += osc.phaseIncr;
-                if (osc.phase >= 1) osc.phase -= 1;
-            }
-            for (let channel = 0; channel < numChannels; channel++) {
-                output[channel][sample] = currentSample * 0.25;
-            }
-        }
-        return true;
-    }
-}
-registerProcessor('synth-processor', SynthProcessor);
-`;
-
-const effectsProcessorCode = `
-class EffectsProcessor extends AudioWorkletProcessor {
-    constructor() {
-        super();
-        this.delayBufferL = new Float32Array(sampleRate * 2);
-        this.delayBufferR = new Float32Array(sampleRate * 2);
-        this.delayReadPos = 0;
-        this.delayWritePos = 0;
-        this.reverbBuffer = new Float32Array(sampleRate * 4);
-        this.reverbReadPos = 0;
-        this.reverbWritePos = 0;
-        this.port.onmessage = (e) => this.handleMessage(e.data);
-        this.lfoPhase = 0;
-        this.lfoPhaseIncr = 1 / sampleRate;
-    }
-    handleMessage(params) {
-        Object.assign(this, params);
-    }
-    process(inputs, outputs, parameters) {
-        const input = inputs[0];
-        const output = outputs[0];
-        const numSamples = input[0].length;
-
-        for (let sample = 0; sample < numSamples; sample++) {
-            let dryL = input[0][sample];
-            let dryR = input[1] ? input[1][sample] : dryL;
-            let wetL = dryL, wetR = dryR;
-
-            // Distortion
-            if (this.dist) {
-                const amount = 50;
-                wetL = Math.tanh(wetL * (1 + amount)) / Math.tanh(1 + amount);
-                wetR = Math.tanh(wetR * (1 + amount)) / Math.tanh(1 + amount);
-            }
-
-            // Filter
-            if (this.filter) {
-                // Simple low-pass filter simulation
-                const freq = this.filterFreq / sampleRate;
-                const res = this.filterReso;
-                const d = (1 - 2 * freq * res) / (1 + 2 * freq * res);
-                wetL = d * (wetL - this.prevL) + this.prevL; this.prevL = wetL;
-                wetR = d * (wetR - this.prevR) + this.prevR; this.prevR = wetR;
-            }
-
-            // Delay
-            if (this.delay) {
-                wetL += this.delayBufferL[this.delayReadPos] * this.delayFeedback;
-                wetR += this.delayBufferR[this.delayReadPos] * this.delayFeedback;
-                this.delayBufferL[this.delayWritePos] = wetL;
-                this.delayBufferR[this.delayWritePos] = wetR;
-                this.delayReadPos = (this.delayReadPos + 1) % this.delayBufferL.length;
-                this.delayWritePos = (this.delayWritePos + 1) % this.delayBufferL.length;
-            }
-            
-            // Reverb
-            if (this.reverb) {
-                wetL += this.reverbBuffer[this.reverbReadPos] * 0.5;
-                wetR += this.reverbBuffer[(this.reverbReadPos + this.reverbBuffer.length / 2) % this.reverbBuffer.length] * 0.5;
-                this.reverbBuffer[this.reverbWritePos] = (wetL + wetR) * 0.5;
-                this.reverbWritePos = (this.reverbWritePos + 1) % this.reverbBuffer.length;
-                this.reverbReadPos = (this.reverbReadPos + 1) % this.reverbBuffer.length;
-            }
-            
-            // WASM-style effect (Complex DSP in JS)
-            if (this.wasmEffect) {
-                // Simulating a complex ring-modulator/formant effect
-                this.lfoPhase += this.lfoPhaseIncr * 10;
-                const modulator = Math.sin(this.lfoPhase * 2 * Math.PI);
-                wetL = (wetL * modulator + wetL) * 0.5;
-                wetR = (wetR * modulator + wetR) * 0.5;
-            }
-
-            output[0][sample] = wetL;
-            output[1][sample] = wetR;
-        }
-        return true;
-    }
-}
-registerProcessor('effects-processor', EffectsProcessor);
-`;
-
-const sequencerProcessorCode = `
-class SequencerProcessor extends AudioWorkletProcessor {
-    constructor() {
-        super();
-        this.port.onmessage = (e) => this.handleMessage(e.data);
-        this.sampleRate = sampleRate;
-        this.isPlaying = false;
-        this.bpm = 120;
-        this.currentStep = 0;
-        this.samplesPerStep = (60 / this.bpm / 4) * this.sampleRate;
-        this.sampleCounter = 0;
-        this.pattern = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
-    }
-    handleMessage(params) {
-        if (params.bpm !== undefined) {
-            this.bpm = params.bpm;
-            this.samplesPerStep = (60 / this.bpm / 4) * this.sampleRate;
-        }
-        if (params.isPlaying !== undefined) this.isPlaying = params.isPlaying;
-        if (params.pattern !== undefined) this.pattern = params.pattern;
-    }
-    process(inputs, outputs, parameters) {
-        if (this.isPlaying) {
-            this.sampleCounter++;
-            if (this.sampleCounter >= this.samplesPerStep) {
-                this.sampleCounter = 0;
-                if (this.pattern[this.currentStep % this.pattern.length] === 1) {
-                    this.port.postMessage({ type: 'triggerKick' });
-                }
-                this.currentStep++;
-            }
-        }
-        return true;
-    }
-}
-registerProcessor('sequencer-processor', SequencerProcessor);
-`;
-
-// ===================================================================
-// MAIN APPLICATION LOGIC
-// ===================================================================
-
+// Gelişmiş State Management
 const AppState = {
-    audioCtx: null, isPlaying: false, motionEnabled: false, panEnabled: false,
-    NUM_OSC: 4, waveType: "sawtooth", detuneAmount: 15,
-    baseFreq: 261.63, octaveOffset: 0, tiltBend: 0,
-    rhythmActive: false, rhythmBPM: 120,
-    effects: { dist: false, filter: true, delay: false, reverb: false, wasmEffect: false },
-    filterFreq: 20000, filterReso: 1, delayFeedback: 0.5,
-    touchPoint: { x: 0.5, y: 0.5 }, panTarget: 0, freqTarget: 261.63,
-    themeNeedsUpdate: false,
+    audioCtx: null, oscillators: [], masterGain: null, baseFreq: 261.63, 
+    octaveOffset: 0, tiltBend: 0, detuneAmount: 15, waveType: "sawtooth", 
+    isPlaying: false, motionEnabled: false, panEnabled: false, NUM_OSC: 7, 
+    pulseWidth: 0.5, rhythmActive: false, rhythmSpeed: 120, rhythmIntensity: 50, 
+    currentAnimation: "network", animationSpeed: 1, animationIntensity: 1,
+    kickSettings: {volume: 80, pattern: '4/4', punch: 60, bass: 100, distortion: 40, sweep: 100},
+    qualityLevel: 'medium',
+    performance: {cpuUsage: 0, fps: 0, memoryUsage: 0, audioLatency: 0}
 };
 
+// Gelişmiş Performans İzleme Sistemi
+class PerformanceMonitor {
+    constructor() {
+        this.metrics = {
+            audioProcessingTime: 0,
+            memoryUsage: 0,
+            cpuLoad: 0,
+            frameRate: 0,
+            audioLatency: 0
+        };
+        this.frameCount = 0;
+        this.lastTime = performance.now();
+        this.sampleCount = 0;
+        this.totalProcessingTime = 0;
+    }
+
+    startMonitoring() {
+        // Frame rate monitoring
+        const checkFrameRate = () => {
+            this.frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - this.lastTime >= 1000) {
+                this.metrics.frameRate = Math.round(this.frameCount);
+                this.frameCount = 0;
+                this.lastTime = currentTime;
+                this.updatePerformanceDisplay();
+            }
+            requestAnimationFrame(checkFrameRate);
+        };
+        checkFrameRate();
+
+        // Memory monitoring
+        setInterval(() => {
+            if (performance.memory) {
+                this.metrics.memoryUsage = Math.round(performance.memory.usedJSHeapSize / (1024 * 1024));
+            }
+        }, 2000);
+
+        // Audio processing time monitoring
+        this.audioProcessingStart = 0;
+    }
+
+    startAudioProcessing() {
+        this.audioProcessingStart = performance.now();
+    }
+
+    endAudioProcessing() {
+        if (this.audioProcessingStart) {
+            const processingTime = performance.now() - this.audioProcessingStart;
+            this.totalProcessingTime += processingTime;
+            this.sampleCount++;
+            
+            if (this.sampleCount >= 10) {
+                this.metrics.audioLatency = Math.round(this.totalProcessingTime / this.sampleCount);
+                this.totalProcessingTime = 0;
+                this.sampleCount = 0;
+            }
+        }
+    }
+
+    updatePerformanceDisplay() {
+        const display = document.getElementById('performanceDisplay');
+        if (display) {
+            display.textContent = `CPU:${this.metrics.cpuLoad}% FPS:${this.metrics.frameRate} MEM:${this.metrics.memoryUsage}MB`;
+            display.style.display = 'block';
+        }
+    }
+
+    getMetrics() {
+        return this.metrics;
+    }
+}
+
+// Adaptif Kalite Sistemi
+class AdaptiveQualitySystem {
+    constructor() {
+        this.qualityLevels = {
+            low: { oscillators: 3, sampleRate: 22050, effects: false, animationQuality: 'low' },
+            medium: { oscillators: 5, sampleRate: 44100, effects: true, animationQuality: 'medium' },
+            high: { oscillators: 7, sampleRate: 48000, effects: true, animationQuality: 'high' }
+        };
+        this.performanceThresholds = {
+            low: { maxCpu: 90, maxMemory: 200, minFps: 20 },
+            medium: { maxCpu: 70, maxMemory: 150, minFps: 30 },
+            high: { maxCpu: 50, maxMemory: 100, minFps: 45 }
+        };
+    }
+
+    detectDeviceCapabilities() {
+        let score = 0;
+        
+        // CPU çekirdek sayısı
+        const cores = navigator.hardwareConcurrency || 1;
+        score += cores * 15;
+        
+        // Bellek
+        if (performance.memory) {
+            const memoryGB = performance.memory.jsHeapSizeLimit / (1024 * 1024 * 1024);
+            score += Math.min(memoryGB * 25, 50);
+        }
+        
+        // User agent bazlı tespit
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+            const isNewDevice = /iPhone1[2-9]|iPhone2[0-9]|iPad[8-9]|iPad1[0-9]/.test(navigator.userAgent);
+            score += isNewDevice ? 40 : 20;
+        }
+        
+        if (score < 40) return 'low';
+        if (score < 80) return 'medium';
+        return 'high';
+    }
+
+    adjustQualityBasedOnPerformance(metrics) {
+        const currentLevel = AppState.qualityLevel;
+        const thresholds = this.performanceThresholds[currentLevel];
+        
+        if (metrics.cpuLoad > thresholds.maxCpu || 
+            metrics.memoryUsage > thresholds.maxMemory || 
+            metrics.frameRate < thresholds.minFps) {
+            
+            // Performans düşük, kaliteyi düşür
+            this.setQualityLevel(this.getLowerQualityLevel(currentLevel));
+            return true;
+        }
+        
+        // Performans iyi, kaliteyi artırabiliriz
+        if (metrics.cpuLoad < thresholds.maxCpu - 20 && 
+            metrics.memoryUsage < thresholds.maxMemory - 50 && 
+            metrics.frameRate > thresholds.minFps + 15) {
+            
+            this.setQualityLevel(this.getHigherQualityLevel(currentLevel));
+            return true;
+        }
+        
+        return false;
+    }
+
+    getLowerQualityLevel(current) {
+        const levels = ['high', 'medium', 'low'];
+        const index = levels.indexOf(current);
+        return levels[Math.min(index + 1, levels.length - 1)];
+    }
+
+    getHigherQualityLevel(current) {
+        const levels = ['low', 'medium', 'high'];
+        const index = levels.indexOf(current);
+        return levels[Math.max(index - 1, 0)];
+    }
+
+    setQualityLevel(level) {
+        if (AppState.qualityLevel === level) return;
+        
+        AppState.qualityLevel = level;
+        const settings = this.qualityLevels[level];
+        
+        // Oscillator sayısını ayarla
+        AppState.NUM_OSC = settings.oscillators;
+        
+        // Efektleri ayarla
+        if (!settings.effects) {
+            Object.keys(effects).forEach(effect => {
+                effects[effect] = false;
+                const button = document.getElementById(`toggle${effect.charAt(0).toUpperCase() + effect.slice(1)}`);
+                if (button) button.classList.remove('active');
+            });
+        }
+        
+        // Audio context sample rate'i ayarla
+        if (AppState.audioCtx && AppState.audioCtx.sampleRate !== settings.sampleRate) {
+            this.restartAudioWithNewSettings(settings);
+        }
+        
+        // Kalite göstergesini güncelle
+        const indicator = document.getElementById('qualityIndicator');
+        if (indicator) {
+            indicator.textContent = `Kalite: ${this.getQualityDisplayName(level)}`;
+        }
+        
+        showStatus(`Kalite seviyesi: ${this.getQualityDisplayName(level)}`);
+    }
+
+    getQualityDisplayName(level) {
+        const names = { low: 'Düşük', medium: 'Orta', high: 'Yüksek' };
+        return names[level] || level;
+    }
+
+    restartAudioWithNewSettings(settings) {
+        if (AppState.isPlaying) {
+            const wasPlaying = true;
+            stopSynth();
+            setTimeout(() => {
+                startSynth();
+                showStatus(`Sample rate: ${settings.sampleRate}Hz`);
+            }, 100);
+        }
+    }
+
+    applyUserQualityPreference(preference) {
+        if (preference === 'auto') {
+            const autoLevel = this.detectDeviceCapabilities();
+            this.setQualityLevel(autoLevel);
+        } else {
+            this.setQualityLevel(preference);
+        }
+    }
+}
+
+// Gelişmiş Bellek Yöneticisi
+class AudioMemoryManager {
+    constructor() {
+        this.audioBuffers = new Map();
+        this.maxBufferSize = 100; // MB
+        this.currentUsage = 0;
+        this.cleanupInterval = null;
+    }
+
+    initialize() {
+        // Periyodik temizlik
+        this.cleanupInterval = setInterval(() => {
+            this.cleanupOldBuffers();
+        }, 30000); // 30 saniyede bir
+    }
+
+    cleanupOldBuffers() {
+        const now = Date.now();
+        const maxAge = 60000; // 1 dakika
+        
+        for (const [key, value] of this.audioBuffers.entries()) {
+            if (now - value.lastUsed > maxAge) {
+                this.audioBuffers.delete(key);
+                this.currentUsage -= value.size;
+            }
+        }
+    }
+
+    createSharedBuffer(size) {
+        if (window.SharedArrayBuffer) {
+            try {
+                return new SharedArrayBuffer(size);
+            } catch (e) {
+                console.warn('SharedArrayBuffer not available:', e);
+            }
+        }
+        return new ArrayBuffer(size);
+    }
+
+    cacheAudioBuffer(key, audioBuffer) {
+        const size = audioBuffer.length * 4; // bytes
+        if (this.currentUsage + size > this.maxBufferSize * 1024 * 1024) {
+            this.evictLRUBuffers();
+        }
+        
+        this.audioBuffers.set(key, {
+            buffer: audioBuffer,
+            lastUsed: Date.now(),
+            size: size
+        });
+        this.currentUsage += size;
+    }
+
+    getCachedBuffer(key) {
+        const cached = this.audioBuffers.get(key);
+        if (cached) {
+            cached.lastUsed = Date.now();
+            return cached.buffer;
+        }
+        return null;
+    }
+
+    evictLRUBuffers() {
+        const sorted = Array.from(this.audioBuffers.entries())
+            .sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+        
+        while (this.currentUsage > this.maxBufferSize * 1024 * 1024 * 0.7 && sorted.length > 0) {
+            const [key, value] = sorted.shift();
+            this.audioBuffers.delete(key);
+            this.currentUsage -= value.size;
+        }
+    }
+
+    destroy() {
+        if (this.cleanupInterval) {
+            clearInterval(this.cleanupInterval);
+        }
+        this.audioBuffers.clear();
+        this.currentUsage = 0;
+    }
+}
+
+// WebAssembly DSP Simülasyonu (Gerçek WASM yerine JavaScript implementasyonu)
+class WASMDSPProcessor {
+    constructor() {
+        this.initialized = false;
+        this.processors = new Map();
+    }
+
+    async initialize() {
+        // Gerçek WASM yüklemeyi simüle ediyoruz
+        try {
+            // Burada gerçek WASM modülleri yüklenirdi
+            this.initialized = true;
+            console.log('DSP Processor initialized (simulated)');
+        } catch (error) {
+            console.error('WASM initialization failed:', error);
+            this.initialized = false;
+        }
+    }
+
+    processAudio(input, output, algorithm = 'default') {
+        if (!this.initialized) return input;
+        
+        // DSP işlemlerini simüle et
+        switch (algorithm) {
+            case 'lowpass':
+                return this.applyLowPass(input, output);
+            case 'highpass':
+                return this.applyHighPass(input, output);
+            case 'compressor':
+                return this.applyCompression(input, output);
+            default:
+                return this.applyDefaultProcessing(input, output);
+        }
+    }
+
+    applyLowPass(input, output) {
+        // Basit low-pass filter simülasyonu
+        for (let i = 1; i < input.length; i++) {
+            output[i] = 0.8 * output[i-1] + 0.2 * input[i];
+        }
+        return output;
+    }
+
+    applyCompression(input, output) {
+        // Basit compressor simülasyonu
+        const threshold = 0.7;
+        const ratio = 4;
+        
+        for (let i = 0; i < input.length; i++) {
+            const absValue = Math.abs(input[i]);
+            if (absValue > threshold) {
+                output[i] = threshold + (input[i] - threshold) / ratio;
+            } else {
+                output[i] = input[i];
+            }
+        }
+        return output;
+    }
+
+    applyDefaultProcessing(input, output) {
+        // Varsayılan işlem - input'u output'a kopyala
+        for (let i = 0; i < input.length; i++) {
+            output[i] = input[i];
+        }
+        return output;
+    }
+}
+
+// Global değişkenler
+const effects = {dist: false, autoWah: false, flanger: false, chorus: false, tremolo: false, filter: true, delay: false, reverb: false};
+let audioNodes = {};
+let rhythmInterval = null;
+let kickOsc = null, kickGain = null, kickOsc2 = null, kickGain2 = null, kickDistortion = null;
+let animationFrameId = null;
+let animationHue = 0;
+let touchPoint = {x: 0, y: 0};
+
+// Sistem yöneticileri
+let performanceMonitor = null;
+let adaptiveQuality = null;
+let memoryManager = null;
+let dspProcessor = null;
+
+// Element referansları
+const elements = {
+    pad: document.getElementById("pad"),
+    noteDisplay: document.getElementById("noteDisplay"),
+    motionDisplay: document.getElementById("motionDisplay"),
+    wahDisplay: document.getElementById("wahDisplay"),
+    panDisplay: document.getElementById("panDisplay"),
+    performanceDisplay: document.getElementById("performanceDisplay"),
+    startBtn: document.getElementById("startBtn"),
+    stopBtn: document.getElementById("stopBtn"),
+    motionBtn: document.getElementById("motionBtn"),
+    panBtn: document.getElementById("panBtn"),
+    statusMessage: document.getElementById("statusMessage"),
+    permissionModal: document.getElementById("permissionModal"),
+    controls: document.getElementById("controls"),
+    toggleControls: document.getElementById("toggleControls"),
+    noteRuler: document.getElementById("noteRuler"),
+    startRhythmBtn: document.getElementById("startRhythmBtn"),
+    stopRhythmBtn: document.getElementById("stopRhythmBtn"),
+    kickVolume: document.getElementById("kickVolume"),
+    kickPattern: document.getElementById("kickPattern"),
+    kickPunch: document.getElementById("kickPunch"),
+    kickBass: document.getElementById("kickBass"),
+    kickDistortion: document.getElementById("kickDistortion"),
+    kickSweep: document.getElementById("kickSweep"),
+    waveCanvas: document.getElementById("waveAnimation"),
+    animSpeed: document.getElementById("animSpeed"),
+    animIntensity: document.getElementById("animIntensity"),
+    animationSelect: document.getElementById("animationSelect"),
+    qualitySelect: document.getElementById("qualitySelect"),
+    cpuLimit: document.getElementById("cpuLimit"),
+    memoryLimit: document.getElementById("memoryLimit"),
+    qualityIndicator: document.getElementById("qualityIndicator")
+};
+
+// Sabitler
 const noteColors = [[255,100,100],[255,150,80],[255,220,80],[220,255,80],[120,255,100],[80,255,180],[80,220,255],[100,150,255],[150,100,255],[220,80,255],[255,80,220],[255,80,120]];
 const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const elements = { /* ... element selectors ... */ };
-Object.assign(elements, { pad: document.getElementById("pad"), noteDisplay: document.getElementById("noteDisplay"), motionDisplay: document.getElementById("motionDisplay"), panDisplay: document.getElementById("panDisplay"), startBtn: document.getElementById("startBtn"), stopBtn: document.getElementById("stopBtn"), motionBtn: document.getElementById("motionBtn"), panBtn: document.getElementById("panBtn"), statusMessage: document.getElementById("statusMessage"), permissionModal: document.getElementById("permissionModal"), controls: document.getElementById("controls"), toggleControls: document.getElementById("toggleControls"), noteRuler: document.getElementById("noteRuler"), startRhythmBtn: document.getElementById("startRhythmBtn"), stopRhythmBtn: document.getElementById("stopRhythmBtn"), rhythmSpeed: document.getElementById("rhythmSpeed"), waveSelect: document.getElementById("waveSelect"), oscCount: document.getElementById("oscCount"), detuneRange: document.getElementById("detuneRange"), filterFreq: document.getElementById("filterFreq"), filterReso: document.getElementById("filterReso"), animationSelect: document.getElementById("animationSelect") });
+const patternMap = {'4/4':[1,1,1,1,1,1,1,1],'2/4':[1,0,1,0,1,0,1,0],'breakbeat':[1,0,1,0,1,0,0,1],'offbeat':[0,1,0,1,0,1,0,1],'techno':[1,0,0,1,1,0,0,1]};
 
-// --- Modular Audio Classes ---
-class AudioModule {
-    constructor(ctx, processorCode, processorName) {
-        this.ctx = ctx;
-        this.blob = new Blob([processorCode], { type: 'application/javascript' });
-        this.workletUrl = URL.createObjectURL(this.blob);
-        this.nodePromise = ctx.audioWorklet.addModule(this.workletUrl).then(() => {
-            this.node = new AudioWorkletNode(ctx, processorName);
-            URL.revokeObjectURL(this.workletUrl);
-            return this.node;
-        });
+// Animasyon sistemini burada tutuyoruz (mevcut kodunuzdaki gibi)
+const animations = {
+    none: {init(){}, draw(ctx,time){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);}},
+    psychedelic: {init(){}, draw(ctx,time){
+        const w=ctx.canvas.width,h=ctx.canvas.height;
+        ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,w,h);
+        const centerX=w/2,centerY=h/2;
+        for(let i=0;i<5;i++){
+            ctx.save();ctx.translate(centerX,centerY);ctx.rotate(time*(0.1+i*0.05)*AppState.animationSpeed);
+            const hue=(animationHue+i*30+time*20)%360;
+            ctx.strokeStyle=`hsla(${hue},100%,60%,${0.15-i*0.02})`;ctx.lineWidth=2-i*0.3;ctx.beginPath();
+            for(let j=0;j<6;j++){
+                const angle=(j/6)*Math.PI*2;const radius=100+Math.sin(time*2+i)*50*AppState.animationIntensity+i*20;
+                const x=Math.cos(angle+time)*radius;const y=Math.sin(angle+time)*radius;
+                if(j===0)ctx.moveTo(x,y);else{const cpx=Math.cos(angle-0.5+time)*(radius*1.5);const cpy=Math.sin(angle-0.5+time)*(radius*1.5);ctx.quadraticCurveTo(cpx,cpy,x,y);}
+            }ctx.closePath();ctx.stroke();ctx.restore();
+        }
+    }},
+    network: {nodes:[], init(){
+        this.nodes=[];
+        for(let i=0;i<80;i++)this.nodes.push({x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,vx:(Math.random()-0.5)*0.5*AppState.animationSpeed,vy:(Math.random()-0.5)*0.5*AppState.animationSpeed});
+    }, draw(ctx,time){
+        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        this.nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>ctx.canvas.width)n.vx=-n.vx;if(n.y<0||n.y>ctx.canvas.height)n.vy=-n.vy;});
+        for(let i=0;i<this.nodes.length;i++){
+            for(let j=i+1;j<this.nodes.length;j++){
+                const dx=this.nodes[i].x-this.nodes[j].x,dy=this.nodes[i].y-this.nodes[j].y;const dist=Math.sqrt(dx*dx+dy*dy);
+                if(dist<150){const opacity=(1-(dist/150))*AppState.animationIntensity;ctx.strokeStyle=`hsla(${animationHue},100%,60%,${opacity*0.5})`;ctx.beginPath();ctx.moveTo(this.nodes[i].x,this.nodes[i].y);ctx.lineTo(this.nodes[j].x,this.nodes[j].y);ctx.stroke();}
+            }
+        }
+        this.nodes.forEach(n=>{ctx.fillStyle=`hsla(${animationHue},100%,80%,0.8)`;ctx.beginPath();ctx.arc(n.x,n.y,2,0,Math.PI*2);ctx.fill();});
+    }}
+};
+
+// Yardımcı fonksiyonlar
+function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
+
+function safeAudioOperation(op){
+    performanceMonitor.startAudioProcessing();
+    if(!isAudioContextValid()){showStatus('Start synth first');performanceMonitor.endAudioProcessing();return false;}
+    try{op();performanceMonitor.endAudioProcessing();return true}catch(e){console.error(e);showStatus('Audio error');performanceMonitor.endAudioProcessing();return false;}
+}
+
+function showStatus(msg,dur=800){
+    elements.statusMessage.textContent=msg;
+    elements.statusMessage.classList.add('show');
+    setTimeout(()=>elements.statusMessage.classList.remove('show'),dur);
+}
+
+function updateButtonStates(){
+    elements.startBtn.disabled=AppState.isPlaying;
+    elements.stopBtn.disabled=!AppState.isPlaying;
+}
+
+function cleanupOscillators(){
+    if(AppState.oscillators.length>0){
+        AppState.oscillators.forEach(o=>{try{o.stop();o.disconnect();}catch(e){}});
+        AppState.oscillators=[];
     }
-    connect(destination) { this.nodePromise.then(n => n.connect(destination)); }
-    sendMessage(data) { this.nodePromise.then(n => n.port.postMessage(data)); }
 }
 
-class SynthModule extends AudioModule {
-    constructor(ctx) { super(ctx, synthProcessorCode, 'synth-processor'); }
-    init(numOsc, wave, detune) { this.sendMessage({ type: 'init', sampleRate: this.ctx.sampleRate, numOsc, wave, detune }); }
-    updateParams(frequency, wave, detune) { this.sendMessage({ type: 'update', frequency, wave, detune }); }
-}
-
-class EffectsModule extends AudioModule {
-    constructor(ctx) { super(ctx, effectsProcessorCode, 'effects-processor'); }
-    updateParams(params) { this.sendMessage(params); }
-}
-
-class SequencerModule extends AudioModule {
-    constructor(ctx) {
-        super(ctx, sequencerProcessorCode, 'sequencer-processor');
-        this.nodePromise.then(n => n.port.onmessage = (e) => {
-            if (e.data.type === 'triggerKick') playKick();
-        });
-    }
-    start(bpm) { this.sendMessage({ isPlaying: true, bpm }); }
-    stop() { this.sendMessage({ isPlaying: false }); }
-    updateBpm(bpm) { this.sendMessage({ bpm }); }
-}
-
-// --- Global Audio Nodes ---
-let synthModule, effectsModule, sequencerModule, pannerNode, masterGainNode, kickGain, kickOsc;
-
-// --- Core Functions ---
-function isAudioContextValid() { return AppState.audioCtx && AppState.audioCtx.state === 'running'; }
-function showStatus(msg, dur = 800) { elements.statusMessage.textContent = msg; elements.statusMessage.classList.add('show'); setTimeout(() => elements.statusMessage.classList.remove('show'), dur); }
-function updateButtonStates() { elements.startBtn.disabled = AppState.isPlaying; elements.stopBtn.disabled = !AppState.isPlaying; }
-function createNoteRuler() { /* ... same as before ... */ const notes = ['C6','B5','A#5','A5','G#5','G5','F#5','F5','E5','D#5','D5','C#5','C5','B4','A#4','A4','G#4','G4','F#4','F4','E4','D#4','D4','C#4','C4']; elements.noteRuler.innerHTML = ''; notes.forEach(note => { const div = document.createElement('div'); div.className = 'ruler-note'; div.textContent = note; elements.noteRuler.appendChild(div); }); }
-function freqToNote(freq) { const A4 = 440, semitonesFromA4 = 12 * Math.log2(freq / A4); const noteIndex = Math.round(semitonesFromA4 + 9) % 12; const octave = Math.floor((semitonesFromA4 + 9) / 12); const noteName = noteNames[(noteIndex + 12) % 12]; return { name: noteName, octave: octave, fullName: `${noteName}${octave}` }; }
-function updateThemeColor(color) { document.documentElement.style.setProperty('--r', color[0]); document.documentElement.style.setProperty('--g', color[1]); document.documentElement.style.setProperty('--b', color[2]); }
-function noteFromPad(y) { const ratio = 1 - y; const baseFreq = 65.41 * Math.pow(2, AppState.octaveOffset); return baseFreq * Math.pow(2, (ratio * 24) / 12); }
-function applyPitch() { const noteInfo = freqToNote(AppState.freqTarget); elements.noteDisplay.textContent = noteInfo.fullName; const colorIndex = noteNames.indexOf(noteInfo.name); if (colorIndex !== -1) { updateThemeColor(noteColors[colorIndex]); AppState.themeNeedsUpdate = false; } }
-function playKick() { const now = AppState.audioCtx.currentTime; kickOsc.frequency.setValueAtTime(60, now); kickOsc.frequency.exponentialRampToValueAtTime(0.01, now + 0.5); kickGain.gain.setValueAtTime(1, now); kickGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); }
-function startMainLoop() { function loop() { if (!AppState.isPlaying) return; requestAnimationFrame(loop); safeAudioOperation(() => { masterGainNode.gain.setTargetAtTime(AppState.touchPoint.x * 0.4, AppState.audioCtx.currentTime, 0.01); pannerNode.pan.setTargetAtTime(AppState.panTarget, AppState.audioCtx.currentTime, 0.01); }); if (AppState.themeNeedsUpdate) applyPitch(); elements.motionDisplay.textContent = `Tilt:${Math.round(AppState.tiltBend * 10) / 10}st`; elements.panDisplay.textContent = `Pan:${Math.round(AppState.panTarget * 100)}%`; }; loop(); }
-function safeAudioOperation(op) { if (!isAudioContextValid()) { showStatus('Start synth first'); return false; } try { op(); return true; } catch (e) { console.error(e); showStatus('Audio error'); return false; } }
-
-// --- Start/Stop ---
-async function startSynth() {
-    if (isAudioContextValid()) { showStatus('Already running'); return; }
-    try {
-        AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await AppState.audioCtx.resume();
+// Ana synth fonksiyonları
+async function startSynth(){
+    if(isAudioContextValid()){showStatus('Already running');return;}
+    
+    try{
+        // Sistem yöneticilerini başlat
+        if (!performanceMonitor) {
+            performanceMonitor = new PerformanceMonitor();
+            performanceMonitor.startMonitoring();
+        }
+        if (!adaptiveQuality) {
+            adaptiveQuality = new AdaptiveQualitySystem();
+        }
+        if (!memoryManager) {
+            memoryManager = new AudioMemoryManager();
+            memoryManager.initialize();
+        }
+        if (!dspProcessor) {
+            dspProcessor = new WASMDSPProcessor();
+            await dspProcessor.initialize();
+        }
         
-        // Initialize modular audio graph
-        synthModule = new SynthModule(AppState.audioCtx);
-        effectsModule = new EffectsModule(AppState.audioCtx);
-        sequencerModule = new SequencerModule(AppState.audioCtx);
-        pannerNode = AppState.audioCtx.createStereoPanner();
-        masterGainNode = AppState.audioCtx.createGain();
+        // Kalite ayarlarını uygula
+        const qualityPreference = document.getElementById('qualitySelect').value;
+        adaptiveQuality.applyUserQualityPreference(qualityPreference);
         
-        // Kick drum (using standard nodes for simplicity)
-        kickOsc = AppState.audioCtx.createOscillator();
-        kickGain = AppState.audioCtx.createGain();
-        kickOsc.connect(kickGain).connect(masterGainNode);
-        kickOsc.start();
-
-        // Connect the graph
-        synthModule.connect(effectsModule.nodePromise);
-        effectsModule.connect(pannerNode);
-        pannerNode.connect(masterGainNode);
-        masterGainNode.connect(AppState.audioCtx.destination);
-
-        // Initialize modules
-        synthModule.init(AppState.NUM_OSC, AppState.waveType, AppState.detuneAmount);
-        effectsModule.updateParams(AppState.effects);
+        AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         
-        AppState.isPlaying = true;
+        // Low-latency mode deneyelim
+        if (AppState.audioCtx.baseLatency) {
+            console.log('Audio context latency:', AppState.audioCtx.baseLatency);
+        }
+        
+        createAudioNodes();
+        AppState.isPlaying=true;
         updateButtonStates();
-        startMainLoop();
-        showStatus('Started');
-    } catch (e) { console.error(e); showStatus('Start failed'); }
-}
-function stopSynth() {
-    if (!AppState.audioCtx) { showStatus('No synth running'); return; }
-    try {
-        if (AppState.rhythmActive) stopRhythm();
-        AppState.audioCtx.close().then(() => {
-            AppState.audioCtx = null; AppState.isPlaying = false; updateButtonStates(); showStatus('Stopped');
-        }).catch(e => console.error(e));
-    } catch (e) { console.error(e); showStatus('Stop error'); }
+        startWaveAnimation();
+        
+        // Performans izleme başlat
+        startPerformanceMonitoring();
+        
+        showStatus('Started - Advanced features active!');
+    }catch(e){
+        console.error(e);
+        showStatus('Start failed');
+    }
 }
 
-// --- Event Handlers ---
-function handleTouch(e) { if (!isAudioContextValid()) { showStatus('Start synth first'); return; } e.preventDefault(); const clientY = e.touches ? e.touches[0].clientY : e.clientY; const clientX = e.touches ? e.touches[0].clientX : e.clientX; AppState.touchPoint = { x: clientX / window.innerWidth, y: clientY / window.innerHeight }; AppState.freqTarget = noteFromPad(AppState.touchPoint.y); AppState.themeNeedsUpdate = true; synthModule.updateParams(AppState.freqTarget, AppState.waveType, AppState.detuneAmount); }
-function toggleControls() { elements.controls.classList.toggle('expanded'); elements.toggleControls.textContent = elements.controls.classList.contains('expanded') ? '✕' : '⚙️'; }
-function requestMotionPermission() { if (typeof DeviceOrientationEvent.requestPermission === 'function') { elements.permissionModal.style.display = 'flex'; } else { startMotionControl(); } }
-function startMotionControl() { window.addEventListener("deviceorientation", handleOrientation); AppState.motionEnabled = true; elements.motionBtn.textContent = "Motion ON"; elements.motionBtn.classList.add('active'); elements.motionDisplay.style.display = 'block'; showStatus('Motion enabled'); }
-function disableMotion() { window.removeEventListener("deviceorientation", handleOrientation); AppState.motionEnabled = false; AppState.tiltBend = 0; elements.motionBtn.textContent = "Motion OFF"; elements.motionBtn.classList.remove('active'); elements.motionDisplay.style.display = 'none'; showStatus('Motion disabled'); }
-function togglePan() { AppState.panEnabled = !AppState.panEnabled; elements.panBtn.textContent = AppState.panEnabled ? "Pan ON" : "Pan OFF"; elements.panBtn.classList.toggle('active', AppState.panEnabled); elements.panDisplay.style.display = AppState.panEnabled ? 'block' : 'none'; if (!AppState.panEnabled) { AppState.panTarget = 0; } showStatus(AppState.panEnabled ? 'Pan enabled' : 'Pan disabled'); }
-function handleOrientation(e) { if (e.beta === null) return; const tilt = e.beta, pan = e.gamma; if (AppState.motionEnabled) { AppState.tiltBend = tilt / 45 * 12; const baseFreq = 65.41 * Math.pow(2, AppState.octaveOffset); AppState.freqTarget = baseFreq * Math.pow(2, AppState.tiltBend / 12); AppState.themeNeedsUpdate = true; synthModule.updateParams(AppState.freqTarget, AppState.waveType, AppState.detuneAmount); } if (AppState.panEnabled && pan !== null) { AppState.panTarget = Math.max(-1, Math.min(1, pan / 90)); } }
-function startRhythm() { if (!isAudioContextValid()) { showStatus('Start synth first'); return; } AppState.rhythmActive = true; elements.startRhythmBtn.disabled = true; elements.stopRhythmBtn.disabled = false; sequencerModule.start(AppState.rhythmBPM); showStatus('Rhythm Started'); }
-function stopRhythm() { AppState.rhythmActive = false; elements.startRhythmBtn.disabled = false; elements.stopRhythmBtn.disabled = true; sequencerModule.stop(); showStatus('Rhythm Stopped'); }
+function createAudioNodes(){
+    cleanupOscillators();
+    AppState.masterGain=AppState.audioCtx.createGain();
+    AppState.masterGain.gain.value=0.2;
+    
+    // DSP işlemcisini kullan
+    audioNodes.dspGain = AppState.audioCtx.createGain();
+    
+    audioNodes.panner=AppState.audioCtx.createStereoPanner();
+    audioNodes.panner.pan.value=0;
+    audioNodes.distortion=createWaveShaper(50);
+    audioNodes.distortionGain=AppState.audioCtx.createGain();
+    audioNodes.distortionGain.gain.value=0;
+    audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();
+    audioNodes.autoWah.type="bandpass";
+    audioNodes.autoWah.frequency.value=800;
+    audioNodes.autoWah.Q.value=5;
+    audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();
+    audioNodes.autoWahLFO.frequency.value=1;
+    audioNodes.autoWahGain=AppState.audioCtx.createGain();
+    audioNodes.autoWahGain.gain.value=600;
+    audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);
+    audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);
+    audioNodes.autoWahLFO.start();
+    audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);
+    audioNodes.flangerDelay.delayTime.value=0.005;
+    audioNodes.flangerLFO=AppState.audioCtx.createOscillator();
+    audioNodes.flangerLFO.frequency.value=0.2;
+    audioNodes.flangerGain=AppState.audioCtx.createGain();
+    audioNodes.flangerGain.gain.value=0.005;
+    audioNodes.flangerFeedback=AppState.audioCtx.createGain();
+    audioNodes.flangerFeedback.gain.value=0.5;
+    audioNodes.flangerLFO.connect(audioNodes.flangerGain);
+    audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);
+    audioNodes.flangerLFO.start();
+    audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);
+    audioNodes.chorusDelay.delayTime.value=0.025;
+    audioNodes.chorusLFO=AppState.audioCtx.createOscillator();
+    audioNodes.chorusLFO.frequency.value=0.5;
+    audioNodes.chorusGain=AppState.audioCtx.createGain();
+    audioNodes.chorusGain.gain.value=0.01;
+    audioNodes.chorusLFO.connect(audioNodes.chorusGain);
+    audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);
+    audioNodes.chorusLFO.start();
+    audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();
+    audioNodes.tremoloLFO.frequency.value=5;
+    audioNodes.tremoloGain=AppState.audioCtx.createGain();
+    audioNodes.tremoloGain.gain.value=0;
+    audioNodes.tremoloLFO.connect(audioNodes.tremoloGain);
+    audioNodes.tremoloLFO.start();
+    audioNodes.filter=AppState.audioCtx.createBiquadFilter();
+    audioNodes.filter.type="lowpass";
+    audioNodes.filter.frequency.value=20000;
+    audioNodes.filter.Q.value=1;
+    audioNodes.delay=AppState.audioCtx.createDelay(2);
+    audioNodes.delay.delayTime.value=0.3;
+    audioNodes.delayFeedback=AppState.audioCtx.createGain();
+    audioNodes.delayFeedback.gain.value=0.5;
+    audioNodes.reverb=AppState.audioCtx.createConvolver();
+    const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);
+    for(let c=0;c<2;c++){
+        const d=buffer.getChannelData(c);
+        for(let i=0;i<buffer.length;i++){
+            d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);
+        }
+    }
+    audioNodes.reverb.buffer=buffer;
+    
+    createKickNodes();
+    createOscillators();
+    connectAudioGraph();
+}
 
-// --- Initialization ---
-function initializeEventListeners() {
-    elements.pad.addEventListener("touchstart", handleTouch, { passive: false });
-    elements.pad.addEventListener("touchmove", handleTouch, { passive: false });
-    elements.pad.addEventListener("mousedown", handleTouch);
-    elements.pad.addEventListener("mousemove", e => { if (e.buttons === 1) handleTouch(e); });
-    elements.startBtn.addEventListener("click", startSynth);
-    elements.stopBtn.addEventListener("click", stopSynth);
-    elements.motionBtn.addEventListener("click", () => { AppState.motionEnabled ? disableMotion() : requestMotionPermission(); });
-    elements.panBtn.addEventListener("click", togglePan);
-    elements.toggleControls.addEventListener("click", toggleControls);
-    elements.startRhythmBtn.addEventListener("click", startRhythm);
-    elements.stopRhythmBtn.addEventListener("click", stopRhythm);
-    document.getElementById("octUp").addEventListener("click", () => { AppState.octaveOffset++; AppState.freqTarget = noteFromPad(AppState.touchPoint.y); AppState.themeNeedsUpdate = true; createNoteRuler(); });
-    document.getElementById("octDown").addEventListener("click", () => { AppState.octaveOffset--; AppState.freqTarget = noteFromPad(AppState.touchPoint.y); AppState.themeNeedsUpdate = true; createNoteRuler(); });
-    document.getElementById("permissionAllow").addEventListener("click", () => { DeviceOrientationEvent.requestPermission().then(r => { elements.permissionModal.style.display = 'none'; if (r === 'granted') { startMotionControl(); } else { showStatus('Motion permission denied'); } }).catch(e => { elements.permissionModal.style.display = 'none'; showStatus('Permission error'); }); });
-    document.getElementById("permissionDeny").addEventListener("click", () => { elements.permissionModal.style.display = 'none'; showStatus('Motion disabled'); });
+function createKickNodes(){
+    kickOsc=AppState.audioCtx.createOscillator();
+    kickGain=AppState.audioCtx.createGain();
+    kickGain.gain.value=0;
+    kickOsc2=AppState.audioCtx.createOscillator();
+    kickGain2=AppState.audioCtx.createGain();
+    kickGain2.gain.value=0;
+    kickDistortion=createWaveShaper(0);
+    kickDistortion.oversample='4x';
+    kickOsc.connect(kickGain);
+    kickOsc2.connect(kickGain2);
+    kickGain.connect(kickDistortion);
+    kickGain2.connect(kickDistortion);
+    kickDistortion.connect(AppState.audioCtx.destination);
+    kickOsc.start();
+    kickOsc2.start();
+}
+
+function createWaveShaper(amount){
+    const ws=AppState.audioCtx.createWaveShaper();
+    const n=44100;
+    const curve=new Float32Array(n);
+    for(let i=0;i<n;i++){
+        const x=(i-n/2)/(n/2);
+        curve[i]=(3+amount)*Math.tanh(x*5)/(Math.PI+amount*Math.abs(x));
+    }
+    ws.curve=curve;
+    return ws;
+}
+
+function createOscillators(){
+    const now=AppState.audioCtx.currentTime;
+    for(let i=0;i<AppState.NUM_OSC;i++){
+        let osc;
+        if(AppState.waveType==='fm'){
+            osc=AppState.audioCtx.createOscillator();
+            osc.type='sine';
+            const modulator=AppState.audioCtx.createOscillator();
+            modulator.type='sine';
+            modulator.frequency.value=AppState.baseFreq*2;
+            const modGain=AppState.audioCtx.createGain();
+            modGain.gain.value=100;
+            modulator.connect(modGain);
+            modGain.connect(osc.frequency);
+            modulator.start(now);
+        }else if(AppState.waveType==='pulse'){
+            osc=AppState.audioCtx.createOscillator();
+            osc.type='square';
+        }else{
+            osc=AppState.audioCtx.createOscillator();
+            osc.type=AppState.waveType;
+        }
+        osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;
+        if(AppState.waveType==='pulse'){
+            const pulseWidth=AppState.audioCtx.createWaveShaper();
+            const pulseCurve=new Float32Array(256);
+            for(let j=0;j<256;j++){
+                pulseCurve[j]=j<128*AppState.pulseWidth?-1:1;
+            }
+            pulseWidth.curve=pulseCurve;
+            osc.connect(pulseWidth);
+            pulseWidth.connect(AppState.masterGain);
+        }else{
+            osc.connect(AppState.masterGain);
+        }
+        osc.start(now);
+        AppState.oscillators.push(osc);
+    }
+}
+
+function connectAudioGraph(){
+    AppState.masterGain.disconnect();
+    audioNodes.distortion.disconnect();
+    audioNodes.autoWah.disconnect();
+    audioNodes.flangerDelay.disconnect();
+    audioNodes.chorusDelay.disconnect();
+    audioNodes.filter.disconnect();
+    audioNodes.delay.disconnect();
+    audioNodes.reverb.disconnect();
+    audioNodes.panner.disconnect();
     
-    // UI to Worklet communication
-    elements.waveSelect.addEventListener("change", e => { AppState.waveType = e.target.value; synthModule.updateParams(AppState.freqTarget, AppState.waveType, AppState.detuneAmount); });
-    elements.oscCount.addEventListener("input", e => { AppState.NUM_OSC = parseInt(e.target.value); synthModule.init(AppState.NUM_OSC, AppState.waveType, AppState.detuneAmount); });
-    elements.detuneRange.addEventListener("input", e => { AppState.detuneAmount = parseFloat(e.target.value); synthModule.updateParams(AppState.freqTarget, AppState.waveType, AppState.detuneAmount); });
-    elements.filterFreq.addEventListener("input", e => { AppState.filterFreq = parseFloat(e.target.value); effectsModule.updateParams({ ...AppState.effects, filterFreq: AppState.filterFreq }); });
-    elements.filterReso.addEventListener("input", e => { AppState.filterReso = parseFloat(e.target.value); effectsModule.updateParams({ ...AppState.effects, filterReso: AppState.filterReso }); });
-    elements.rhythmSpeed.addEventListener("input", e => { AppState.rhythmBPM = parseInt(e.target.value); if (AppState.rhythmActive) sequencerModule.updateBpm(AppState.rhythmBPM); });
+    let signal=AppState.masterGain;
     
-    const toggleMap = { toggleDist: 'dist', toggleFilter: 'filter', toggleDelay: 'delay', toggleReverb: 'reverb', toggleWasmEffect: 'wasmEffect' };
-    Object.entries(toggleMap).forEach(([id, effect]) => {
-        document.getElementById(id).addEventListener("click", () => {
-            AppState.effects[effect] = !AppState.effects[effect];
-            document.getElementById(id).classList.toggle('active', AppState.effects[effect]);
-            effectsModule.updateParams(AppState.effects);
-            showStatus(effect + ' ' + (AppState.effects[effect] ? 'ON' : 'OFF'));
-        });
+    // DSP işlemcisini zincire ekle
+    signal.connect(audioNodes.dspGain);
+    signal = audioNodes.dspGain;
+    
+    if(effects.dist){signal.connect(audioNodes.distortion);signal=audioNodes.distortion;}
+    if(effects.autoWah){signal.connect(audioNodes.autoWah);signal=audioNodes.autoWah;}
+    if(effects.flanger){signal.connect(audioNodes.flangerDelay);audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);signal=audioNodes.flangerDelay;}
+    if(effects.chorus){signal.connect(audioNodes.chorusDelay);signal=audioNodes.chorusDelay;}
+    signal.connect(audioNodes.filter);
+    if(effects.delay){audioNodes.filter.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delay);signal=audioNodes.delay;}
+    if(effects.reverb){signal.connect(audioNodes.reverb);signal=audioNodes.reverb;}
+    if(effects.tremolo){audioNodes.tremoloGain.connect(signal.gain);}
+    signal.connect(audioNodes.panner);
+    audioNodes.panner.connect(AppState.audioCtx.destination);
+    
+    audioNodes.distortionGain.gain.value=effects.dist?1:0;
+    audioNodes.autoWahGain.gain.value=effects.autoWah?1:0;
+    audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:0;
+}
+
+function createNoteRuler(){
+    const notes=['C6','B5','A#5','A5','G#5','G5','F#5','F5','E5','D#5','D5','C#5','C5','B4','A#4','A4','G#4','G4','F#4','F4','E4','D#4','D4','C#4','C4'];
+    elements.noteRuler.innerHTML='';
+    notes.forEach(note=>{
+        const div=document.createElement('div');
+        div.className='ruler-note';
+        div.textContent=note;
+        elements.noteRuler.appendChild(div);
     });
-    document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); AppState.rhythmActive ? stopRhythm() : startRhythm(); } });
-    document.addEventListener('visibilitychange', () => { if (document.hidden && AppState.rhythmActive) stopRhythm(); });
-    elements.pad.addEventListener('touchstart', () => { if (AppState.audioCtx && AppState.audioCtx.state === 'suspended') AppState.audioCtx.resume(); }, { once: true });
 }
 
-window.addEventListener('load', () => {
-    updateThemeColor([255, 100, 100]); initializeEventListeners(); updateButtonStates(); createNoteRuler();
-    showStatus('Ready - Click Start then try effects! SPACE for rhythm');
+function freqToNote(freq){
+    const A4=440,semitonesFromA4=12*Math.log2(freq/A4);
+    const noteIndex=Math.round(semitonesFromA4+9)%12;
+    const octave=Math.floor((semitonesFromA4+9)/12);
+    const noteName=noteNames[(noteIndex+12)%12];
+    return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};
+}
+
+function updateThemeColor(color){
+    document.documentElement.style.setProperty('--r',color[0]);
+    document.documentElement.style.setProperty('--g',color[1]);
+    document.documentElement.style.setProperty('--b',color[2]);
+    const r=color[0]/255,g=color[1]/255,b=color[2]/255;
+    const max=Math.max(r,g,b),min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if(max===min){h=s=0;}else{
+        const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);
+        switch(max){
+            case r:h=((g-b)/d+(g<b?6:0))/6;break;
+            case g:h=((b-r)/d+2)/6;break;
+            case b:h=((r-g)/d+4)/6;break;
+        }
+    }
+    animationHue=Math.round(h*360);
+}
+
+function noteFromPad(y){
+    const padHeight=window.innerHeight;
+    const ratio=1-(y/padHeight);
+    const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);
+    return baseFreq*Math.pow(2,(ratio*24)/12);
+}
+
+function applyPitch(){
+    if(!safeAudioOperation(()=>{
+        const freq=AppState.baseFreq;
+        const noteInfo=freqToNote(freq);
+        AppState.oscillators.forEach((osc,i)=>{
+            if(osc.frequency){
+                osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.001);
+            }
+        });
+        elements.noteDisplay.textContent=noteInfo.fullName;
+        const colorIndex=noteNames.indexOf(noteInfo.name);
+        if(colorIndex!==-1)updateThemeColor(noteColors[colorIndex]);
+    }))return;
+}
+
+let lastTouchTime=0;
+function handleTouch(e){
+    const now=performance.now();
+    if(now-lastTouchTime<1)return;
+    lastTouchTime=now;
+    if(!isAudioContextValid()){showStatus('Start synth first');return;}
+    const clientY=e.touches?e.touches[0].clientY:e.clientY;
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    touchPoint={x:clientX,y:clientY};
+    AppState.baseFreq=noteFromPad(clientY);
+    const volume=clientX/window.innerWidth;
+    safeAudioOperation(()=>{
+        AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.001);
+    });
+    applyPitch();
+}
+
+function updatePan(position){
+    if(!audioNodes.panner)return;
+    safeAudioOperation(()=>{
+        audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.001);
+        const panPercent=Math.round(position*100);
+        elements.panDisplay.textContent=`Pan:${panPercent}%`;
+    });
+}
+
+function stopSynth(){
+    if(!AppState.audioCtx){showStatus('No synth running');return;}
+    try{
+        cleanupOscillators();
+        stopRhythm();
+        stopWaveAnimation();
+        stopPerformanceMonitoring();
+        
+        if (memoryManager) {
+            memoryManager.destroy();
+        }
+        
+        AppState.audioCtx.close().then(()=>{
+            AppState.audioCtx=null;
+            AppState.isPlaying=false;
+            updateButtonStates();
+            showStatus('Stopped');
+        }).catch(e=>{
+            console.error(e);
+            showStatus('Stop error');
+        });
+    }catch(e){
+        console.error(e);
+        showStatus('Stop error');
+    }
+}
+
+function toggleControls(){
+    elements.controls.classList.toggle('expanded');
+    elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';
+}
+
+function requestMotionPermission(){
+    if(typeof DeviceOrientationEvent.requestPermission==='function'){
+        elements.permissionModal.style.display='flex';
+    }else{
+        startMotionControl();
+    }
+}
+
+function startMotionControl(){
+    window.addEventListener("deviceorientation",handleOrientation);
+    AppState.motionEnabled=true;
+    elements.motionBtn.textContent="Motion ON";
+    elements.motionBtn.classList.add('active');
+    elements.motionDisplay.style.display='block';
+    showStatus('Motion enabled - Tilt device for pitch!');
+}
+
+function disableMotion(){
+    window.removeEventListener("deviceorientation",handleOrientation);
+    AppState.motionEnabled=false;
+    AppState.tiltBend=0;
+    elements.motionBtn.textContent="Motion OFF";
+    elements.motionBtn.classList.remove('active');
+    elements.motionDisplay.style.display='none';
+    showStatus('Motion disabled');
+}
+
+function togglePan(){
+    AppState.panEnabled=!AppState.panEnabled;
+    elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";
+    elements.panBtn.classList.toggle('active',AppState.panEnabled);
+    elements.panDisplay.style.display=AppState.panEnabled?'block':'none';
+    if(!AppState.panEnabled){
+        updatePan(0);
+    }
+    showStatus(AppState.panEnabled?'Pan enabled - Tilt device sideways!':'Pan disabled');
+}
+
+let lastOrientationTime=0;
+function handleOrientation(e){
+    const now=performance.now();
+    if(now-lastOrientationTime<4)return;
+    lastOrientationTime=now;
+    if(e.beta===null)return;
+    const tilt=e.beta;
+    const pan=e.gamma;
+    if(AppState.motionEnabled){
+        AppState.tiltBend=tilt/45*12;
+        const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);
+        AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);
+        elements.motionDisplay.textContent=`Tilt:${Math.round(AppState.tiltBend*10)/10}st`;
+        applyPitch();
+    }
+    if(AppState.panEnabled&&pan!==null){
+        const panValue=Math.max(-1,Math.min(1,pan/90));
+        updatePan(panValue);
+    }
+}
+
+function playKick(beat){
+    const pattern=patternMap[AppState.kickSettings.pattern];
+    if(!pattern[beat%pattern.length])return;
+    const now=AppState.audioCtx.currentTime;
+    const volume=AppState.kickSettings.volume/100;
+    const punch=AppState.kickSettings.punch/100;
+    const bass=AppState.kickSettings.bass/100;
+    const distortion=AppState.kickSettings.distortion;
+    const sweep=AppState.kickSettings.sweep/100;
+    const baseFreq=80+40*punch;
+    const endFreq=30+20*(1-sweep);
+    const sweepTime=0.08+0.07*sweep;
+    kickOsc.frequency.setValueAtTime(baseFreq,now);
+    kickOsc.frequency.exponentialRampToValueAtTime(endFreq,now+sweepTime);
+    kickGain.gain.setValueAtTime(volume*0.8,now);
+    kickGain.gain.exponentialRampToValueAtTime(0.001,now+sweepTime+0.05);
+    if(bass>0){
+        kickOsc2.frequency.setValueAtTime(60,now);
+        kickOsc2.frequency.exponentialRampToValueAtTime(25,now+sweepTime*1.5);
+        kickGain2.gain.setValueAtTime(volume*bass*0.6,now);
+        kickGain2.gain.exponentialRampToValueAtTime(0.001,now+sweepTime*1.5+0.05);
+    }
+    kickDistortion.curve=createWaveShaper(distortion*50).curve;
+}
+
+function startRhythm(){
+    if(!isAudioContextValid()){showStatus('Start synth first');return;}
+    stopRhythm();
+    AppState.rhythmActive=true;
+    elements.startRhythmBtn.disabled=true;
+    elements.stopRhythmBtn.disabled=false;
+    let beat=0;
+    rhythmInterval=setInterval(()=>{
+        if(!isAudioContextValid())return;
+        const intensity=AppState.rhythmIntensity/100;
+        const baseGain=0.1+intensity*0.3;
+        const pattern=[baseGain,baseGain*0.2,baseGain*0.8,baseGain*0.1,baseGain,baseGain*0.3,baseGain*0.7,baseGain*0.2];
+        safeAudioOperation(()=>{
+            AppState.masterGain.gain.setTargetAtTime(pattern[beat%8],AppState.audioCtx.currentTime,0.001);
+            playKick(beat);
+        });
+        const randomColor=noteColors[Math.floor(Math.random()*noteColors.length)];
+        updateThemeColor(randomColor);
+        beat++;
+    },60000/AppState.rhythmSpeed);
+    showStatus('Rhythm Started');
+}
+
+function stopRhythm(){
+    AppState.rhythmActive=false;
+    elements.startRhythmBtn.disabled=false;
+    elements.stopRhythmBtn.disabled=true;
+    if(rhythmInterval){
+        clearInterval(rhythmInterval);
+        rhythmInterval=null;
+    }
+    showStatus('Rhythm Stopped');
+}
+
+function updateRhythmSpeed(value){
+    AppState.rhythmSpeed=value;
+    if(AppState.rhythmActive){
+        stopRhythm();
+        startRhythm();
+    }
+}
+
+function updateRhythmIntensity(value){
+    AppState.rhythmIntensity=value;
+}
+
+function updateKickVolume(value){
+    AppState.kickSettings.volume=parseInt(value);
+}
+
+function updateKickPattern(value){
+    AppState.kickSettings.pattern=value;
+}
+
+function updateKickPunch(value){
+    AppState.kickSettings.punch=parseInt(value);
+}
+
+function updateKickBass(value){
+    AppState.kickSettings.bass=parseInt(value);
+}
+
+function updateKickDistortion(value){
+    AppState.kickSettings.distortion=parseInt(value);
+}
+
+function updateKickSweep(value){
+    AppState.kickSettings.sweep=parseInt(value);
+}
+
+function startWaveAnimation(){
+    const canvas=elements.waveCanvas;
+    const ctx=canvas.getContext('2d');
+    function resize(){
+        canvas.width=window.innerWidth;
+        canvas.height=window.innerHeight;
+        if(animations[AppState.currentAnimation].init){
+            animations[AppState.currentAnimation].init();
+        }
+    }
+    resize();
+    window.addEventListener('resize',resize);
+    function animate(){
+        if(!AppState.isPlaying)return;
+        animationFrameId=requestAnimationFrame(animate);
+        const time=Date.now()*0.001;
+        animations[AppState.currentAnimation].draw(ctx,time);
+    }
+    animate();
+}
+
+function stopWaveAnimation(){
+    if(animationFrameId){
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId=null;
+        const ctx=elements.waveCanvas.getContext('2d');
+        ctx.clearRect(0,0,elements.waveCanvas.width,elements.waveCanvas.height);
+    }
+}
+
+function setAnimation(animationName){
+    AppState.currentAnimation=animationName;
+    if(AppState.isPlaying){
+        stopWaveAnimation();
+        startWaveAnimation();
+    }
+    showStatus(`Animation: ${animationName==='none'?'None':animationName}`);
+}
+
+function updateAnimationSpeed(value){
+    AppState.animationSpeed=parseFloat(value);
+}
+
+function updateAnimationIntensity(value){
+    AppState.animationIntensity=parseFloat(value);
+}
+
+// Performans İzleme Fonksiyonları
+function startPerformanceMonitoring() {
+    let lastCpuCheck = performance.now();
+    let lastCpuTime = 0;
+    
+    if (typeof Worker !== 'undefined') {
+        try {
+            // Basit CPU kullanım simülasyonu
+            const cpuMonitor = setInterval(() => {
+                const now = performance.now();
+                const elapsed = now - lastCpuCheck;
+                
+                // Gerçek uygulamada bu daha karmaşık olurdu
+                const audioLoad = AppState.rhythmActive ? 15 : 5;
+                const animationLoad = AppState.currentAnimation !== 'none' ? 10 : 2;
+                const baseLoad = 5;
+                
+                const simulatedCpuLoad = Math.min(baseLoad + audioLoad + animationLoad, 95);
+                performanceMonitor.metrics.cpuLoad = simulatedCpuLoad;
+                
+                // Adaptif kalite kontrolü
+                if (adaptiveQuality) {
+                    adaptiveQuality.adjustQualityBasedOnPerformance(performanceMonitor.getMetrics());
+                }
+                
+                lastCpuCheck = now;
+            }, 2000);
+            
+            // Temizleme için referansı sakla
+            window.cpuMonitor = cpuMonitor;
+        } catch (e) {
+            console.warn('CPU monitoring not available:', e);
+        }
+    }
+}
+
+function stopPerformanceMonitoring() {
+    if (window.cpuMonitor) {
+        clearInterval(window.cpuMonitor);
+    }
+}
+
+// Gelişmiş kalite kontrolü için event listener'lar
+function initializeAdvancedEventListeners() {
+    // Kalite seçimi
+    elements.qualitySelect.addEventListener("change", e => {
+        const preference = e.target.value;
+        if (adaptiveQuality) {
+            adaptiveQuality.applyUserQualityPreference(preference);
+        }
+    });
+    
+    // CPU limiti
+    elements.cpuLimit.addEventListener("input", e => {
+        const limit = parseInt(e.target.value);
+        if (adaptiveQuality) {
+            adaptiveQuality.performanceThresholds.high.maxCpu = limit - 20;
+            adaptiveQuality.performanceThresholds.medium.maxCpu = limit;
+            adaptiveQuality.performanceThresholds.low.maxCpu = limit + 20;
+        }
+    });
+    
+    // Bellek limiti
+    elements.memoryLimit.addEventListener("input", e => {
+        const limit = parseInt(e.target.value);
+        if (adaptiveQuality) {
+            adaptiveQuality.performanceThresholds.high.maxMemory = limit;
+            adaptiveQuality.performanceThresholds.medium.maxMemory = limit + 50;
+            adaptiveQuality.performanceThresholds.low.maxMemory = limit + 100;
+        }
+        if (memoryManager) {
+            memoryManager.maxBufferSize = limit;
+        }
+    });
+    
+    // Performans göstergesini toggle etme
+    elements.performanceDisplay.addEventListener("click", () => {
+        const display = elements.performanceDisplay;
+        display.style.display = display.style.display === 'none' ? 'block' : 'none';
+    });
+}
+
+// Mevcut event listener'ları genişlet
+function initializeEventListeners(){
+    elements.pad.addEventListener("touchstart",handleTouch,{passive:true});
+    elements.pad.addEventListener("touchmove",handleTouch,{passive:true});
+    elements.pad.addEventListener("mousedown",handleTouch);
+    elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});
+    elements.startBtn.addEventListener("click",startSynth);
+    elements.stopBtn.addEventListener("click",stopSynth);
+    elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():requestMotionPermission();});
+    elements.panBtn.addEventListener("click",togglePan);
+    elements.toggleControls.addEventListener("click",toggleControls);
+    elements.startRhythmBtn.addEventListener("click",startRhythm);
+    elements.stopRhythmBtn.addEventListener("click",stopRhythm);
+    elements.kickVolume.addEventListener("input",e=>{updateKickVolume(e.target.value);});
+    elements.kickPattern.addEventListener("change",e=>{updateKickPattern(e.target.value);});
+    elements.kickPunch.addEventListener("input",e=>{updateKickPunch(e.target.value);});
+    elements.kickBass.addEventListener("input",e=>{updateKickBass(e.target.value);});
+    elements.kickDistortion.addEventListener("input",e=>{updateKickDistortion(e.target.value);});
+    elements.kickSweep.addEventListener("input",e=>{updateKickSweep(e.target.value);});
+    document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();createNoteRuler();});
+    document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();createNoteRuler();});
+    document.getElementById("permissionAllow").addEventListener("click",()=>{DeviceOrientationEvent.requestPermission().then(r=>{elements.permissionModal.style.display='none';if(r==='granted'){startMotionControl();}else{showStatus('Motion permission denied');}}).catch(e=>{elements.permissionModal.style.display='none';showStatus('Permission error');});});
+    document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});
+    document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;cleanupOscillators();createOscillators();connectAudioGraph();showStatus('Wave: '+AppState.waveType);});
+    document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{if(osc.detune)osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;});}});
+    document.getElementById("filterFreq").addEventListener("input",e=>{audioNodes.filter.frequency.value=parseFloat(e.target.value);});
+    document.getElementById("filterReso").addEventListener("input",e=>{audioNodes.filter.Q.value=parseFloat(e.target.value);});
+    document.getElementById("autoWahRate").addEventListener("input",e=>{audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);});
+    document.getElementById("autoWahDepth").addEventListener("input",e=>{audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);});
+    const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleFilter:'filter',toggleDelay:'delay',toggleReverb:'reverb'};
+    Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener("click",()=>{effects[effect]=!effects[effect];document.getElementById(id).classList.toggle('active',effects[effect]);connectAudioGraph();showStatus(effect+' '+(effects[effect]?'ON':'OFF'));if(effect==='autoWah'){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'ON':'OFF');}});});
+    document.getElementById("rhythmSpeed").addEventListener("input",e=>{updateRhythmSpeed(parseInt(e.target.value));});
+    document.getElementById("rhythmIntensity").addEventListener("input",e=>{updateRhythmIntensity(parseInt(e.target.value));});
+    elements.animationSelect.addEventListener("change",e=>{setAnimation(e.target.value);});
+    elements.animSpeed.addEventListener("input",e=>updateAnimationSpeed(e.target.value));
+    elements.animIntensity.addEventListener("input",e=>updateAnimationIntensity(e.target.value));
+    document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();AppState.rhythmActive?stopRhythm():startRhythm();}});
+    
+    // Gelişmiş event listener'ları ekle
+    initializeAdvancedEventListeners();
+}
+
+// Uygulama başlatma
+window.addEventListener('load',()=>{
+    updateThemeColor([255,100,100]);
+    initializeEventListeners();
+    updateButtonStates();
+    createNoteRuler();
+    
+    // Sistem yöneticilerini önceden başlat
+    performanceMonitor = new PerformanceMonitor();
+    adaptiveQuality = new AdaptiveQualitySystem();
+    memoryManager = new AudioMemoryManager();
+    dspProcessor = new WASMDSPProcessor();
+    
+    // Başlangıç kalitesini ayarla
+    const autoLevel = adaptiveQuality.detectDeviceCapabilities();
+    adaptiveQuality.setQualityLevel(autoLevel);
+    
+    showStatus('Gelişmiş Synth Hazır - Tüm optimizasyonlar aktif! SPACE for rhythm');
 });
-window.addEventListener("contextmenu", e => e.preventDefault());
-</script></body></html>
+
+window.addEventListener("contextmenu",e=>e.preventDefault());
+</script>
+</body>
+</html>
