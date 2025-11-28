@@ -54,6 +54,10 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 .volume-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
 .volume-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
 .volume-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+#footer{position:fixed;bottom:15px;left:0;right:0;text-align:center;pointer-events:none;z-index:1000;}
+#credit{color:var(--text-color);font-size:14px;text-decoration:none;font-family:'Courier New',monospace;background:var(--control-bg);padding:6px 12px;border-radius:12px;border:1px solid var(--border-color);pointer-events:auto;transition:all 0.2s ease;}
+#credit:active{background:var(--border-color);transform:scale(0.95);}
+.candy{position:fixed;pointer-events:none;user-select:none;z-index:1000;font-size:20px;opacity:0.8;}
 </style>
 </head>
 <body>
@@ -90,8 +94,8 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 <div class="control-group">
 <label>Kick Volume</label>
-<input type="range" id="kickVolume" min="0" max="100" value="60">
-<div class="value-display" id="kickVolumeValue">60</div>
+<input type="range" id="kickVolume" min="0" max="100" value="80">
+<div class="value-display" id="kickVolumeValue">80</div>
 </div>
 <div class="control-group">
 <label>Effects Volume</label>
@@ -101,6 +105,8 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 </div>
 
+<div class="effect-group">
+<div class="effect-group-title">SYNTH & EFFECTS CONTROLS</div>
 <div class="control-group">
 <label>Wave</label>
 <select id="waveSelect">
@@ -137,6 +143,17 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <input type="range" id="autoWahDepth" min="100" max="1500" value="800">
 <div class="value-display" id="autoWahDepthValue">800</div>
 </div>
+
+<div class="effect-group-title" style="margin-top:8px;">EFFECTS TOGGLE</div>
+<button id="toggleDist">Distortion</button>
+<button id="toggleAutoWah">Auto Wah</button>
+<button id="toggleFlanger">Flanger</button>
+<button id="toggleChorus">Chorus</button>
+<button id="toggleTremolo">Tremolo</button>
+<button id="toggleDelay">Delay</button>
+<button id="toggleReverb">Reverb</button>
+</div>
+
 <div class="rhythm-panel">
 <div class="rhythm-title">DYNAMIC RHYTHM</div>
 <div class="control-group">
@@ -154,8 +171,9 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <button id="stopRhythmBtn" disabled>Stop Rhythm</button>
 </div>
 </div>
+
 <div class="kick-panel">
-<div class="kick-title">KICK DRUM</div>
+<div class="kick-title">KICK DRUM - ENHANCED</div>
 <div class="kick-controls">
 <div class="control-group">
 <label>Pattern</label>
@@ -170,38 +188,29 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </select>
 </div>
 <div class="control-group">
-<label>Attack</label>
-<input type="range" id="kickPunch" min="0" max="100" value="40">
-<div class="value-display" id="kickPunchValue">40</div>
+<label>Punch</label>
+<input type="range" id="kickPunch" min="0" max="100" value="70">
+<div class="value-display" id="kickPunchValue">70</div>
 </div>
 <div class="control-group">
 <label>Bass</label>
-<input type="range" id="kickBass" min="0" max="100" value="80">
-<div class="value-display" id="kickBassValue">80</div>
+<input type="range" id="kickBass" min="0" max="100" value="90">
+<div class="value-display" id="kickBassValue">90</div>
 </div>
 <div class="control-group">
 <label>Drive</label>
-<input type="range" id="kickDistortion" min="0" max="100" value="20">
-<div class="value-display" id="kickDistortionValue">20</div>
+<input type="range" id="kickDistortion" min="0" max="100" value="40">
+<div class="value-display" id="kickDistortionValue">40</div>
 </div>
 <div class="control-group">
 <label>Sweep</label>
-<input type="range" id="kickSweep" min="0" max="100" value="70">
-<div class="value-display" id="kickSweepValue">70</div>
+<input type="range" id="kickSweep" min="0" max="100" value="80">
+<div class="value-display" id="kickSweepValue">80</div>
 </div>
 </div>
 <button id="kickSoloBtn" style="grid-column:1/-1; margin-top:8px;">Kick Solo</button>
 </div>
-<div class="effect-group">
-<div class="effect-group-title">EFFECTS</div>
-<button id="toggleDist">Distortion</button>
-<button id="toggleAutoWah">Auto Wah</button>
-<button id="toggleFlanger">Flanger</button>
-<button id="toggleChorus">Chorus</button>
-<button id="toggleTremolo">Tremolo</button>
-<button id="toggleDelay">Delay</button>
-<button id="toggleReverb">Reverb</button>
-</div>
+
 <div class="animation-panel">
 <div class="animation-title">VISUAL ANIMATIONS</div>
 <div class="control-group">
@@ -234,6 +243,11 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 </div>
 </div>
+
+<div id="footer">
+<a href="#" id="credit">Designed by C.D. v0.31α</a>
+</div>
+
 <div id="statusMessage"></div>
 <div id="permissionModal" class="modal">
 <div class="modal-content">
@@ -245,6 +259,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 </div>
 </div>
+
 <script>
 const AppState = {
     audioCtx: null,
@@ -273,15 +288,15 @@ const AppState = {
     volumeSettings: {
         master: 60,
         synth: 80,
-        kick: 60,
+        kick: 80,
         effects: 70
     },
     kickSettings: {
         pattern: '4/4',
-        punch: 40,
-        bass: 80,
-        distortion: 20,
-        sweep: 70
+        punch: 70,
+        bass: 90,
+        distortion: 40,
+        sweep: 80
     }
 };
 
@@ -304,6 +319,7 @@ let animationFrameId = null;
 let animationHue = 0;
 let touchPoint = { x: 0, y: 0 };
 let activeTouches = new Map();
+let resizeHandler = null;
 
 const noteColors = [
     [255, 100, 100], [255, 150, 80], [255, 220, 80], [220, 255, 80],
@@ -341,7 +357,8 @@ const elements = {
     kickSoloBtn: document.getElementById("kickSoloBtn"),
     masterVolume: document.getElementById("masterVolume"),
     synthVolume: document.getElementById("synthVolume"),
-    effectsVolume: document.getElementById("effectsVolume")
+    effectsVolume: document.getElementById("effectsVolume"),
+    credit: document.getElementById("credit")
 };
 
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -727,12 +744,10 @@ function cleanupOscillators() {
 }
 
 function cleanupAudioNodes() {
-    // Ana audio nodes'ları temizle
     Object.values(audioNodes).forEach(node => {
         if (node && typeof node.disconnect === 'function') {
             try {
                 node.disconnect();
-                // LFO'ları durdur
                 if ((node === audioNodes.autoWahLFO || node === audioNodes.flangerLFO || 
                      node === audioNodes.chorusLFO || node === audioNodes.tremoloLFO) && node.stop) {
                     node.stop();
@@ -745,7 +760,6 @@ function cleanupAudioNodes() {
     audioNodes = {};
     lfoStarted = false;
 
-    // Kick node'larını temizle
     const kickNodes = [kickOsc, kickGain, kickClickOsc, kickClickGain, kickFilter, kickDistortion, kickCompressor];
     kickNodes.forEach(node => {
         if (node) {
@@ -816,13 +830,11 @@ function createAudioNodes() {
     cleanupOscillators();
     cleanupAudioNodes();
     
-    // Volume kontrol node'ları
     AppState.masterGain = AppState.audioCtx.createGain();
     AppState.synthGain = AppState.audioCtx.createGain();
     AppState.kickGain = AppState.audioCtx.createGain();
     AppState.effectsGain = AppState.audioCtx.createGain();
     
-    // Volume değerlerini ayarla
     updateAllVolumes();
     
     audioNodes.panner = AppState.audioCtx.createStereoPanner();
@@ -840,7 +852,7 @@ function createAudioNodes() {
     audioNodes.autoWahLFO = AppState.audioCtx.createOscillator();
     audioNodes.autoWahLFO.frequency.value = 1;
     audioNodes.autoWahGain = AppState.audioCtx.createGain();
-    audioNodes.autoWahGain.gain.value = 0; // Başlangıçta kapalı
+    audioNodes.autoWahGain.gain.value = 0;
     
     audioNodes.flangerDelay = AppState.audioCtx.createDelay(0.02);
     audioNodes.flangerDelay.delayTime.value = 0.005;
@@ -989,7 +1001,6 @@ function connectAudioGraph() {
     if (!AppState.audioCtx) return;
     
     try {
-        // Tüm bağlantıları kes
         AppState.masterGain.disconnect();
         AppState.synthGain.disconnect();
         AppState.kickGain.disconnect();
@@ -1002,10 +1013,8 @@ function connectAudioGraph() {
             }
         });
         
-        // LFO'ları başlat
         startLFOs();
         
-        // Synth sinyal yolu
         let synthSignal = AppState.synthGain;
         
         if (effects.dist) {
@@ -1053,19 +1062,15 @@ function connectAudioGraph() {
         synthSignal.connect(audioNodes.panner);
         audioNodes.panner.connect(AppState.effectsGain);
         
-        // Kick sinyal yolu
         kickCompressor.connect(AppState.kickGain);
         
-        // Master mixing
         AppState.effectsGain.connect(AppState.masterGain);
         AppState.kickGain.connect(AppState.masterGain);
         AppState.masterGain.connect(AppState.audioCtx.destination);
         
-        // Effect kontrolleri
         audioNodes.distortionGain.gain.value = effects.dist ? 1 : 0;
         audioNodes.tremoloGain.gain.value = effects.tremolo ? 0.5 : 1;
         
-        // LFO bağlantıları
         if (effects.autoWah) {
             audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);
             audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);
@@ -1099,23 +1104,18 @@ function updateAllVolumes() {
     
     const now = AppState.audioCtx.currentTime;
     
-    // Master volume (0-1 arası)
     const masterVol = AppState.volumeSettings.master / 100;
     AppState.masterGain.gain.setTargetAtTime(masterVol, now, 0.02);
     
-    // Synth volume (0-1 arası)
     const synthVol = AppState.volumeSettings.synth / 100;
     AppState.synthGain.gain.setTargetAtTime(synthVol, now, 0.02);
     
-    // Kick volume (0-1 arası)
     const kickVol = AppState.volumeSettings.kick / 100;
     AppState.kickGain.gain.setTargetAtTime(kickVol, now, 0.02);
     
-    // Effects volume (0-1 arası)
     const effectsVol = AppState.volumeSettings.effects / 100;
     AppState.effectsGain.gain.setTargetAtTime(effectsVol, now, 0.02);
     
-    // UI güncelleme
     document.getElementById('masterVolumeValue').textContent = AppState.volumeSettings.master;
     document.getElementById('synthVolumeValue').textContent = AppState.volumeSettings.synth;
     document.getElementById('kickVolumeValue').textContent = AppState.volumeSettings.kick;
@@ -1319,7 +1319,7 @@ async function stopSynth() {
         stopRhythm();
         stopWaveAnimation();
         
-        if (AppState.audioCtx.state !== 'closed') {
+        if (AppState.audioCtx.state === 'running') {
             await AppState.audioCtx.suspend();
         }
         
@@ -1328,7 +1328,13 @@ async function stopSynth() {
         showStatus('Synth stopped');
     } catch (e) {
         console.error('Stop error:', e);
-        showStatus('Error stopping synth');
+        if (AppState.audioCtx) {
+            await AppState.audioCtx.close();
+            AppState.audioCtx = null;
+        }
+        AppState.isPlaying = false;
+        updateButtonStates();
+        showStatus('Synth stopped with cleanup');
     }
 }
 
@@ -1410,30 +1416,30 @@ function playKick(beat) {
     const distortion = AppState.kickSettings.distortion / 100;
     const sweep = AppState.kickSettings.sweep / 100;
     
-    const baseFreq = 80 + 40 * punch;
-    const endFreq = 40 + 20 * (1 - sweep);
-    const sweepTime = 0.05 + 0.04 * sweep;
-    const clickFreq = 1000 + 500 * punch;
-    const clickTime = 0.005;
+    const baseFreq = 60 + 60 * punch;
+    const endFreq = 30 + 25 * (1 - sweep);
+    const sweepTime = 0.08 + 0.06 * sweep;
+    const clickFreq = 1200 + 800 * punch;
+    const clickTime = 0.008;
     
     kickOsc.frequency.setValueAtTime(baseFreq, now);
     kickOsc.frequency.exponentialRampToValueAtTime(endFreq, now + sweepTime);
     
-    kickGain.gain.setValueAtTime(1.0, now);
-    kickGain.gain.exponentialRampToValueAtTime(0.001, now + sweepTime + 0.1);
+    kickGain.gain.setValueAtTime(1.5, now);
+    kickGain.gain.exponentialRampToValueAtTime(0.001, now + sweepTime + 0.15);
     
     kickClickOsc.frequency.setValueAtTime(clickFreq, now);
-    kickClickGain.gain.setValueAtTime(punch * 0.9, now);
+    kickClickGain.gain.setValueAtTime(punch * 1.2, now);
     kickClickGain.gain.exponentialRampToValueAtTime(0.001, now + clickTime);
     
-    const filterFreq = 800 + 400 * punch;
+    const filterFreq = 1000 + 600 * punch;
     kickFilter.frequency.setValueAtTime(filterFreq, now);
-    kickFilter.frequency.exponentialRampToValueAtTime(100, now + sweepTime);
+    kickFilter.frequency.exponentialRampToValueAtTime(80, now + sweepTime);
     
-    const distortionAmount = 10 + distortion * 10;
+    const distortionAmount = 15 + distortion * 15;
     updateKickDistortionCurve(distortionAmount);
     
-    kickCompressor.threshold.value = -24 - punch * 6;
+    kickCompressor.threshold.value = -30 - punch * 10;
 }
 
 function toggleKickSolo() {
@@ -1445,11 +1451,9 @@ function toggleKickSolo() {
     AppState.kickSolo = !AppState.kickSolo;
     
     if (AppState.kickSolo) {
-        // Sadece kick duyulsun
         AppState.effectsGain.disconnect();
         showStatus('Kick solo: ON - Only kick drum audible');
     } else {
-        // Tüm sesler duyulsun
         connectAudioGraph();
         showStatus('Kick solo: OFF');
     }
@@ -1566,6 +1570,7 @@ function startWaveAnimation() {
     }
     
     resize();
+    resizeHandler = resize;
     window.addEventListener('resize', resize);
     
     let lastTime = 0;
@@ -1594,6 +1599,10 @@ function stopWaveAnimation() {
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
+    }
+    if (resizeHandler) {
+        window.removeEventListener('resize', resizeHandler);
+        resizeHandler = null;
     }
     const ctx = elements.waveCanvas.getContext('2d');
     ctx.clearRect(0, 0, elements.waveCanvas.width, elements.waveCanvas.height);
@@ -1624,6 +1633,39 @@ function updateValueDisplays() {
     document.getElementById('filterResoValue').textContent = audioNodes.filter ? audioNodes.filter.Q.value : 1;
     document.getElementById('autoWahRateValue').textContent = audioNodes.autoWahLFO ? audioNodes.autoWahLFO.frequency.value : 1;
     document.getElementById('autoWahDepthValue').textContent = audioNodes.autoWahGain ? Math.round(audioNodes.autoWahGain.gain.value) : 800;
+}
+
+function createCandyRain() {
+    const candies = ['🍬', '🍭', '🍫', '🍩', '🍪', '🎂', '🍰', '🧁', '🍦', '🍡'];
+    const duration = 3000;
+    const startTime = Date.now();
+    
+    function createCandy() {
+        if (Date.now() - startTime > duration) return;
+        
+        const candy = document.createElement('div');
+        candy.className = 'candy';
+        candy.textContent = candies[Math.floor(Math.random() * candies.length)];
+        candy.style.left = Math.random() * window.innerWidth + 'px';
+        candy.style.top = '-50px';
+        document.body.appendChild(candy);
+        
+        const animation = candy.animate([
+            { transform: `translateY(0px) rotate(0deg)`, opacity: 1 },
+            { transform: `translateY(${window.innerHeight + 50}px) rotate(360deg)`, opacity: 0 }
+        ], {
+            duration: 1000 + Math.random() * 2000,
+            easing: 'cubic-bezier(0.1, 0.2, 0.8, 0.9)'
+        });
+        
+        animation.onfinish = () => {
+            candy.remove();
+        };
+        
+        setTimeout(createCandy, 100 + Math.random() * 200);
+    }
+    
+    createCandy();
 }
 
 function initializeEventListeners() {
@@ -1777,6 +1819,12 @@ function initializeEventListeners() {
     elements.animationSelect.addEventListener("change", e => setAnimation(e.target.value));
     elements.animSpeed.addEventListener("input", e => updateAnimationSpeed(e.target.value));
     elements.animIntensity.addEventListener("input", e => updateAnimationIntensity(e.target.value));
+    
+    elements.credit.addEventListener("click", function(e) {
+        e.preventDefault();
+        createCandyRain();
+        showStatus('Sweet! Candy rain! 🍬');
+    });
     
     document.addEventListener('keydown', e => {
         if (e.code === 'Space') {
