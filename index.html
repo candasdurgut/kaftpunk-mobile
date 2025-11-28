@@ -320,6 +320,7 @@ let animationHue = 0;
 let touchPoint = { x: 0, y: 0 };
 let activeTouches = new Map();
 let resizeHandler = null;
+let candyPool = [];
 
 const noteColors = [
     [255, 100, 100], [255, 150, 80], [255, 220, 80], [220, 255, 80],
@@ -681,8 +682,12 @@ const animations = {
     }
 };
 
+// Performance optimizations
+let lastOrientationTime = 0;
+let lastTouchTime = 0;
+
 function isAudioContextValid() {
-    return AppState.audioCtx && AppState.audioCtx.state === 'running';
+    return AppState.audioCtx && (AppState.audioCtx.state === 'running' || AppState.audioCtx.state === 'suspended');
 }
 
 function safeAudioOperation(op) {
@@ -827,77 +832,82 @@ function updatePulseWidth(node, width) {
 }
 
 function createAudioNodes() {
-    cleanupOscillators();
-    cleanupAudioNodes();
-    
-    AppState.masterGain = AppState.audioCtx.createGain();
-    AppState.synthGain = AppState.audioCtx.createGain();
-    AppState.kickGain = AppState.audioCtx.createGain();
-    AppState.effectsGain = AppState.audioCtx.createGain();
-    
-    updateAllVolumes();
-    
-    audioNodes.panner = AppState.audioCtx.createStereoPanner();
-    audioNodes.panner.pan.value = 0;
-    
-    audioNodes.distortion = createWaveShaper(50);
-    audioNodes.distortionGain = AppState.audioCtx.createGain();
-    audioNodes.distortionGain.gain.value = 0;
-    
-    audioNodes.autoWah = AppState.audioCtx.createBiquadFilter();
-    audioNodes.autoWah.type = "bandpass";
-    audioNodes.autoWah.frequency.value = 800;
-    audioNodes.autoWah.Q.value = 5;
-    
-    audioNodes.autoWahLFO = AppState.audioCtx.createOscillator();
-    audioNodes.autoWahLFO.frequency.value = 1;
-    audioNodes.autoWahGain = AppState.audioCtx.createGain();
-    audioNodes.autoWahGain.gain.value = 0;
-    
-    audioNodes.flangerDelay = AppState.audioCtx.createDelay(0.02);
-    audioNodes.flangerDelay.delayTime.value = 0.005;
-    audioNodes.flangerLFO = AppState.audioCtx.createOscillator();
-    audioNodes.flangerLFO.frequency.value = 0.2;
-    audioNodes.flangerGain = AppState.audioCtx.createGain();
-    audioNodes.flangerGain.gain.value = 0.005;
-    audioNodes.flangerFeedback = AppState.audioCtx.createGain();
-    audioNodes.flangerFeedback.gain.value = 0.5;
-    
-    audioNodes.chorusDelay = AppState.audioCtx.createDelay(0.05);
-    audioNodes.chorusDelay.delayTime.value = 0.025;
-    audioNodes.chorusLFO = AppState.audioCtx.createOscillator();
-    audioNodes.chorusLFO.frequency.value = 0.5;
-    audioNodes.chorusGain = AppState.audioCtx.createGain();
-    audioNodes.chorusGain.gain.value = 0.01;
-    
-    audioNodes.tremoloLFO = AppState.audioCtx.createOscillator();
-    audioNodes.tremoloLFO.frequency.value = 5;
-    audioNodes.tremoloGain = AppState.audioCtx.createGain();
-    audioNodes.tremoloGain.gain.value = 1;
-    
-    audioNodes.filter = AppState.audioCtx.createBiquadFilter();
-    audioNodes.filter.type = "lowpass";
-    audioNodes.filter.frequency.value = 8000;
-    audioNodes.filter.Q.value = 1;
-    
-    audioNodes.delay = AppState.audioCtx.createDelay(2);
-    audioNodes.delay.delayTime.value = 0.3;
-    audioNodes.delayFeedback = AppState.audioCtx.createGain();
-    audioNodes.delayFeedback.gain.value = 0.5;
-    
-    audioNodes.reverb = AppState.audioCtx.createConvolver();
-    const buffer = AppState.audioCtx.createBuffer(2, AppState.audioCtx.sampleRate * 2, AppState.audioCtx.sampleRate);
-    for (let c = 0; c < 2; c++) {
-        const d = buffer.getChannelData(c);
-        for (let i = 0; i < buffer.length; i++) {
-            d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / buffer.length, 2);
+    try {
+        cleanupOscillators();
+        cleanupAudioNodes();
+        
+        AppState.masterGain = AppState.audioCtx.createGain();
+        AppState.synthGain = AppState.audioCtx.createGain();
+        AppState.kickGain = AppState.audioCtx.createGain();
+        AppState.effectsGain = AppState.audioCtx.createGain();
+        
+        updateAllVolumes();
+        
+        audioNodes.panner = AppState.audioCtx.createStereoPanner();
+        audioNodes.panner.pan.value = 0;
+        
+        audioNodes.distortion = createWaveShaper(50);
+        audioNodes.distortionGain = AppState.audioCtx.createGain();
+        audioNodes.distortionGain.gain.value = 0;
+        
+        audioNodes.autoWah = AppState.audioCtx.createBiquadFilter();
+        audioNodes.autoWah.type = "bandpass";
+        audioNodes.autoWah.frequency.value = 800;
+        audioNodes.autoWah.Q.value = 5;
+        
+        audioNodes.autoWahLFO = AppState.audioCtx.createOscillator();
+        audioNodes.autoWahLFO.frequency.value = 1;
+        audioNodes.autoWahGain = AppState.audioCtx.createGain();
+        audioNodes.autoWahGain.gain.value = 0;
+        
+        audioNodes.flangerDelay = AppState.audioCtx.createDelay(0.02);
+        audioNodes.flangerDelay.delayTime.value = 0.005;
+        audioNodes.flangerLFO = AppState.audioCtx.createOscillator();
+        audioNodes.flangerLFO.frequency.value = 0.2;
+        audioNodes.flangerGain = AppState.audioCtx.createGain();
+        audioNodes.flangerGain.gain.value = 0.005;
+        audioNodes.flangerFeedback = AppState.audioCtx.createGain();
+        audioNodes.flangerFeedback.gain.value = 0.5;
+        
+        audioNodes.chorusDelay = AppState.audioCtx.createDelay(0.05);
+        audioNodes.chorusDelay.delayTime.value = 0.025;
+        audioNodes.chorusLFO = AppState.audioCtx.createOscillator();
+        audioNodes.chorusLFO.frequency.value = 0.5;
+        audioNodes.chorusGain = AppState.audioCtx.createGain();
+        audioNodes.chorusGain.gain.value = 0.01;
+        
+        audioNodes.tremoloLFO = AppState.audioCtx.createOscillator();
+        audioNodes.tremoloLFO.frequency.value = 5;
+        audioNodes.tremoloGain = AppState.audioCtx.createGain();
+        audioNodes.tremoloGain.gain.value = 1;
+        
+        audioNodes.filter = AppState.audioCtx.createBiquadFilter();
+        audioNodes.filter.type = "lowpass";
+        audioNodes.filter.frequency.value = 8000;
+        audioNodes.filter.Q.value = 1;
+        
+        audioNodes.delay = AppState.audioCtx.createDelay(2);
+        audioNodes.delay.delayTime.value = 0.3;
+        audioNodes.delayFeedback = AppState.audioCtx.createGain();
+        audioNodes.delayFeedback.gain.value = 0.5;
+        
+        audioNodes.reverb = AppState.audioCtx.createConvolver();
+        const buffer = AppState.audioCtx.createBuffer(2, AppState.audioCtx.sampleRate * 2, AppState.audioCtx.sampleRate);
+        for (let c = 0; c < 2; c++) {
+            const d = buffer.getChannelData(c);
+            for (let i = 0; i < buffer.length; i++) {
+                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / buffer.length, 2);
+            }
         }
+        audioNodes.reverb.buffer = buffer;
+        
+        createKickNodes();
+        createOscillators();
+        connectAudioGraph();
+    } catch (error) {
+        console.error('Audio node creation error:', error);
+        showStatus('Audio setup failed');
     }
-    audioNodes.reverb.buffer = buffer;
-    
-    createKickNodes();
-    createOscillators();
-    connectAudioGraph();
 }
 
 function createKickNodes() {
@@ -1179,7 +1189,7 @@ function applyPitch() {
         
         AppState.oscillators.forEach((osc, i) => {
             if (osc.frequency) {
-                osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.02);
+                osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
             }
         });
         
@@ -1189,7 +1199,6 @@ function applyPitch() {
     })) return;
 }
 
-let lastTouchTime = 0;
 function handleTouchStart(e) {
     e.preventDefault();
     if (!isAudioContextValid()) {
@@ -1198,7 +1207,7 @@ function handleTouchStart(e) {
     }
     
     const now = performance.now();
-    if (now - lastTouchTime < 50) return;
+    if (now - lastTouchTime < 8) return;
     lastTouchTime = now;
     
     Array.from(e.touches).forEach(touch => {
@@ -1216,7 +1225,7 @@ function handleTouchMove(e) {
     if (!isAudioContextValid()) return;
     
     const now = performance.now();
-    if (now - lastTouchTime < 16) return;
+    if (now - lastTouchTime < 8) return;
     lastTouchTime = now;
     
     Array.from(e.touches).forEach(touch => {
@@ -1265,7 +1274,7 @@ function handleMouseMove(e) {
 function updatePan(position) {
     if (!audioNodes.panner) return;
     safeAudioOperation(() => {
-        audioNodes.panner.pan.setTargetAtTime(position, AppState.audioCtx.currentTime, 0.02);
+        audioNodes.panner.pan.setTargetAtTime(position, AppState.audioCtx.currentTime, 0.01);
         const panPercent = Math.round(position * 100);
         elements.panDisplay.textContent = `Pan:${panPercent}%`;
     });
@@ -1319,7 +1328,7 @@ async function stopSynth() {
         stopRhythm();
         stopWaveAnimation();
         
-        if (AppState.audioCtx.state === 'running') {
+        if (AppState.audioCtx.state !== 'closed') {
             await AppState.audioCtx.suspend();
         }
         
@@ -1379,10 +1388,9 @@ function togglePan() {
     showStatus(AppState.panEnabled ? 'Pan enabled - Tilt sideways!' : 'Pan disabled');
 }
 
-let lastOrientationTime = 0;
 function handleOrientation(e) {
     const now = performance.now();
-    if (now - lastOrientationTime < 100) return;
+    if (now - lastOrientationTime < 30) return;
     lastOrientationTime = now;
     
     if (e.beta === null || e.gamma === null) return;
@@ -1570,18 +1578,16 @@ function startWaveAnimation() {
     }
     
     resize();
+    if (resizeHandler) {
+        window.removeEventListener('resize', resizeHandler);
+    }
     resizeHandler = resize;
     window.addEventListener('resize', resize);
     
-    let lastTime = 0;
     function animate(time) {
         if (!AppState.isPlaying || !animationFrameId) return;
         
         animationFrameId = requestAnimationFrame(animate);
-        const delta = time - lastTime;
-        
-        if (delta < 16) return;
-        lastTime = time;
         
         const timeSec = time * 0.001;
         try {
@@ -1635,6 +1641,19 @@ function updateValueDisplays() {
     document.getElementById('autoWahDepthValue').textContent = audioNodes.autoWahGain ? Math.round(audioNodes.autoWahGain.gain.value) : 800;
 }
 
+function getCandyFromPool() {
+    if (candyPool.length > 0) {
+        return candyPool.pop();
+    }
+    const candy = document.createElement('div');
+    candy.className = 'candy';
+    return candy;
+}
+
+function returnCandyToPool(candy) {
+    candyPool.push(candy);
+}
+
 function createCandyRain() {
     const candies = ['🍬', '🍭', '🍫', '🍩', '🍪', '🎂', '🍰', '🧁', '🍦', '🍡'];
     const duration = 3000;
@@ -1643,8 +1662,7 @@ function createCandyRain() {
     function createCandy() {
         if (Date.now() - startTime > duration) return;
         
-        const candy = document.createElement('div');
-        candy.className = 'candy';
+        const candy = getCandyFromPool();
         candy.textContent = candies[Math.floor(Math.random() * candies.length)];
         candy.style.left = Math.random() * window.innerWidth + 'px';
         candy.style.top = '-50px';
@@ -1660,6 +1678,7 @@ function createCandyRain() {
         
         animation.onfinish = () => {
             candy.remove();
+            returnCandyToPool(candy);
         };
         
         setTimeout(createCandy, 100 + Math.random() * 200);
@@ -1761,7 +1780,7 @@ function initializeEventListeners() {
         const value = parseFloat(e.target.value);
         document.getElementById('filterFreqValue').textContent = Math.round(value);
         if (audioNodes.filter) {
-            audioNodes.filter.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
+            audioNodes.filter.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.01);
         }
     });
     
@@ -1769,7 +1788,7 @@ function initializeEventListeners() {
         const value = parseFloat(e.target.value);
         document.getElementById('filterResoValue').textContent = value;
         if (audioNodes.filter) {
-            audioNodes.filter.Q.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
+            audioNodes.filter.Q.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.01);
         }
     });
     
@@ -1777,7 +1796,7 @@ function initializeEventListeners() {
         const value = parseFloat(e.target.value);
         document.getElementById('autoWahRateValue').textContent = value;
         if (audioNodes.autoWahLFO) {
-            audioNodes.autoWahLFO.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
+            audioNodes.autoWahLFO.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.01);
         }
     });
     
@@ -1785,7 +1804,7 @@ function initializeEventListeners() {
         const value = parseFloat(e.target.value);
         document.getElementById('autoWahDepthValue').textContent = Math.round(value);
         if (audioNodes.autoWahGain) {
-            audioNodes.autoWahGain.gain.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
+            audioNodes.autoWahGain.gain.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.01);
         }
     });
     
