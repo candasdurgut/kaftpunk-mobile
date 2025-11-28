@@ -261,7 +261,6 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 
 <script>
-// Enhanced AppState with better error handling
 const AppState = {
     audioCtx: null,
     oscillators: [],
@@ -286,32 +285,15 @@ const AppState = {
     animationSpeed: 1,
     animationIntensity: 1,
     kickSolo: false,
-    volumeSettings: {
-        master: 60,
-        synth: 80,
-        kick: 80,
-        effects: 70
-    },
-    kickSettings: {
-        pattern: '4/4',
-        punch: 70,
-        bass: 90,
-        distortion: 40,
-        sweep: 80
-    }
+    volumeSettings: {master: 60, synth: 80, kick: 80, effects: 70},
+    kickSettings: {pattern: '4/4', punch: 70, bass: 90, distortion: 40, sweep: 80}
 };
 
 const effects = {
-    dist: false,
-    autoWah: false,
-    flanger: false,
-    chorus: false,
-    tremolo: false,
-    delay: false,
-    reverb: false
+    dist: false, autoWah: false, flanger: false, chorus: false,
+    tremolo: false, delay: false, reverb: false
 };
 
-// Audio nodes and state management
 let audioNodes = {};
 let lfoStarted = false;
 let rhythmInterval = null;
@@ -323,8 +305,6 @@ let touchPoint = { x: 0, y: 0 };
 let activeTouches = new Map();
 let resizeHandler = null;
 let candyPool = [];
-
-// Performance optimization variables
 let lastOrientationTime = 0;
 let lastTouchTime = 0;
 
@@ -334,7 +314,6 @@ const noteColors = [
     [150, 100, 255], [220, 80, 255], [255, 80, 220], [255, 80, 120]
 ];
 
-// DOM elements cache
 const elements = {
     pad: document.getElementById("pad"),
     noteDisplay: document.getElementById("noteDisplay"),
@@ -381,9 +360,8 @@ const patternMap = {
     'minimal': [1, 0, 0, 0, 0.5, 0, 0, 0]
 };
 
-// Animation definitions (unchanged for brevity)
 const animations = {
-    none: { init() {}, draw(ctx, time) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); } },
+    none: { init() {}, draw(ctx) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); } },
     psychedelic: {
         init() {},
         draw(ctx, time) {
@@ -435,7 +413,7 @@ const animations = {
                 });
             }
         },
-        draw(ctx, time) {
+        draw(ctx) {
             ctx.fillStyle = 'rgba(0,0,0,0.05)';
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             
@@ -471,7 +449,7 @@ const animations = {
                 });
             }
         },
-        draw(ctx, time) {
+        draw(ctx) {
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             
             this.nodes.forEach(n => {
@@ -506,17 +484,185 @@ const animations = {
             });
         }
     },
-    // Other animations remain the same for brevity
-    metaballs: { /* ... */ },
-    oscilloscope: { /* ... */ },
-    equalizer: { /* ... */ },
-    circularWave: { /* ... */ },
-    kaleidoscope: { /* ... */ },
-    spiral: { /* ... */ },
-    matrix: { /* ... */ }
+    metaballs: {
+        init() {},
+        draw(ctx, time) {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            const balls = [
+                {x: ctx.canvas.width/2 + Math.sin(time) * 100, y: ctx.canvas.height/2 + Math.cos(time) * 80, r: 40},
+                {x: ctx.canvas.width/2 + Math.sin(time*1.3) * 120, y: ctx.canvas.height/2 + Math.cos(time*0.7) * 90, r: 35},
+                {x: ctx.canvas.width/2 + Math.sin(time*0.7) * 80, y: ctx.canvas.height/2 + Math.cos(time*1.5) * 70, r: 45}
+            ];
+            
+            for (let x = 0; x < ctx.canvas.width; x += 4) {
+                for (let y = 0; y < ctx.canvas.height; y += 4) {
+                    let sum = 0;
+                    balls.forEach(ball => {
+                        const dx = x - ball.x;
+                        const dy = y - ball.y;
+                        const d = Math.sqrt(dx*dx + dy*dy);
+                        sum += ball.r / d;
+                    });
+                    
+                    if (sum > 1) {
+                        ctx.fillStyle = `hsla(${animationHue},100%,${Math.min(100, sum*30)}%,${Math.min(1, sum-1)})`;
+                        ctx.fillRect(x-2, y-2, 4, 4);
+                    }
+                }
+            }
+        }
+    },
+    oscilloscope: {
+        init() {},
+        draw(ctx, time) {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            ctx.strokeStyle = `hsl(${animationHue},100%,70%)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let x = 0; x < ctx.canvas.width; x++) {
+                const y = ctx.canvas.height/2 + Math.sin(x * 0.05 + time * 3) * 50 * AppState.animationIntensity +
+                         Math.sin(x * 0.03 + time * 2) * 30 * AppState.animationSpeed;
+                
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+    },
+    equalizer: {
+        bars: [],
+        init() {
+            this.bars = Array(32).fill(0);
+        },
+        draw(ctx, time) {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            const barWidth = ctx.canvas.width / this.bars.length;
+            
+            this.bars.forEach((bar, i) => {
+                const height = 20 + Math.sin(time * 2 + i * 0.3) * 15 * AppState.animationIntensity +
+                              Math.sin(time * 3 + i * 0.5) * 10 * AppState.animationSpeed;
+                
+                const hue = (animationHue + i * 5) % 360;
+                ctx.fillStyle = `hsl(${hue},100%,60%)`;
+                ctx.fillRect(i * barWidth, ctx.canvas.height - height, barWidth - 2, height);
+            });
+        }
+    },
+    circularWave: {
+        init() {},
+        draw(ctx, time) {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            const centerX = ctx.canvas.width / 2;
+            const centerY = ctx.canvas.height / 2;
+            
+            for (let i = 0; i < 5; i++) {
+                const radius = 50 + i * 30 + Math.sin(time + i) * 20 * AppState.animationIntensity;
+                const hue = (animationHue + i * 40) % 360;
+                
+                ctx.strokeStyle = `hsla(${hue},100%,60%,${0.8 - i * 0.15})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+    },
+    kaleidoscope: {
+        init() {},
+        draw(ctx, time) {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            const segments = 12;
+            const centerX = ctx.canvas.width / 2;
+            const centerY = ctx.canvas.height / 2;
+            const maxRadius = Math.min(centerX, centerY);
+            
+            for (let i = 0; i < segments; i++) {
+                const angle = (i / segments) * Math.PI * 2;
+                const hue = (animationHue + i * 30) % 360;
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle);
+                
+                ctx.fillStyle = `hsla(${hue},100%,60%,0.3)`;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, maxRadius, 0, Math.PI / segments);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = `hsla(${hue},100%,80%,0.8)`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+    },
+    spiral: {
+        init() {},
+        draw(ctx, time) {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            const centerX = ctx.canvas.width / 2;
+            const centerY = ctx.canvas.height / 2;
+            
+            ctx.strokeStyle = `hsl(${animationHue},100%,70%)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let i = 0; i < 200; i++) {
+                const angle = 0.1 * i;
+                const radius = 5 + i * 0.5;
+                const x = centerX + Math.cos(angle + time) * radius;
+                const y = centerY + Math.sin(angle + time) * radius;
+                
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+    },
+    matrix: {
+        chars: "01",
+        columns: [],
+        init() {
+            this.columns = Array(Math.floor(window.innerWidth / 20)).fill(0);
+        },
+        draw(ctx) {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            ctx.fillStyle = `hsl(${animationHue},100%,60%)`;
+            ctx.font = '15px monospace';
+            
+            this.columns.forEach((y, i) => {
+                const x = i * 20;
+                const char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                ctx.fillText(char, x, y);
+                
+                if (y > 100 + Math.random() * 10000) {
+                    this.columns[i] = 0;
+                } else {
+                    this.columns[i] = y + 20;
+                }
+            });
+        }
+    }
 };
 
-// Core utility functions
 function isAudioContextValid() {
     return AppState.audioCtx && (AppState.audioCtx.state === 'running' || AppState.audioCtx.state === 'suspended');
 }
@@ -561,7 +707,6 @@ function updateButtonStates() {
     elements.kickSoloBtn.classList.toggle('active', AppState.kickSolo);
 }
 
-// Enhanced kick bass control
 function playKick(beat) {
     if (!isAudioContextValid()) return;
     
@@ -576,14 +721,11 @@ function playKick(beat) {
     const distortion = AppState.kickSettings.distortion / 100;
     const sweep = AppState.kickSettings.sweep / 100;
     
-    // Enhanced bass control - more pronounced effect
     const baseFreq = 50 + 40 * punch * (1 - bass * 0.3);
     const endFreq = 25 + 20 * (1 - sweep) * (1 - bass * 0.5);
     const sweepTime = 0.08 + 0.08 * sweep + bass * 0.12;
     const clickFreq = 1200 + 800 * punch;
     const clickTime = 0.008;
-    
-    // Apply bass enhancement to gain envelope
     const bassBoost = 0.5 + bass * 0.8;
     
     try {
@@ -597,7 +739,6 @@ function playKick(beat) {
         kickClickGain.gain.setValueAtTime(punch * 1.2, now);
         kickClickGain.gain.exponentialRampToValueAtTime(0.001, now + clickTime);
         
-        // Enhanced filter control for bass
         const filterFreq = 800 + 400 * punch - bass * 600;
         const filterQ = 1 + bass * 2;
         
@@ -615,7 +756,6 @@ function playKick(beat) {
     }
 }
 
-// Audio node management with better error handling
 function cleanupOscillators() {
     if (AppState.oscillators.length > 0) {
         AppState.oscillators.forEach(osc => {
@@ -654,7 +794,6 @@ function cleanupOscillators() {
 }
 
 function cleanupAudioNodes() {
-    // Cleanup main audio nodes
     Object.values(audioNodes).forEach(node => {
         if (node && typeof node.disconnect === 'function') {
             try {
@@ -671,7 +810,6 @@ function cleanupAudioNodes() {
     audioNodes = {};
     lfoStarted = false;
 
-    // Cleanup kick nodes
     const kickNodes = [kickOsc, kickGain, kickClickOsc, kickClickGain, kickFilter, kickDistortion, kickCompressor];
     kickNodes.forEach(node => {
         if (node) {
@@ -762,7 +900,6 @@ function createAudioNodes() {
         cleanupOscillators();
         cleanupAudioNodes();
         
-        // Create gain nodes
         AppState.masterGain = AppState.audioCtx.createGain();
         AppState.synthGain = AppState.audioCtx.createGain();
         AppState.kickGain = AppState.audioCtx.createGain();
@@ -770,7 +907,6 @@ function createAudioNodes() {
         
         updateAllVolumes();
         
-        // Create effect nodes
         audioNodes.panner = AppState.audioCtx.createStereoPanner();
         audioNodes.panner.pan.value = 0;
         
@@ -948,7 +1084,6 @@ function connectAudioGraph() {
     if (!AppState.audioCtx) return;
     
     try {
-        // Disconnect all nodes first
         if (AppState.masterGain) AppState.masterGain.disconnect();
         if (AppState.synthGain) AppState.synthGain.disconnect();
         if (AppState.kickGain) AppState.kickGain.disconnect();
@@ -969,7 +1104,6 @@ function connectAudioGraph() {
         
         let synthSignal = AppState.synthGain;
         
-        // Connect effects chain
         if (effects.dist && audioNodes.distortion) {
             synthSignal.connect(audioNodes.distortion);
             synthSignal = audioNodes.distortion;
@@ -1019,17 +1153,14 @@ function connectAudioGraph() {
             audioNodes.panner.connect(AppState.effectsGain);
         }
         
-        // Connect kick
         if (kickCompressor) {
             kickCompressor.connect(AppState.kickGain);
         }
         
-        // Connect to master
         if (AppState.effectsGain) AppState.effectsGain.connect(AppState.masterGain);
         if (AppState.kickGain) AppState.kickGain.connect(AppState.masterGain);
         if (AppState.masterGain) AppState.masterGain.connect(AppState.audioCtx.destination);
         
-        // Set effect parameters
         if (audioNodes.distortionGain) {
             audioNodes.distortionGain.gain.value = effects.dist ? 1 : 0;
         }
@@ -1037,7 +1168,6 @@ function connectAudioGraph() {
             audioNodes.tremoloGain.gain.value = effects.tremolo ? 0.5 : 1;
         }
         
-        // Connect LFOs
         if (effects.autoWah && audioNodes.autoWahLFO && audioNodes.autoWahGain && audioNodes.autoWah) {
             audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);
             audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);
@@ -1092,7 +1222,6 @@ function updateAllVolumes() {
             AppState.effectsGain.gain.setTargetAtTime(effectsVol, now, 0.02);
         }
         
-        // Update UI displays
         const masterValue = document.getElementById('masterVolumeValue');
         const synthValue = document.getElementById('synthVolumeValue');
         const kickValue = document.getElementById('kickVolumeValue');
@@ -1108,7 +1237,6 @@ function updateAllVolumes() {
     }
 }
 
-// UI and control functions
 function createNoteRuler() {
     if (!elements.noteRuler) return;
     
@@ -1184,7 +1312,6 @@ function applyPitch() {
     })) return;
 }
 
-// Input handling with error prevention
 function handleTouchStart(e) {
     e.preventDefault();
     if (!isAudioContextValid()) {
@@ -1272,7 +1399,6 @@ function updatePan(position) {
     });
 }
 
-// Main synth control functions
 async function startSynth() {
     try {
         if (AppState.audioCtx) {
@@ -1336,7 +1462,6 @@ function toggleControls() {
     elements.toggleControls.textContent = elements.controls.classList.contains('expanded') ? '✕' : '⚙️';
 }
 
-// Motion control functions
 function requestMotionPermission() {
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         if (elements.permissionModal) {
@@ -1407,7 +1532,6 @@ function handleOrientation(e) {
     }
 }
 
-// Rhythm functions
 function toggleKickSolo() {
     if (!AppState.audioCtx) {
         showStatus('Please start synth first');
@@ -1467,7 +1591,6 @@ function stopRhythm() {
     showStatus('Rhythm stopped');
 }
 
-// Control update functions
 function updateRhythmSpeed(value) {
     AppState.rhythmSpeed = parseInt(value);
     const display = document.getElementById('rhythmSpeedValue');
@@ -1532,7 +1655,6 @@ function updateEffectsVolume(value) {
     updateAllVolumes();
 }
 
-// Animation functions
 function startWaveAnimation() {
     const canvas = elements.waveCanvas;
     if (!canvas) return;
@@ -1621,7 +1743,6 @@ function updateValueDisplays() {
     if (wahDepthDisplay) wahDepthDisplay.textContent = audioNodes.autoWahGain ? Math.round(audioNodes.autoWahGain.gain.value) : 800;
 }
 
-// Candy rain effect with object pooling
 function getCandyFromPool() {
     if (candyPool.length > 0) {
         return candyPool.pop();
@@ -1668,10 +1789,8 @@ function createCandyRain() {
     createCandy();
 }
 
-// Event listener initialization with error handling
 function initializeEventListeners() {
     try {
-        // Touch and mouse events
         if (elements.pad) {
             elements.pad.addEventListener("touchstart", handleTouchStart, { passive: false });
             elements.pad.addEventListener("touchmove", handleTouchMove, { passive: false });
@@ -1684,7 +1803,6 @@ function initializeEventListeners() {
             elements.pad.addEventListener("mouseleave", handleTouchEnd);
         }
         
-        // Control buttons
         if (elements.startBtn) elements.startBtn.addEventListener("click", startSynth);
         if (elements.stopBtn) elements.stopBtn.addEventListener("click", stopSynth);
         if (elements.motionBtn) elements.motionBtn.addEventListener("click", () => {
@@ -1696,20 +1814,17 @@ function initializeEventListeners() {
         if (elements.stopRhythmBtn) elements.stopRhythmBtn.addEventListener("click", stopRhythm);
         if (elements.kickSoloBtn) elements.kickSoloBtn.addEventListener("click", toggleKickSolo);
         
-        // Volume controls
         if (elements.masterVolume) elements.masterVolume.addEventListener("input", e => updateMasterVolume(e.target.value));
         if (elements.synthVolume) elements.synthVolume.addEventListener("input", e => updateSynthVolume(e.target.value));
         if (elements.kickVolume) elements.kickVolume.addEventListener("input", e => updateKickVolume(e.target.value));
         if (elements.effectsVolume) elements.effectsVolume.addEventListener("input", e => updateEffectsVolume(e.target.value));
         
-        // Kick controls
         if (elements.kickPattern) elements.kickPattern.addEventListener("change", e => updateKickPattern(e.target.value));
         if (elements.kickPunch) elements.kickPunch.addEventListener("input", e => updateKickPunch(e.target.value));
         if (elements.kickBass) elements.kickBass.addEventListener("input", e => updateKickBass(e.target.value));
         if (elements.kickDistortion) elements.kickDistortion.addEventListener("input", e => updateKickDistortion(e.target.value));
         if (elements.kickSweep) elements.kickSweep.addEventListener("input", e => updateKickSweep(e.target.value));
         
-        // Octave controls
         const octUp = document.getElementById("octUp");
         const octDown = document.getElementById("octDown");
         if (octUp) octUp.addEventListener("click", () => {
@@ -1723,7 +1838,6 @@ function initializeEventListeners() {
             createNoteRuler();
         });
         
-        // Permission modal
         const permissionAllow = document.getElementById("permissionAllow");
         const permissionDeny = document.getElementById("permissionDeny");
         if (permissionAllow) {
@@ -1756,7 +1870,6 @@ function initializeEventListeners() {
             });
         }
         
-        // Synth controls
         const waveSelect = document.getElementById("waveSelect");
         const detuneRange = document.getElementById("detuneRange");
         const filterFreq = document.getElementById("filterFreq");
@@ -1821,7 +1934,6 @@ function initializeEventListeners() {
             }
         });
         
-        // Effect toggles
         const toggleMap = {
             toggleDist: 'dist',
             toggleAutoWah: 'autoWah',
@@ -1849,18 +1961,15 @@ function initializeEventListeners() {
             }
         });
         
-        // Rhythm controls
         const rhythmSpeed = document.getElementById("rhythmSpeed");
         const rhythmIntensity = document.getElementById("rhythmIntensity");
         if (rhythmSpeed) rhythmSpeed.addEventListener("input", e => updateRhythmSpeed(e.target.value));
         if (rhythmIntensity) rhythmIntensity.addEventListener("input", e => updateRhythmIntensity(e.target.value));
         
-        // Animation controls
         if (elements.animationSelect) elements.animationSelect.addEventListener("change", e => setAnimation(e.target.value));
         if (elements.animSpeed) elements.animSpeed.addEventListener("input", e => updateAnimationSpeed(e.target.value));
         if (elements.animIntensity) elements.animIntensity.addEventListener("input", e => updateAnimationIntensity(e.target.value));
         
-        // Credit click
         if (elements.credit) {
             elements.credit.addEventListener("click", function(e) {
                 e.preventDefault();
@@ -1869,7 +1978,6 @@ function initializeEventListeners() {
             });
         }
         
-        // Keyboard shortcuts
         document.addEventListener('keydown', e => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -1877,7 +1985,6 @@ function initializeEventListeners() {
             }
         });
         
-        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             stopSynth();
             disableMotion();
@@ -1889,7 +1996,6 @@ function initializeEventListeners() {
     }
 }
 
-// Initialize application
 window.addEventListener('load', () => {
     try {
         updateThemeColor([255, 100, 100]);
@@ -1904,7 +2010,6 @@ window.addEventListener('load', () => {
     }
 });
 
-// Prevent context menu
 window.addEventListener("contextmenu", e => e.preventDefault());
 </script>
 </body>
