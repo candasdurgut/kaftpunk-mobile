@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Synth">
 <title>Synth</title>
 <style>
 :root{--r:255;--g:100;--b:100;--bg-color:rgba(var(--r),var(--g),var(--b),0.3);--control-bg:rgba(var(--r),var(--g),var(--b),0.4);--text-color:rgba(255,255,255,0.95);--border-color:rgba(var(--r),var(--g),var(--b),0.8);--safe-area-inset-top:env(safe-area-inset-top, 0px);--safe-area-inset-bottom:env(safe-area-inset-bottom, 0px);}
@@ -50,7 +49,6 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 .animation-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:12px;background:var(--control-bg);border-radius:8px;border:2px solid var(--border-color);}
 .animation-title{text-align:center;font-size:11px;font-weight:600;color:var(--text-color);margin-bottom:5px;}
 .animation-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.value-display{font-size:10px;margin-top:2px;color:var(--text-color);}
 </style>
 </head>
 <body>
@@ -85,39 +83,32 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group">
 <label>Detune</label>
 <input type="range" id="detuneRange" min="0" max="50" value="15">
-<div class="value-display" id="detuneValue">15</div>
 </div>
 <div class="control-group">
 <label>Filter Freq</label>
-<input type="range" id="filterFreq" min="200" max="20000" value="8000" step="100">
-<div class="value-display" id="filterFreqValue">8000</div>
+<input type="range" id="filterFreq" min="200" max="20000" value="20000" step="100">
 </div>
 <div class="control-group">
 <label>Filter Reso</label>
 <input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5">
-<div class="value-display" id="filterResoValue">1</div>
 </div>
 <div class="control-group">
 <label>Wah Rate</label>
 <input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1">
-<div class="value-display" id="autoWahRateValue">1</div>
 </div>
 <div class="control-group">
 <label>Wah Depth</label>
 <input type="range" id="autoWahDepth" min="100" max="1500" value="800">
-<div class="value-display" id="autoWahDepthValue">800</div>
 </div>
 <div class="rhythm-panel">
 <div class="rhythm-title">DYNAMIC RHYTHM</div>
 <div class="control-group">
 <label>Speed</label>
 <input type="range" id="rhythmSpeed" min="30" max="2000" value="120">
-<div class="value-display" id="rhythmSpeedValue">120</div>
 </div>
 <div class="control-group">
 <label>Intensity</label>
 <input type="range" id="rhythmIntensity" min="0" max="100" value="50">
-<div class="value-display" id="rhythmIntensityValue">50</div>
 </div>
 <div class="rhythm-buttons">
 <button id="startRhythmBtn">Start Rhythm</button>
@@ -130,7 +121,6 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group">
 <label>Volume</label>
 <input type="range" id="kickVolume" min="0" max="100" value="60">
-<div class="value-display" id="kickVolumeValue">60</div>
 </div>
 <div class="control-group">
 <label>Pattern</label>
@@ -147,22 +137,18 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group">
 <label>Attack</label>
 <input type="range" id="kickPunch" min="0" max="100" value="40">
-<div class="value-display" id="kickPunchValue">40</div>
 </div>
 <div class="control-group">
 <label>Bass</label>
 <input type="range" id="kickBass" min="0" max="100" value="80">
-<div class="value-display" id="kickBassValue">80</div>
 </div>
 <div class="control-group">
 <label>Drive</label>
 <input type="range" id="kickDistortion" min="0" max="100" value="20">
-<div class="value-display" id="kickDistortionValue">20</div>
 </div>
 <div class="control-group">
 <label>Sweep</label>
 <input type="range" id="kickSweep" min="0" max="100" value="70">
-<div class="value-display" id="kickSweepValue">70</div>
 </div>
 </div>
 <button id="kickSoloBtn" style="grid-column:1/-1; margin-top:8px;">Kick Solo</button>
@@ -198,12 +184,10 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group">
 <label>Animation Speed</label>
 <input type="range" id="animSpeed" min="0.1" max="3" value="1" step="0.1">
-<div class="value-display" id="animSpeedValue">1</div>
 </div>
 <div class="control-group">
 <label>Intensity</label>
 <input type="range" id="animIntensity" min="0.1" max="2" value="1" step="0.1">
-<div class="value-display" id="animIntensityValue">1</div>
 </div>
 </div>
 </div>
@@ -221,1470 +205,740 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 </div>
 <script>
-const AppState = {
-    audioCtx: null,
-    oscillators: [],
-    masterGain: null,
-    baseFreq: 261.63,
-    octaveOffset: 0,
-    tiltBend: 0,
-    detuneAmount: 15,
-    waveType: "sawtooth",
-    isPlaying: false,
-    motionEnabled: false,
-    panEnabled: false,
-    NUM_OSC: 7,
-    pulseWidth: 0.5,
-    rhythmActive: false,
-    rhythmSpeed: 120,
-    rhythmIntensity: 50,
-    currentAnimation: "network",
-    animationSpeed: 1,
-    animationIntensity: 1,
-    kickSolo: false,
-    kickSettings: {
-        volume: 60,
-        pattern: '4/4',
-        punch: 40,
-        bass: 80,
-        distortion: 20,
-        sweep: 70
-    }
+const AppState={
+    audioCtx:null,oscillators:[],masterGain:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,
+    waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5,
+    rhythmActive:false,rhythmSpeed:120,rhythmIntensity:50,currentAnimation:"network",animationSpeed:1,
+    animationIntensity:1,kickSolo:false,
+    kickSettings:{volume:60,pattern:'4/4',punch:40,bass:80,distortion:20,sweep:70}
 };
 
-const effects = {
-    dist: false,
-    autoWah: false,
-    flanger: false,
-    chorus: false,
-    tremolo: false,
-    delay: false,
-    reverb: false
+const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,delay:false,reverb:false};
+let audioNodes={};
+let rhythmInterval=null;
+let kickOsc=null,kickGain=null,kickClickOsc=null,kickClickGain=null;
+let kickFilter=null,kickDistortion=null,kickCompressor=null;
+let animationFrameId=null;
+let animationHue=0;
+let touchPoint={x:0,y:0};
+
+const noteColors=[[255,100,100],[255,150,80],[255,220,80],[220,255,80],[120,255,100],[80,255,180],[80,220,255],[100,150,255],[150,100,255],[220,80,255],[255,80,220],[255,80,120]];
+const elements={
+    pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),
+    motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),
+    panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),
+    stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),
+    panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),
+    permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),
+    toggleControls:document.getElementById("toggleControls"),noteRuler:document.getElementById("noteRuler"),
+    startRhythmBtn:document.getElementById("startRhythmBtn"),stopRhythmBtn:document.getElementById("stopRhythmBtn"),
+    kickVolume:document.getElementById("kickVolume"),kickPattern:document.getElementById("kickPattern"),
+    kickPunch:document.getElementById("kickPunch"),kickBass:document.getElementById("kickBass"),
+    kickDistortion:document.getElementById("kickDistortion"),kickSweep:document.getElementById("kickSweep"),
+    waveCanvas:document.getElementById("waveAnimation"),animSpeed:document.getElementById("animSpeed"),
+    animIntensity:document.getElementById("animIntensity"),animationSelect:document.getElementById("animationSelect"),
+    kickSoloBtn:document.getElementById("kickSoloBtn")
 };
 
-let audioNodes = {};
-let rhythmInterval = null;
-let kickOsc = null, kickGain = null, kickClickOsc = null, kickClickGain = null;
-let kickFilter = null, kickDistortion = null, kickCompressor = null;
-let animationFrameId = null;
-let animationHue = 0;
-let touchPoint = { x: 0, y: 0 };
-let activeTouches = new Map();
-
-const noteColors = [
-    [255, 100, 100], [255, 150, 80], [255, 220, 80], [220, 255, 80],
-    [120, 255, 100], [80, 255, 180], [80, 220, 255], [100, 150, 255],
-    [150, 100, 255], [220, 80, 255], [255, 80, 220], [255, 80, 120]
-];
-
-const elements = {
-    pad: document.getElementById("pad"),
-    noteDisplay: document.getElementById("noteDisplay"),
-    motionDisplay: document.getElementById("motionDisplay"),
-    wahDisplay: document.getElementById("wahDisplay"),
-    panDisplay: document.getElementById("panDisplay"),
-    startBtn: document.getElementById("startBtn"),
-    stopBtn: document.getElementById("stopBtn"),
-    motionBtn: document.getElementById("motionBtn"),
-    panBtn: document.getElementById("panBtn"),
-    statusMessage: document.getElementById("statusMessage"),
-    permissionModal: document.getElementById("permissionModal"),
-    controls: document.getElementById("controls"),
-    toggleControls: document.getElementById("toggleControls"),
-    noteRuler: document.getElementById("noteRuler"),
-    startRhythmBtn: document.getElementById("startRhythmBtn"),
-    stopRhythmBtn: document.getElementById("stopRhythmBtn"),
-    kickVolume: document.getElementById("kickVolume"),
-    kickPattern: document.getElementById("kickPattern"),
-    kickPunch: document.getElementById("kickPunch"),
-    kickBass: document.getElementById("kickBass"),
-    kickDistortion: document.getElementById("kickDistortion"),
-    kickSweep: document.getElementById("kickSweep"),
-    waveCanvas: document.getElementById("waveAnimation"),
-    animSpeed: document.getElementById("animSpeed"),
-    animIntensity: document.getElementById("animIntensity"),
-    animationSelect: document.getElementById("animationSelect"),
-    kickSoloBtn: document.getElementById("kickSoloBtn")
+const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const patternMap={
+    '4/4':[1,0,0.8,0,1,0,0.6,0],
+    '2/4':[1,0,0,0,1,0,0,0],
+    'breakbeat':[1,0,0.7,0,0.8,0.3,0,0.6],
+    'offbeat':[0,1,0,0.8,0,1,0,0.7],
+    'techno':[1,0,0,0.5,1,0,0,0.5],
+    'house':[1,0,0.8,0,0.6,0,0.8,0],
+    'minimal':[1,0,0,0,0.5,0,0,0]
 };
 
-const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-const patternMap = {
-    '4/4': [1, 0, 0.8, 0, 1, 0, 0.6, 0],
-    '2/4': [1, 0, 0, 0, 1, 0, 0, 0],
-    'breakbeat': [1, 0, 0.7, 0, 0.8, 0.3, 0, 0.6],
-    'offbeat': [0, 1, 0, 0.8, 0, 1, 0, 0.7],
-    'techno': [1, 0, 0, 0.5, 1, 0, 0, 0.5],
-    'house': [1, 0, 0.8, 0, 0.6, 0, 0.8, 0],
-    'minimal': [1, 0, 0, 0, 0.5, 0, 0, 0]
-};
-
-const animations = {
-    none: {
-        init() {},
-        draw(ctx, time) {
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        }
-    },
-    psychedelic: {
-        init() {},
-        draw(ctx, time) {
-            const w = ctx.canvas.width, h = ctx.canvas.height;
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(0, 0, w, h);
-            const centerX = w / 2, centerY = h / 2;
-            
-            for (let i = 0; i < 5; i++) {
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(time * (0.1 + i * 0.05) * AppState.animationSpeed);
-                const hue = (animationHue + i * 30 + time * 20) % 360;
-                ctx.strokeStyle = `hsla(${hue},100%,60%,${0.15 - i * 0.02})`;
-                ctx.lineWidth = 2 - i * 0.3;
-                ctx.beginPath();
-                
-                for (let j = 0; j < 6; j++) {
-                    const angle = (j / 6) * Math.PI * 2;
-                    const radius = 100 + Math.sin(time * 2 + i) * 50 * AppState.animationIntensity + i * 20;
-                    const x = Math.cos(angle + time) * radius;
-                    const y = Math.sin(angle + time) * radius;
-                    
-                    if (j === 0) ctx.moveTo(x, y);
-                    else {
-                        const cpx = Math.cos(angle - 0.5 + time) * (radius * 1.5);
-                        const cpy = Math.sin(angle - 0.5 + time) * (radius * 1.5);
-                        ctx.quadraticCurveTo(cpx, cpy, x, y);
-                    }
-                }
-                ctx.closePath();
-                ctx.stroke();
-                ctx.restore();
-            }
-        }
-    },
-    cosmicDust: {
-        particles: [],
-        init() {
-            this.particles = [];
-            const particleCount = Math.min(150, Math.floor(window.innerWidth * window.innerHeight / 4000));
-            for (let i = 0; i < particleCount; i++) {
-                this.particles.push({
-                    x: Math.random() * elements.waveCanvas.width,
-                    y: Math.random() * elements.waveCanvas.height,
-                    size: Math.random() * 2 + 0.5,
-                    sx: (Math.random() * 0.5 - 0.25) * AppState.animationSpeed,
-                    sy: (Math.random() * 0.5 - 0.25) * AppState.animationSpeed
-                });
-            }
-        },
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(0,0,0,0.05)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            
-            this.particles.forEach(p => {
-                p.x += p.sx;
-                p.y += p.sy;
-                if (p.x > ctx.canvas.width) p.x = 0;
-                if (p.x < 0) p.x = ctx.canvas.width;
-                if (p.y > ctx.canvas.height) p.y = 0;
-                if (p.y < 0) p.y = ctx.canvas.height;
-                
-                ctx.fillStyle = `hsl(${animationHue},100%,70%)`;
-                ctx.shadowBlur = 10 * AppState.animationIntensity;
-                ctx.shadowColor = `hsl(${animationHue},100%,70%)`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.shadowBlur = 0;
-        }
-    },
-    network: {
-        nodes: [],
-        init() {
-            this.nodes = [];
-            const nodeCount = Math.min(80, Math.floor(window.innerWidth * window.innerHeight / 4000));
-            for (let i = 0; i < nodeCount; i++) {
-                this.nodes.push({
-                    x: Math.random() * elements.waveCanvas.width,
-                    y: Math.random() * elements.waveCanvas.height,
-                    vx: (Math.random() - 0.5) * 0.5 * AppState.animationSpeed,
-                    vy: (Math.random() - 0.5) * 0.5 * AppState.animationSpeed
-                });
-            }
-        },
-        draw(ctx, time) {
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            
-            this.nodes.forEach(n => {
-                n.x += n.vx;
-                n.y += n.vy;
-                if (n.x < 0 || n.x > ctx.canvas.width) n.vx = -n.vx;
-                if (n.y < 0 || n.y > ctx.canvas.height) n.vy = -n.vy;
-            });
-            
-            for (let i = 0; i < this.nodes.length; i++) {
-                for (let j = i + 1; j < this.nodes.length; j++) {
-                    const dx = this.nodes[i].x - this.nodes[j].x;
-                    const dy = this.nodes[i].y - this.nodes[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 150) {
-                        const opacity = (1 - (dist / 150)) * AppState.animationIntensity;
-                        ctx.strokeStyle = `hsla(${animationHue},100%,60%,${opacity * 0.5})`;
-                        ctx.beginPath();
-                        ctx.moveTo(this.nodes[i].x, this.nodes[i].y);
-                        ctx.lineTo(this.nodes[j].x, this.nodes[j].y);
-                        ctx.stroke();
-                    }
+const animations={
+    none:{init(){},draw(ctx,time){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);}},
+    psychedelic:{init(){},draw(ctx,time){
+        const w=ctx.canvas.width,h=ctx.canvas.height;
+        ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,w,h);
+        const centerX=w/2,centerY=h/2;
+        for(let i=0;i<5;i++){
+            ctx.save();ctx.translate(centerX,centerY);
+            ctx.rotate(time*(0.1+i*0.05)*AppState.animationSpeed);
+            const hue=(animationHue+i*30+time*20)%360;
+            ctx.strokeStyle=`hsla(${hue},100%,60%,${0.15-i*0.02})`;
+            ctx.lineWidth=2-i*0.3;ctx.beginPath();
+            for(let j=0;j<6;j++){
+                const angle=(j/6)*Math.PI*2;
+                const radius=100+Math.sin(time*2+i)*50*AppState.animationIntensity+i*20;
+                const x=Math.cos(angle+time)*radius;const y=Math.sin(angle+time)*radius;
+                if(j===0)ctx.moveTo(x,y);else{
+                    const cpx=Math.cos(angle-0.5+time)*(radius*1.5);
+                    const cpy=Math.sin(angle-0.5+time)*(radius*1.5);
+                    ctx.quadraticCurveTo(cpx,cpy,x,y);
                 }
             }
-            
-            this.nodes.forEach(n => {
-                ctx.fillStyle = `hsla(${animationHue},100%,80%,0.8)`;
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, 2, 0, Math.PI * 2);
-                ctx.fill();
-            });
+            ctx.closePath();ctx.stroke();ctx.restore();
         }
-    },
-    metaballs: {
-        balls: [],
-        init() {
-            this.balls = [];
-            for (let i = 0; i < 6; i++) {
-                this.balls.push({
-                    x: Math.random() * elements.waveCanvas.width,
-                    y: Math.random() * elements.waveCanvas.height,
-                    vx: (Math.random() - 0.5) * 2 * AppState.animationSpeed,
-                    vy: (Math.random() - 0.5) * 2 * AppState.animationSpeed,
-                    r: Math.random() * 50 + 30
-                });
-            }
-        },
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.globalCompositeOperation = 'lighter';
-            
-            this.balls.forEach(b => {
-                b.x += b.vx;
-                b.y += b.vy;
-                if (b.x + b.r > ctx.canvas.width || b.x - b.r < 0) b.vx = -b.vx;
-                if (b.y + b.r > ctx.canvas.height || b.y - b.r < 0) b.vy = -b.vy;
-                
-                const gradient = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
-                gradient.addColorStop(0, `hsla(${animationHue},100%,70%,0.8)`);
-                gradient.addColorStop(1, `hsla(${animationHue},100%,50%,0)`);
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalCompositeOperation = 'source-over';
-        }
-    },
-    oscilloscope: {
-        init() {},
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(10,10,10,0.1)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.strokeStyle = `hsl(${animationHue},100%,60%)`;
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 10 * AppState.animationIntensity;
-            ctx.shadowColor = `hsl(${animationHue},100%,60%)`;
-            
-            ctx.beginPath();
-            for (let i = 0; i < ctx.canvas.width; i++) {
-                const y = ctx.canvas.height / 2 + 
-                    Math.sin(i * 0.01 + time * AppState.animationSpeed) * 
-                    ctx.canvas.height / 4 * 
-                    Math.sin(time * 0.5 * AppState.animationSpeed);
-                i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
-            }
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-    },
-    equalizer: {
-        bars: [],
-        init() {
-            this.bars = new Array(32).fill(0);
-        },
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(17,17,17,0.2)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            const barW = ctx.canvas.width / 32;
-            
-            for (let i = 0; i < 32; i++) {
-                const barH = Math.abs(Math.sin(i * 0.2 + time * AppState.animationSpeed) * 
-                    ctx.canvas.height * 0.5 * AppState.animationIntensity) + 20;
-                const hue = (i / 32 * 360 + animationHue) % 360;
-                ctx.fillStyle = `hsl(${hue},100%,60%)`;
-                ctx.fillRect(i * barW, ctx.canvas.height - barH, barW - 2, barH);
-            }
-        }
-    },
-    circularWave: {
-        init() {},
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(10,10,10,0.1)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            const centerX = ctx.canvas.width / 2, centerY = ctx.canvas.height / 2;
-            const r = ctx.canvas.height * 0.4;
-            ctx.strokeStyle = `hsl(${animationHue},100%,60%)`;
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 15 * AppState.animationIntensity;
-            ctx.shadowColor = `hsl(${animationHue},100%,60%)`;
-            
-            ctx.beginPath();
-            for (let i = 0; i < 360; i++) {
-                const angle = i * Math.PI / 180;
-                const waveOffset = Math.sin(i * 0.1 + time * 2 * AppState.animationSpeed) * 
-                    30 * AppState.animationIntensity;
-                const rr = r + waveOffset;
-                const x = centerX + Math.cos(angle) * rr;
-                const y = centerY + Math.sin(angle) * rr;
-                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-    },
-    kaleidoscope: {
-        init() {},
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(0,0,0,0.05)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            const centerX = ctx.canvas.width / 2, centerY = ctx.canvas.height / 2;
-            const segments = 8;
-            
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            
-            for (let i = 0; i < segments; i++) {
-                ctx.rotate((Math.PI * 2) / segments);
-                ctx.strokeStyle = `hsl(${(animationHue + time * 50 * AppState.animationSpeed) % 360},100%,50%)`;
-                ctx.lineWidth = 3 * AppState.animationIntensity;
-                ctx.beginPath();
-                const r = 100 + Math.sin(time * AppState.animationSpeed) * 50 * AppState.animationIntensity;
-                const angle = time * 0.5 * AppState.animationSpeed;
-                ctx.moveTo(0, 0);
-                ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
-                ctx.stroke();
-                ctx.scale(-1, 1);
-                ctx.stroke();
-                ctx.scale(-1, 1);
-            }
-            ctx.restore();
-        }
-    },
-    spiral: {
-        init() {},
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(0,0,0,0.05)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            const centerX = ctx.canvas.width / 2, centerY = ctx.canvas.height / 2;
-            
-            const drawSpiral = (offset, speed) => {
-                ctx.beginPath();
-                for (let i = 0; i < 300; i++) {
-                    const angle = 0.1 * i + time * speed * AppState.animationSpeed;
-                    const x = centerX + (offset + i) * Math.cos(angle);
-                    const y = centerY + (offset + i) * Math.sin(angle);
-                    const hue = (i * 2 + animationHue) % 360;
-                    ctx.strokeStyle = `hsl(${hue},100%,50%)`;
-                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
-                ctx.lineWidth = 2 * AppState.animationIntensity;
-                ctx.stroke();
-            };
-            
-            drawSpiral(0, 1);
-            drawSpiral(10, -1.2);
-        }
-    },
-    matrix: {
-        drops: [],
-        init() {
-            const cols = Math.floor(elements.waveCanvas.width / 16);
-            this.drops = new Array(cols).fill(0).map(() => Math.floor(Math.random() * -100));
-        },
-        draw(ctx, time) {
-            ctx.fillStyle = 'rgba(0,0,0,0.05)';
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.fillStyle = `hsl(${animationHue},100%,50%)`;
-            ctx.font = '16px monospace';
-            
-            this.drops.forEach((d, i) => {
-                const text = String.fromCharCode(0x30A0 + Math.random() * 96);
-                ctx.fillText(text, i * 16, d);
-                d > ctx.canvas.height && Math.random() > 0.975 / AppState.animationSpeed ? 
-                    this.drops[i] = 0 : this.drops[i] += 16 * AppState.animationSpeed;
-            });
-        }
-    }
-};
-
-function isAudioContextValid() {
-    return AppState.audioCtx && AppState.audioCtx.state === 'running';
-}
-
-function safeAudioOperation(op) {
-    if (!isAudioContextValid()) {
-        showStatus('Audio context not ready. Please start synth first.');
-        return false;
-    }
-    try {
-        op();
-        return true;
-    } catch (e) {
-        console.error('Audio operation failed:', e);
-        showStatus('Audio error: ' + e.message);
-        return false;
-    }
-}
-
-function showStatus(msg, dur = 1500) {
-    elements.statusMessage.textContent = msg;
-    elements.statusMessage.classList.add('show');
-    setTimeout(() => elements.statusMessage.classList.remove('show'), dur);
-}
-
-function updateButtonStates() {
-    elements.startBtn.disabled = AppState.isPlaying;
-    elements.stopBtn.disabled = !AppState.isPlaying;
-    elements.startRhythmBtn.disabled = AppState.rhythmActive || !AppState.isPlaying;
-    elements.stopRhythmBtn.disabled = !AppState.rhythmActive;
-    elements.motionBtn.textContent = AppState.motionEnabled ? "Motion ON" : "Motion";
-    elements.motionBtn.classList.toggle('active', AppState.motionEnabled);
-    elements.panBtn.textContent = AppState.panEnabled ? "Pan ON" : "Pan";
-    elements.panBtn.classList.toggle('active', AppState.panEnabled);
-    elements.kickSoloBtn.classList.toggle('active', AppState.kickSolo);
-}
-
-function cleanupOscillators() {
-    if (AppState.oscillators.length > 0) {
-        AppState.oscillators.forEach(osc => {
-            try {
-                if (osc.stop) osc.stop();
-                if (osc.disconnect) osc.disconnect();
-                
-                if (osc.modulator) {
-                    osc.modulator.stop();
-                    osc.modulator.disconnect();
-                }
-                if (osc.pulseWidth) {
-                    osc.pulseWidth.disconnect();
-                }
-                if (osc.modGain) {
-                    osc.modGain.disconnect();
-                }
-            } catch (e) {
-                console.log('Cleanup error:', e);
-            }
+    }},
+    cosmicDust:{particles:[],init(){
+        this.particles=[];
+        for(let i=0;i<150;i++)this.particles.push({
+            x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,
+            size:Math.random()*2+0.5,sx:(Math.random()*0.5-0.25)*AppState.animationSpeed,
+            sy:(Math.random()*0.5-0.25)*AppState.animationSpeed
         });
-        AppState.oscillators = [];
+    },draw(ctx,time){
+        ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        this.particles.forEach(p=>{
+            p.x+=p.sx;p.y+=p.sy;
+            if(p.x>ctx.canvas.width)p.x=0;if(p.x<0)p.x=ctx.canvas.width;
+            if(p.y>ctx.canvas.height)p.y=0;if(p.y<0)p.y=ctx.canvas.height;
+            ctx.fillStyle=`hsl(${animationHue},100%,70%)`;
+            ctx.shadowBlur=10*AppState.animationIntensity;
+            ctx.shadowColor=`hsl(${animationHue},100%,70%)`;
+            ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+        });ctx.shadowBlur=0;
+    }},
+    network:{nodes:[],init(){
+        this.nodes=[];
+        for(let i=0;i<80;i++)this.nodes.push({
+            x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,
+            vx:(Math.random()-0.5)*0.5*AppState.animationSpeed,vy:(Math.random()-0.5)*0.5*AppState.animationSpeed
+        });
+    },draw(ctx,time){
+        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        this.nodes.forEach(n=>{
+            n.x+=n.vx;n.y+=n.vy;
+            if(n.x<0||n.x>ctx.canvas.width)n.vx=-n.vx;
+            if(n.y<0||n.y>ctx.canvas.height)n.vy=-n.vy;
+        });
+        for(let i=0;i<this.nodes.length;i++){
+            for(let j=i+1;j<this.nodes.length;j++){
+                const dx=this.nodes[i].x-this.nodes[j].x,dy=this.nodes[i].y-this.nodes[j].y;
+                const dist=Math.sqrt(dx*dx+dy*dy);
+                if(dist<150){
+                    const opacity=(1-(dist/150))*AppState.animationIntensity;
+                    ctx.strokeStyle=`hsla(${animationHue},100%,60%,${opacity*0.5})`;
+                    ctx.beginPath();
+                    ctx.moveTo(this.nodes[i].x,this.nodes[i].y);
+                    ctx.lineTo(this.nodes[j].x,this.nodes[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        this.nodes.forEach(n=>{
+            ctx.fillStyle=`hsla(${animationHue},100%,80%,0.8)`;
+            ctx.beginPath();ctx.arc(n.x,n.y,2,0,Math.PI*2);ctx.fill();
+        });
+    }},
+    metaballs:{balls:[],init(){
+        this.balls=[];
+        for(let i=0;i<6;i++)this.balls.push({
+            x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,
+            vx:(Math.random()-0.5)*2*AppState.animationSpeed,vy:(Math.random()-0.5)*2*AppState.animationSpeed,
+            r:Math.random()*50+30
+        });
+    },draw(ctx,time){
+        ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        ctx.globalCompositeOperation='lighter';
+        this.balls.forEach(b=>{
+            b.x+=b.vx;b.y+=b.vy;
+            if(b.x+b.r>ctx.canvas.width||b.x-b.r<0)b.vx=-b.vx;
+            if(b.y+b.r>ctx.canvas.height||b.y-b.r<0)b.vy=-b.vy;
+            const gradient=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
+            gradient.addColorStop(0,`hsla(${animationHue},100%,70%,0.8)`);
+            gradient.addColorStop(1,`hsla(${animationHue},100%,50%,0)`);
+            ctx.fillStyle=gradient;
+            ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();
+        });ctx.globalCompositeOperation='source-over';
+    }},
+    oscilloscope:{init(){},draw(ctx,time){
+        ctx.fillStyle='rgba(10,10,10,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        ctx.strokeStyle=`hsl(${animationHue},100%,60%)`;ctx.lineWidth=2;
+        ctx.shadowBlur=10*AppState.animationIntensity;ctx.shadowColor=`hsl(${animationHue},100%,60%)`;
+        ctx.beginPath();
+        for(let i=0;i<ctx.canvas.width;i++){
+            const y=ctx.canvas.height/2+Math.sin(i*0.01+time*AppState.animationSpeed)*ctx.canvas.height/4*Math.sin(time*0.5*AppState.animationSpeed);
+            i===0?ctx.moveTo(i,y):ctx.lineTo(i,y);
+        }
+        ctx.stroke();ctx.shadowBlur=0;
+    }},
+    equalizer:{bars:[],init(){this.bars=new Array(64).fill(0);},draw(ctx,time){
+        ctx.fillStyle='rgba(17,17,17,0.2)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        const barW=ctx.canvas.width/64;
+        for(let i=0;i<64;i++){
+            const barH=Math.abs(Math.sin(i*0.1+time*AppState.animationSpeed)*ctx.canvas.height*0.5*AppState.animationIntensity)+20;
+            const hue=(i/64*360+animationHue)%360;
+            ctx.fillStyle=`hsl(${hue},100%,60%)`;ctx.fillRect(i*barW,ctx.canvas.height-barH,barW-2,barH);
+        }
+    }},
+    circularWave:{init(){},draw(ctx,time){
+        ctx.fillStyle='rgba(10,10,10,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2,r=ctx.canvas.height*0.4;
+        ctx.strokeStyle=`hsl(${animationHue},100%,60%)`;ctx.lineWidth=2;
+        ctx.shadowBlur=15*AppState.animationIntensity;ctx.shadowColor=`hsl(${animationHue},100%,60%)`;
+        ctx.beginPath();
+        for(let i=0;i<360;i++){
+            const angle=i*Math.PI/180;
+            const waveOffset=Math.sin(i*0.1+time*2*AppState.animationSpeed)*30*AppState.animationIntensity;
+            const rr=r+waveOffset;const x=centerX+Math.cos(angle)*rr;const y=centerY+Math.sin(angle)*rr;
+            i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+        }
+        ctx.closePath();ctx.stroke();ctx.shadowBlur=0;
+    }},
+    kaleidoscope:{init(){},draw(ctx,time){
+        ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2,segments=8;
+        ctx.save();ctx.translate(centerX,centerY);
+        for(let i=0;i<segments;i++){
+            ctx.rotate((Math.PI*2)/segments);
+            ctx.strokeStyle=`hsl(${(animationHue+time*50*AppState.animationSpeed)%360},100%,50%)`;
+            ctx.lineWidth=3*AppState.animationIntensity;ctx.beginPath();
+            const r=100+Math.sin(time*AppState.animationSpeed)*50*AppState.animationIntensity;
+            const angle=time*0.5*AppState.animationSpeed;
+            ctx.moveTo(0,0);ctx.lineTo(Math.cos(angle)*r,Math.sin(angle)*r);ctx.stroke();
+            ctx.scale(-1,1);ctx.stroke();ctx.scale(-1,1);
+        }ctx.restore();
+    }},
+    spiral:{init(){},draw(ctx,time){
+        ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2;
+        const drawSpiral=(offset,speed)=>{
+            ctx.beginPath();
+            for(let i=0;i<500;i++){
+                const angle=0.1*i+time*speed*AppState.animationSpeed;
+                const x=centerX+(offset+i)*Math.cos(angle);const y=centerY+(offset+i)*Math.sin(angle);
+                const hue=(i*2+animationHue)%360;ctx.strokeStyle=`hsl(${hue},100%,50%)`;
+                i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+            }ctx.lineWidth=2*AppState.animationIntensity;ctx.stroke();
+        };drawSpiral(0,1);drawSpiral(10,-1.2);
+    }},
+    matrix:{drops:[],init(){
+        const cols=Math.floor(elements.waveCanvas.width/16);
+        this.drops=new Array(cols).fill(0).map(()=>Math.floor(Math.random()*-100));
+    },draw(ctx,time){
+        ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+        ctx.fillStyle=`hsl(${animationHue},100%,50%)`;ctx.font='16px monospace';
+        this.drops.forEach((d,i)=>{
+            const text=String.fromCharCode(0x30A0+Math.random()*96);
+            ctx.fillText(text,i*16,d);
+            d>ctx.canvas.height&&Math.random()>0.975/AppState.animationSpeed?this.drops[i]=0:this.drops[i]+=16*AppState.animationSpeed;
+        });
+    }}
+};
+
+function isAudioContextValid(){return AppState.audioCtx&&AppState.audioCtx.state==='running';}
+function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Start synth first');return false;}try{op();return true}catch(e){console.error(e);showStatus('Audio error');return false;}}
+function showStatus(msg,dur=800){elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');setTimeout(()=>elements.statusMessage.classList.remove('show'),dur);}
+function updateButtonStates(){elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;}
+
+function cleanupOscillators(){
+    if(AppState.oscillators.length>0){
+        AppState.oscillators.forEach(o=>{
+            try{
+                o.stop();o.disconnect();
+                if(o.modulator){o.modulator.stop();o.modulator.disconnect();}
+                if(o.pulseWidth){o.pulseWidth.disconnect();}
+            }catch(e){console.log('Cleanup error:',e);}
+        });
+        AppState.oscillators=[];
     }
 }
 
-function cleanupAudioNodes() {
-    Object.values(audioNodes).forEach(node => {
-        if (node && typeof node.disconnect === 'function') {
+function createWaveShaper(amount){
+    const ws=AppState.audioCtx.createWaveShaper();
+    const n=4096;const curve=new Float32Array(n);
+    for(let i=0;i<n;i++){
+        const x=(i-n/2)/(n/2);
+        curve[i]=(3+amount)*Math.tanh(x*5)/(Math.PI+amount*Math.abs(x));
+    }
+    ws.curve=curve;return ws;
+}
+
+function createSoftWaveShaper(node, amount){
+    const n=4096;const curve=new Float32Array(n);
+    for(let i=0;i<n;i++){
+        const x=(i-n/2)/(n/2);
+        curve[i]=Math.tanh(x*(3+amount*0.1))*0.8;
+    }
+    node.curve=curve;node.oversample='4x';
+}
+
+function updatePulseWidth(node,width){
+    const curve=new Float32Array(256);
+    for(let i=0;i<256;i++){curve[i]=i<128*width?-1:1;}
+    node.curve=curve;
+}
+
+function disconnectAudioGraph() {
+    if (!AppState.audioCtx) return;
+    const nodesToDisconnect = [
+        AppState.masterGain, audioNodes.distortion, audioNodes.autoWah, audioNodes.flangerDelay,
+        audioNodes.flangerFeedback, audioNodes.chorusDelay, audioNodes.filter, audioNodes.delay,
+        audioNodes.delayFeedback, audioNodes.reverb, audioNodes.panner, audioNodes.tremoloGain
+    ];
+    nodesToDisconnect.forEach(node => {
+        if (node) {
             try {
                 node.disconnect();
-            } catch (e) {
-                console.log('Node cleanup error:', e);
-            }
+            } catch (e) { /* ignore */ }
         }
     });
-    audioNodes = {};
 }
 
-function createWaveShaper(amount) {
-    const ws = AppState.audioCtx.createWaveShaper();
-    const n = 4096;
-    const curve = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-        const x = (i - n / 2) / (n / 2);
-        curve[i] = (3 + amount) * Math.tanh(x * 5) / (Math.PI + amount * Math.abs(x));
-    }
-    ws.curve = curve;
-    return ws;
-}
-
-function createSoftWaveShaper(amount) {
-    const ws = AppState.audioCtx.createWaveShaper();
-    const n = 4096;
-    const curve = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-        const x = (i - n / 2) / (n / 2);
-        curve[i] = Math.tanh(x * (3 + amount * 0.1)) * 0.8;
-    }
-    ws.curve = curve;
-    ws.oversample = '4x';
-    return ws;
-}
-
-function updatePulseWidth(node, width) {
-    const curve = new Float32Array(256);
-    for (let i = 0; i < 256; i++) {
-        curve[i] = i < 128 * width ? -1 : 1;
-    }
-    node.curve = curve;
-}
-
-function createAudioNodes() {
+function createAudioNodes(){
+    if (!AppState.audioCtx) return;
+    
     cleanupOscillators();
-    cleanupAudioNodes();
+    disconnectAudioGraph();
+
+    AppState.masterGain=AppState.audioCtx.createGain();
+    AppState.masterGain.gain.value=0.2;
     
-    AppState.masterGain = AppState.audioCtx.createGain();
-    AppState.masterGain.gain.value = 0.2;
+    audioNodes.panner=AppState.audioCtx.createStereoPanner();
+    audioNodes.panner.pan.value=0;
     
-    audioNodes.panner = AppState.audioCtx.createStereoPanner();
-    audioNodes.panner.pan.value = 0;
+    audioNodes.distortion=createWaveShaper(50);
+    audioNodes.distortionGain=AppState.audioCtx.createGain();
+    audioNodes.distortionGain.gain.value=0;
     
-    audioNodes.distortion = createWaveShaper(50);
-    audioNodes.distortionGain = AppState.audioCtx.createGain();
-    audioNodes.distortionGain.gain.value = 0;
+    audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();
+    audioNodes.autoWah.type="bandpass";
+    audioNodes.autoWah.frequency.value=800;
+    audioNodes.autoWah.Q.value=5;
     
-    audioNodes.autoWah = AppState.audioCtx.createBiquadFilter();
-    audioNodes.autoWah.type = "bandpass";
-    audioNodes.autoWah.frequency.value = 800;
-    audioNodes.autoWah.Q.value = 5;
+    audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();
+    audioNodes.autoWahLFO.frequency.value=1;
+    audioNodes.autoWahGain=AppState.audioCtx.createGain();
+    audioNodes.autoWahGain.gain.value=600;
     
-    audioNodes.autoWahLFO = AppState.audioCtx.createOscillator();
-    audioNodes.autoWahLFO.frequency.value = 1;
-    audioNodes.autoWahGain = AppState.audioCtx.createGain();
-    audioNodes.autoWahGain.gain.value = 600;
+    audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);
+    audioNodes.flangerDelay.delayTime.value=0.005;
+    audioNodes.flangerLFO=AppState.audioCtx.createOscillator();
+    audioNodes.flangerLFO.frequency.value=0.2;
+    audioNodes.flangerGain=AppState.audioCtx.createGain();
+    audioNodes.flangerGain.gain.value=0.005;
+    audioNodes.flangerFeedback=AppState.audioCtx.createGain();
+    audioNodes.flangerFeedback.gain.value=0.5;
     
-    audioNodes.flangerDelay = AppState.audioCtx.createDelay(0.02);
-    audioNodes.flangerDelay.delayTime.value = 0.005;
-    audioNodes.flangerLFO = AppState.audioCtx.createOscillator();
-    audioNodes.flangerLFO.frequency.value = 0.2;
-    audioNodes.flangerGain = AppState.audioCtx.createGain();
-    audioNodes.flangerGain.gain.value = 0.005;
-    audioNodes.flangerFeedback = AppState.audioCtx.createGain();
-    audioNodes.flangerFeedback.gain.value = 0.5;
+    audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);
+    audioNodes.chorusDelay.delayTime.value=0.025;
+    audioNodes.chorusLFO=AppState.audioCtx.createOscillator();
+    audioNodes.chorusLFO.frequency.value=0.5;
+    audioNodes.chorusGain=AppState.audioCtx.createGain();
+    audioNodes.chorusGain.gain.value=0.01;
     
-    audioNodes.chorusDelay = AppState.audioCtx.createDelay(0.05);
-    audioNodes.chorusDelay.delayTime.value = 0.025;
-    audioNodes.chorusLFO = AppState.audioCtx.createOscillator();
-    audioNodes.chorusLFO.frequency.value = 0.5;
-    audioNodes.chorusGain = AppState.audioCtx.createGain();
-    audioNodes.chorusGain.gain.value = 0.01;
+    audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();
+    audioNodes.tremoloLFO.frequency.value=5;
+    audioNodes.tremoloGain=AppState.audioCtx.createGain();
+    audioNodes.tremoloGain.gain.value=1;
     
-    audioNodes.tremoloLFO = AppState.audioCtx.createOscillator();
-    audioNodes.tremoloLFO.frequency.value = 5;
-    audioNodes.tremoloGain = AppState.audioCtx.createGain();
-    audioNodes.tremoloGain.gain.value = 1;
+    audioNodes.filter=AppState.audioCtx.createBiquadFilter();
+    audioNodes.filter.type="lowpass";
+    audioNodes.filter.frequency.value=20000;
+    audioNodes.filter.Q.value=1;
     
-    audioNodes.filter = AppState.audioCtx.createBiquadFilter();
-    audioNodes.filter.type = "lowpass";
-    audioNodes.filter.frequency.value = 8000;
-    audioNodes.filter.Q.value = 1;
+    audioNodes.delay=AppState.audioCtx.createDelay(2);
+    audioNodes.delay.delayTime.value=0.3;
+    audioNodes.delayFeedback=AppState.audioCtx.createGain();
+    audioNodes.delayFeedback.gain.value=0.5;
     
-    audioNodes.delay = AppState.audioCtx.createDelay(2);
-    audioNodes.delay.delayTime.value = 0.3;
-    audioNodes.delayFeedback = AppState.audioCtx.createGain();
-    audioNodes.delayFeedback.gain.value = 0.5;
-    
-    audioNodes.reverb = AppState.audioCtx.createConvolver();
-    const buffer = AppState.audioCtx.createBuffer(2, AppState.audioCtx.sampleRate * 2, AppState.audioCtx.sampleRate);
-    for (let c = 0; c < 2; c++) {
-        const d = buffer.getChannelData(c);
-        for (let i = 0; i < buffer.length; i++) {
-            d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / buffer.length, 2);
+    audioNodes.reverb=AppState.audioCtx.createConvolver();
+    const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);
+    for(let c=0;c<2;c++){
+        const d=buffer.getChannelData(c);
+        for(let i=0;i<buffer.length;i++){
+            d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);
         }
     }
-    audioNodes.reverb.buffer = buffer;
+    audioNodes.reverb.buffer=buffer;
     
     createKickNodes();
     createOscillators();
     connectAudioGraph();
 }
 
-function createKickNodes() {
-    kickOsc = AppState.audioCtx.createOscillator();
-    kickOsc.type = 'sine';
-    kickGain = AppState.audioCtx.createGain();
-    kickGain.gain.value = 0;
-    
-    kickClickOsc = AppState.audioCtx.createOscillator();
-    kickClickOsc.type = 'triangle';
-    kickClickGain = AppState.audioCtx.createGain();
-    kickClickGain.gain.value = 0;
-    
-    kickFilter = AppState.audioCtx.createBiquadFilter();
-    kickFilter.type = 'lowpass';
-    kickFilter.frequency.value = 1000;
-    kickFilter.Q.value = 1;
-    
-    kickDistortion = createSoftWaveShaper(15);
-    
-    kickCompressor = AppState.audioCtx.createDynamicsCompressor();
-    kickCompressor.threshold.value = -24;
-    kickCompressor.knee.value = 30;
-    kickCompressor.ratio.value = 12;
-    kickCompressor.attack.value = 0.003;
-    kickCompressor.release.value = 0.25;
-    
-    kickOsc.connect(kickGain);
-    kickClickOsc.connect(kickClickGain);
-    kickGain.connect(kickFilter);
-    kickClickGain.connect(kickFilter);
-    kickFilter.connect(kickDistortion);
-    kickDistortion.connect(kickCompressor);
-    
-    kickOsc.start();
-    kickClickOsc.start();
+function startLFOs() {
+    if (audioNodes.autoWahLFO) audioNodes.autoWahLFO.start();
+    if (audioNodes.flangerLFO) audioNodes.flangerLFO.start();
+    if (audioNodes.chorusLFO) audioNodes.chorusLFO.start();
+    if (audioNodes.tremoloLFO) audioNodes.tremoloLFO.start();
 }
 
-function createOscillators() {
-    const now = AppState.audioCtx.currentTime;
-    for (let i = 0; i < AppState.NUM_OSC; i++) {
+function stopLFOs() {
+    if (audioNodes.autoWahLFO) {
+        try { audioNodes.autoWahLFO.stop(); audioNodes.autoWahLFO.disconnect(); } catch(e) {}
+    }
+    if (audioNodes.flangerLFO) {
+        try { audioNodes.flangerLFO.stop(); audioNodes.flangerLFO.disconnect(); } catch(e) {}
+    }
+    if (audioNodes.chorusLFO) {
+        try { audioNodes.chorusLFO.stop(); audioNodes.chorusLFO.disconnect(); } catch(e) {}
+    }
+    if (audioNodes.tremoloLFO) {
+        try { audioNodes.tremoloLFO.stop(); audioNodes.tremoloLFO.disconnect(); } catch(e) {}
+    }
+}
+
+function createKickNodes(){
+    kickOsc=AppState.audioCtx.createOscillator();kickOsc.type='sine';kickGain=AppState.audioCtx.createGain();kickGain.gain.value=0;
+    kickClickOsc=AppState.audioCtx.createOscillator();kickClickOsc.type='triangle';kickClickGain=AppState.audioCtx.createGain();kickClickGain.gain.value=0;
+    kickFilter=AppState.audioCtx.createBiquadFilter();kickFilter.type='lowpass';kickFilter.frequency.value=1000;kickFilter.Q.value=1;
+    kickDistortion=AppState.audioCtx.createWaveShaper();
+    createSoftWaveShaper(kickDistortion, 15);
+    kickCompressor=AppState.audioCtx.createDynamicsCompressor();
+    kickCompressor.threshold.value=-24;kickCompressor.knee.value=30;
+    kickCompressor.ratio.value=12;kickCompressor.attack.value=0.003;kickCompressor.release.value=0.25;
+    kickOsc.connect(kickGain);kickClickOsc.connect(kickClickGain);
+    kickGain.connect(kickFilter);kickClickGain.connect(kickFilter);
+    kickFilter.connect(kickDistortion);kickDistortion.connect(kickCompressor);
+    kickCompressor.connect(AppState.audioCtx.destination);
+    kickOsc.start();kickClickOsc.start();
+}
+
+function createOscillators(){
+    const now=AppState.audioCtx.currentTime;
+    for(let i=0;i<AppState.NUM_OSC;i++){
         let osc;
-        
-        if (AppState.waveType === 'fm') {
-            osc = AppState.audioCtx.createOscillator();
-            osc.type = 'sine';
-            
-            const modulator = AppState.audioCtx.createOscillator();
-            modulator.type = 'sine';
-            modulator.frequency.value = AppState.baseFreq * 2;
-            
-            const modGain = AppState.audioCtx.createGain();
-            modGain.gain.value = 100;
-            
-            modulator.connect(modGain);
-            modGain.connect(osc.frequency);
-            modulator.start(now);
-            
-            osc.modulator = modulator;
-            osc.modGain = modGain;
-            osc.connect(AppState.masterGain);
-            
-        } else if (AppState.waveType === 'pulse') {
-            osc = AppState.audioCtx.createOscillator();
-            osc.type = 'square';
-            
-            const pulseWidth = AppState.audioCtx.createWaveShaper();
-            updatePulseWidth(pulseWidth, AppState.pulseWidth);
-            
-            osc.connect(pulseWidth);
-            pulseWidth.connect(AppState.masterGain);
-            osc.pulseWidth = pulseWidth;
-            
-        } else {
-            osc = AppState.audioCtx.createOscillator();
-            osc.type = AppState.waveType;
-            osc.connect(AppState.masterGain);
+        if(AppState.waveType==='fm'){
+            osc=AppState.audioCtx.createOscillator();osc.type='sine';
+            const modulator=AppState.audioCtx.createOscillator();modulator.type='sine';modulator.frequency.value=AppState.baseFreq*2;
+            const modGain=AppState.audioCtx.createGain();modGain.gain.value=100;
+            modulator.connect(modGain);modGain.connect(osc.frequency);modulator.start(now);
+            osc.modulator=modulator;osc.connect(AppState.masterGain);
+        }else if(AppState.waveType==='pulse'){
+            osc=AppState.audioCtx.createOscillator();osc.type='square';
+            const pulseWidth=AppState.audioCtx.createWaveShaper();updatePulseWidth(pulseWidth,AppState.pulseWidth);
+            osc.connect(pulseWidth);pulseWidth.connect(AppState.masterGain);osc.pulseWidth=pulseWidth;
+        }else{
+            osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;osc.connect(AppState.masterGain);
         }
-        
-        osc.detune.value = (i - Math.floor(AppState.NUM_OSC / 2)) * AppState.detuneAmount;
-        osc.start(now);
-        AppState.oscillators.push(osc);
+        osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;
+        osc.start(now);AppState.oscillators.push(osc);
     }
 }
 
-function connectAudioGraph() {
+function connectAudioGraph(){
     if (!AppState.audioCtx) return;
+    disconnectAudioGraph();
     
-    try {
-        AppState.masterGain.disconnect();
-        audioNodes.panner.disconnect();
-        
-        Object.values(audioNodes).forEach(node => {
-            if (node && typeof node.disconnect === 'function') {
-                node.disconnect();
-            }
-        });
-        
-        let signal = AppState.masterGain;
-        
-        if (effects.dist) {
-            signal.connect(audioNodes.distortion);
-            signal = audioNodes.distortion;
-        }
-        
-        if (effects.autoWah) {
-            signal.connect(audioNodes.autoWah);
-            signal = audioNodes.autoWah;
-        }
-        
-        if (effects.flanger) {
-            signal.connect(audioNodes.flangerDelay);
-            audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);
-            audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);
-            signal = audioNodes.flangerDelay;
-        }
-        
-        if (effects.chorus) {
-            signal.connect(audioNodes.chorusDelay);
-            signal = audioNodes.chorusDelay;
-        }
-        
-        signal.connect(audioNodes.filter);
-        signal = audioNodes.filter;
-        
-        if (effects.delay) {
-            signal.connect(audioNodes.delay);
-            audioNodes.delay.connect(audioNodes.delayFeedback);
-            audioNodes.delayFeedback.connect(audioNodes.delay);
-            signal = audioNodes.delay;
-        }
-        
-        if (effects.reverb) {
-            signal.connect(audioNodes.reverb);
-            signal = audioNodes.reverb;
-        }
-        
-        if (effects.tremolo) {
-            signal.connect(audioNodes.tremoloGain);
-            signal = audioNodes.tremoloGain;
-        }
-        
-        signal.connect(audioNodes.panner);
-        
-        if (AppState.kickSolo) {
-            kickCompressor.connect(AppState.audioCtx.destination);
-        } else {
-            audioNodes.panner.connect(AppState.audioCtx.destination);
-            kickCompressor.connect(AppState.audioCtx.destination);
-        }
-        
-        audioNodes.distortionGain.gain.value = effects.dist ? 1 : 0;
-        audioNodes.autoWahGain.gain.value = effects.autoWah ? 1 : 0;
-        audioNodes.tremoloGain.gain.value = effects.tremolo ? 0.5 : 1;
-        
-        if (effects.autoWah) {
-            audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);
-            audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);
-            if (AppState.audioCtx.state === 'running') {
-                audioNodes.autoWahLFO.start();
-            }
-        }
-        
-        if (effects.flanger) {
-            audioNodes.flangerLFO.connect(audioNodes.flangerGain);
-            audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);
-            if (AppState.audioCtx.state === 'running') {
-                audioNodes.flangerLFO.start();
-            }
-        }
-        
-        if (effects.chorus) {
-            audioNodes.chorusLFO.connect(audioNodes.chorusGain);
-            audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);
-            if (AppState.audioCtx.state === 'running') {
-                audioNodes.chorusLFO.start();
-            }
-        }
-        
-        if (effects.tremolo) {
-            audioNodes.tremoloLFO.connect(audioNodes.tremoloGain.gain);
-            if (AppState.audioCtx.state === 'running') {
-                audioNodes.tremoloLFO.start();
-            }
-        }
-        
-    } catch (error) {
-        console.error('Audio graph connection error:', error);
-        showStatus('Audio connection error');
+    let signal=AppState.masterGain;
+    if(effects.dist){signal.connect(audioNodes.distortion);signal=audioNodes.distortion;}
+    if(effects.autoWah){signal.connect(audioNodes.autoWah);signal=audioNodes.autoWah;}
+    if(effects.flanger){
+        signal.connect(audioNodes.flangerDelay);
+        audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);
+        audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);
+        signal=audioNodes.flangerDelay;
     }
-}
-
-function createNoteRuler() {
-    const notes = ['C6', 'B5', 'A#5', 'A5', 'G#5', 'G5', 'F#5', 'F5', 'E5', 'D#5', 'D5', 'C#5', 'C5', 'B4', 'A#4', 'A4', 'G#4', 'G4', 'F#4', 'F4', 'E4', 'D#4', 'D4', 'C#4', 'C4'];
-    elements.noteRuler.innerHTML = '';
-    notes.forEach(note => {
-        const div = document.createElement('div');
-        div.className = 'ruler-note';
-        div.textContent = note;
-        elements.noteRuler.appendChild(div);
-    });
-}
-
-function freqToNote(freq) {
-    const A4 = 440;
-    const semitonesFromA4 = 12 * Math.log2(freq / A4);
-    const noteIndex = Math.round(semitonesFromA4 + 9) % 12;
-    const octave = Math.floor((semitonesFromA4 + 9) / 12);
-    const noteName = noteNames[(noteIndex + 12) % 12];
-    return { name: noteName, octave: octave, fullName: `${noteName}${octave}` };
-}
-
-function updateThemeColor(color) {
-    document.documentElement.style.setProperty('--r', color[0]);
-    document.documentElement.style.setProperty('--g', color[1]);
-    document.documentElement.style.setProperty('--b', color[2]);
+    if(effects.chorus){signal.connect(audioNodes.chorusDelay);signal=audioNodes.chorusDelay;}
     
-    const r = color[0] / 255, g = color[1] / 255, b = color[2] / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
+    signal.connect(audioNodes.filter);
+    signal=audioNodes.filter;
     
-    if (max === min) {
-        h = s = 0;
-    } else {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-            case g: h = ((b - r) / d + 2) / 6; break;
-            case b: h = ((r - g) / d + 4) / 6; break;
-        }
+    if(effects.delay){
+        signal.connect(audioNodes.delay);
+        audioNodes.delay.connect(audioNodes.delayFeedback);
+        audioNodes.delayFeedback.connect(audioNodes.delay);
+        signal=audioNodes.delay;
     }
-    animationHue = Math.round(h * 360);
+    if(effects.reverb){signal.connect(audioNodes.reverb);signal=audioNodes.reverb;}
+    
+    if(effects.tremolo){signal.connect(audioNodes.tremoloGain);signal=audioNodes.tremoloGain;}
+    
+    signal.connect(audioNodes.panner);
+    audioNodes.panner.connect(AppState.audioCtx.destination);
+    
+    // LFO Connections
+    audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);
+    audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);
+    
+    audioNodes.flangerLFO.connect(audioNodes.flangerGain);
+    audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);
+    
+    audioNodes.chorusLFO.connect(audioNodes.chorusGain);
+    audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);
+    
+    audioNodes.tremoloLFO.connect(audioNodes.tremoloGain.gain);
+    
+    // Update effect gains
+    audioNodes.distortionGain.gain.value=effects.dist?1:0;
+    audioNodes.autoWahGain.gain.value=effects.autoWah?1:0;
+    audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:1;
 }
 
-function noteFromPad(y) {
-    const padHeight = window.innerHeight;
-    const ratio = 1 - (y / padHeight);
-    const baseFreq = 65.41 * Math.pow(2, AppState.octaveOffset);
-    return baseFreq * Math.pow(2, (ratio * 24) / 12);
+function createNoteRuler(){
+    const notes=['C6','B5','A#5','A5','G#5','G5','F#5','F5','E5','D#5','D5','C#5','C5','B4','A#4','A4','G#4','G4','F#4','F4','E4','D#4','D4','C#4','C4'];
+    elements.noteRuler.innerHTML='';
+    notes.forEach(note=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=note;elements.noteRuler.appendChild(div);});
 }
 
-function applyPitch() {
-    if (!safeAudioOperation(() => {
-        const freq = AppState.baseFreq;
-        const noteInfo = freqToNote(freq);
-        
-        AppState.oscillators.forEach((osc, i) => {
-            if (osc.frequency) {
-                osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.02);
-            }
-        });
-        
-        elements.noteDisplay.textContent = noteInfo.fullName;
-        const colorIndex = noteNames.indexOf(noteInfo.name);
-        if (colorIndex !== -1) updateThemeColor(noteColors[colorIndex]);
-    })) return;
+function freqToNote(freq){
+    const A4=440,semitonesFromA4=12*Math.log2(freq/A4);
+    const noteIndex=Math.round(semitonesFromA4+9)%12;
+    const octave=Math.floor((semitonesFromA4+9)/12);
+    const noteName=noteNames[(noteIndex+12)%12];
+    return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};
 }
 
-let lastTouchTime = 0;
-function handleTouchStart(e) {
-    e.preventDefault();
-    if (!isAudioContextValid()) {
-        showStatus('Please start synth first');
-        return;
-    }
-    
-    const now = performance.now();
-    if (now - lastTouchTime < 50) return;
-    lastTouchTime = now;
-    
-    Array.from(e.touches).forEach(touch => {
-        activeTouches.set(touch.identifier, {
-            x: touch.clientX,
-            y: touch.clientY
-        });
-    });
-    
-    handleTouchPosition(e.touches[0].clientX, e.touches[0].clientY);
+function updateThemeColor(color){
+    document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);
+    const r=color[0]/255,g=color[1]/255,b=color[2]/255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h,s,l=(max+min)/2;
+    if(max===min){h=s=0;}else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}}
+    animationHue=Math.round(h*360);
 }
 
-function handleTouchMove(e) {
-    e.preventDefault();
-    if (!isAudioContextValid()) return;
-    
-    const now = performance.now();
-    if (now - lastTouchTime < 16) return;
-    lastTouchTime = now;
-    
-    Array.from(e.touches).forEach(touch => {
-        activeTouches.set(touch.identifier, {
-            x: touch.clientX,
-            y: touch.clientY
-        });
-    });
-    
-    if (e.touches.length === 1) {
-        handleTouchPosition(e.touches[0].clientX, e.touches[0].clientY);
-    }
+function noteFromPad(y){
+    const padHeight=window.innerHeight;const ratio=1-(y/padHeight);
+    const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);return baseFreq*Math.pow(2,(ratio*24)/12);
 }
 
-function handleTouchEnd(e) {
-    Array.from(e.changedTouches).forEach(touch => {
-        activeTouches.delete(touch.identifier);
-    });
-    
-    if (activeTouches.size === 0) {
-        safeAudioOperation(() => {
-            AppState.masterGain.gain.setTargetAtTime(0.2, AppState.audioCtx.currentTime, 0.1);
-        });
-    }
+function applyPitch(){
+    if(!safeAudioOperation(()=>{
+        const freq=AppState.baseFreq;const noteInfo=freqToNote(freq);
+        AppState.oscillators.forEach((osc,i)=>{if(osc.frequency){osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.001);}});
+        elements.noteDisplay.textContent=noteInfo.fullName;
+        const colorIndex=noteNames.indexOf(noteInfo.name);if(colorIndex!==-1)updateThemeColor(noteColors[colorIndex]);
+    }))return;
 }
 
-function handleTouchPosition(clientX, clientY) {
-    const rect = elements.pad.getBoundingClientRect();
-    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
-    const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
-    
-    touchPoint = { x, y };
-    AppState.baseFreq = noteFromPad(y);
-    
-    const volume = x / rect.width;
-    safeAudioOperation(() => {
-        AppState.masterGain.gain.setTargetAtTime(volume * 0.4, AppState.audioCtx.currentTime, 0.05);
-    });
-    
+let lastTouchTime=0;
+function handleTouch(e){
+    const now=performance.now();if(now-lastTouchTime<16)return;lastTouchTime=now;
+    if(!isAudioContextValid()){showStatus('Start synth first');return;}
+    const clientY=e.touches?e.touches[0].clientY:e.clientY;const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    touchPoint={x:clientX,y:clientY};AppState.baseFreq=noteFromPad(clientY);
+    const volume=clientX/window.innerWidth;safeAudioOperation(()=>{AppState.masterGain.gain.setTargetAtTime(volume*0.4,AppState.audioCtx.currentTime,0.01);});
     applyPitch();
 }
 
-function handleMouseDown(e) {
-    if (!isAudioContextValid()) {
-        showStatus('Please start synth first');
-        return;
-    }
-    handleTouchPosition(e.clientX, e.clientY);
-}
-
-function handleMouseMove(e) {
-    if (e.buttons === 1) {
-        handleTouchPosition(e.clientX, e.clientY);
-    }
-}
-
-function handleMouseUp() {
-    safeAudioOperation(() => {
-        AppState.masterGain.gain.setTargetAtTime(0.2, AppState.audioCtx.currentTime, 0.1);
+function updatePan(position){
+    if(!audioNodes.panner)return;
+    safeAudioOperation(()=>{
+        audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.01);
+        const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;
     });
 }
 
-function updatePan(position) {
-    if (!audioNodes.panner) return;
-    safeAudioOperation(() => {
-        audioNodes.panner.pan.setTargetAtTime(position, AppState.audioCtx.currentTime, 0.02);
-        const panPercent = Math.round(position * 100);
-        elements.panDisplay.textContent = `Pan:${panPercent}%`;
-    });
-}
-
-async function startSynth() {
-    if (AppState.audioCtx) {
-        if (AppState.audioCtx.state === 'suspended') {
-            try {
-                await AppState.audioCtx.resume();
-                showStatus('Audio resumed');
-                return;
-            } catch (e) {
-                console.error('Resume error:', e);
-                showStatus('Resume failed');
-                return;
-            }
-        } else if (AppState.audioCtx.state === 'running') {
-            showStatus('Resetting synth...');
+function startSynth(){
+    if(AppState.audioCtx){
+        if(AppState.audioCtx.state==='suspended'){
+            AppState.audioCtx.resume().then(()=>{
+                AppState.isPlaying = true;
+                updateButtonStates();
+                showStatus('Resumed');
+            });
+            return;
+        } else if(AppState.audioCtx.state==='running'){
+            // If already running, just restart oscillators
             cleanupOscillators();
-            createAudioNodes();
-            showStatus('Synth reset');
+            createOscillators();
+            connectAudioGraph();
+            AppState.isPlaying = true;
+            updateButtonStates();
+            showStatus('Synth restarted');
             return;
         }
     }
-    
-    try {
-        AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await AppState.audioCtx.resume();
-        
+    try{
+        AppState.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
         createAudioNodes();
-        AppState.isPlaying = true;
+        startLFOs();
+        AppState.isPlaying=true;
         updateButtonStates();
         startWaveAnimation();
-        
-        showStatus('Synth started - Try the effects!');
-    } catch (e) {
-        console.error('Start error:', e);
-        showStatus('Failed to start audio');
-    }
+        showStatus('Started - Try effects!');
+    }catch(e){console.error(e);showStatus('Start failed');}
 }
 
-async function stopSynth() {
-    if (!AppState.audioCtx) {
-        showStatus('No synth running');
-        return;
-    }
-    
-    try {
+function stopSynth(){
+    if(!AppState.audioCtx){showStatus('No synth running');return;}
+    try{
         cleanupOscillators();
         stopRhythm();
         stopWaveAnimation();
-        
-        if (AppState.audioCtx.state !== 'closed') {
-            await AppState.audioCtx.suspend();
-        }
-        
-        AppState.isPlaying = false;
+        stopLFOs();
+        AppState.isPlaying=false;
         updateButtonStates();
-        showStatus('Synth stopped');
-    } catch (e) {
-        console.error('Stop error:', e);
-        showStatus('Error stopping synth');
-    }
+        showStatus('Stopped');
+        // We no longer close the context to allow for quick restarts
+    }catch(e){console.error(e);showStatus('Stop error');}
 }
 
-function toggleControls() {
+function toggleControls(){
     elements.controls.classList.toggle('expanded');
-    elements.toggleControls.textContent = elements.controls.classList.contains('expanded') ? '✕' : '⚙️';
+    elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';
 }
 
-function requestMotionPermission() {
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        elements.permissionModal.style.display = 'flex';
-    } else {
-        startMotionControl();
+function requestMotionPermission(){
+    if(typeof DeviceOrientationEvent.requestPermission==='function'){elements.permissionModal.style.display='flex';}
+    else{startMotionControl();}
+}
+
+function startMotionControl(){
+    window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;
+    elements.motionBtn.textContent="Motion ON";elements.motionBtn.classList.add('active');
+    elements.motionDisplay.style.display='block';showStatus('Motion enabled - Tilt device for pitch!');
+}
+
+function disableMotion(){
+    window.removeEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=false;AppState.tiltBend=0;
+    elements.motionBtn.textContent="Motion OFF";elements.motionBtn.classList.remove('active');
+    elements.motionDisplay.style.display='none';showStatus('Motion disabled');
+}
+
+function togglePan(){
+    AppState.panEnabled=!AppState.panEnabled;
+    elements.panBtn.textContent=AppState.panEnabled?"Pan ON":"Pan OFF";
+    elements.panBtn.classList.toggle('active',AppState.panEnabled);
+    elements.panDisplay.style.display=AppState.panEnabled?'block':'none';
+    if(!AppState.panEnabled){updatePan(0);}
+    showStatus(AppState.panEnabled?'Pan enabled - Tilt device sideways!':'Pan disabled');
+}
+
+let lastOrientationTime=0;
+function handleOrientation(e){
+    const now=performance.now();if(now-lastOrientationTime<4)return;lastOrientationTime=now;
+    if(e.beta===null||e.gamma===null)return;
+    const tilt=Math.max(-90,Math.min(90,e.beta));const pan=Math.max(-90,Math.min(90,e.gamma));
+    if(AppState.motionEnabled){
+        AppState.tiltBend=tilt/45*12;const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);
+        AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);
+        elements.motionDisplay.textContent=`Tilt:${Math.round(AppState.tiltBend*10)/10}st`;applyPitch();
     }
+    if(AppState.panEnabled&&pan!==null){const panValue=Math.max(-1,Math.min(1,pan/90));updatePan(panValue);}
 }
 
-function startMotionControl() {
-    window.addEventListener("deviceorientation", handleOrientation);
-    AppState.motionEnabled = true;
-    elements.motionDisplay.style.display = 'block';
-    updateButtonStates();
-    showStatus('Motion enabled - Tilt device for pitch control!');
+function playKick(beat){
+    const pattern=patternMap[AppState.kickSettings.pattern];if(!pattern[beat%pattern.length])return;
+    const now=AppState.audioCtx.currentTime;const volume=AppState.kickSettings.volume/100;
+    const punch=AppState.kickSettings.punch/100;const bass=AppState.kickSettings.bass/100;
+    const distortion=AppState.kickSettings.distortion/100;const sweep=AppState.kickSettings.sweep/100;
+    const baseFreq=80+40*punch;const endFreq=40+20*(1-sweep);const sweepTime=0.05+0.04*sweep;
+    const clickFreq=1000+500*punch;const clickTime=0.005;
+    kickOsc.frequency.setValueAtTime(baseFreq,now);kickOsc.frequency.exponentialRampToValueAtTime(endFreq,now+sweepTime);
+    kickGain.gain.setValueAtTime(volume*2.1,now);kickGain.gain.exponentialRampToValueAtTime(0.001,now+sweepTime+0.1);
+    kickClickOsc.frequency.setValueAtTime(clickFreq,now);kickClickGain.gain.setValueAtTime(volume*punch*0.9,now);
+    kickClickGain.gain.exponentialRampToValueAtTime(0.001,now+clickTime);
+    const filterFreq=800+400*punch;kickFilter.frequency.setValueAtTime(filterFreq,now);
+    kickFilter.frequency.exponentialRampToValueAtTime(100,now+sweepTime);
+    const distortionAmount=10+distortion*10;
+    createSoftWaveShaper(kickDistortion, distortionAmount);
+    kickCompressor.threshold.value=-24-punch*6;
 }
 
-function disableMotion() {
-    window.removeEventListener("deviceorientation", handleOrientation);
-    AppState.motionEnabled = false;
-    AppState.tiltBend = 0;
-    elements.motionDisplay.style.display = 'none';
-    updateButtonStates();
-    showStatus('Motion disabled');
-}
-
-function togglePan() {
-    AppState.panEnabled = !AppState.panEnabled;
-    elements.panDisplay.style.display = AppState.panEnabled ? 'block' : 'none';
-    updateButtonStates();
-    
-    if (!AppState.panEnabled) {
-        updatePan(0);
+function toggleKickSolo(){
+    if(!AppState.audioCtx)return;
+    if(AppState.kickSolo){
+        if(AppState.isPlaying) connectAudioGraph();
+        showStatus('Kick solo: OFF');elements.kickSoloBtn.classList.remove('active');
+    }else{
+        if(AppState.isPlaying) AppState.masterGain.disconnect();
+        kickCompressor.connect(AppState.audioCtx.destination);
+        showStatus('Kick solo: ON - Only kick drum audible');elements.kickSoloBtn.classList.add('active');
     }
-    showStatus(AppState.panEnabled ? 'Pan enabled - Tilt sideways!' : 'Pan disabled');
+    AppState.kickSolo=!AppState.kickSolo;
 }
 
-let lastOrientationTime = 0;
-function handleOrientation(e) {
-    const now = performance.now();
-    if (now - lastOrientationTime < 100) return;
-    lastOrientationTime = now;
-    
-    if (e.beta === null || e.gamma === null) return;
-    
-    const tilt = Math.max(-90, Math.min(90, e.beta));
-    const pan = Math.max(-90, Math.min(90, e.gamma));
-    
-    if (AppState.motionEnabled) {
-        AppState.tiltBend = tilt / 45 * 12;
-        const baseFreq = 65.41 * Math.pow(2, AppState.octaveOffset);
-        AppState.baseFreq = baseFreq * Math.pow(2, AppState.tiltBend / 12);
-        elements.motionDisplay.textContent = `Tilt:${Math.round(AppState.tiltBend * 10) / 10}st`;
-        applyPitch();
-    }
-    
-    if (AppState.panEnabled && pan !== null) {
-        const panValue = Math.max(-1, Math.min(1, pan / 90));
-        updatePan(panValue);
-    }
-}
-
-function playKick(beat) {
-    const pattern = patternMap[AppState.kickSettings.pattern];
-    const intensity = AppState.rhythmIntensity / 100;
-    
-    if (!pattern[beat % pattern.length] || Math.random() > intensity) return;
-    
-    const now = AppState.audioCtx.currentTime;
-    const volume = AppState.kickSettings.volume / 100 * intensity;
-    const punch = AppState.kickSettings.punch / 100;
-    const bass = AppState.kickSettings.bass / 100;
-    const distortion = AppState.kickSettings.distortion / 100;
-    const sweep = AppState.kickSettings.sweep / 100;
-    
-    const baseFreq = 80 + 40 * punch;
-    const endFreq = 40 + 20 * (1 - sweep);
-    const sweepTime = 0.05 + 0.04 * sweep;
-    const clickFreq = 1000 + 500 * punch;
-    const clickTime = 0.005;
-    
-    kickOsc.frequency.setValueAtTime(baseFreq, now);
-    kickOsc.frequency.exponentialRampToValueAtTime(endFreq, now + sweepTime);
-    
-    kickGain.gain.setValueAtTime(volume * 2.1, now);
-    kickGain.gain.exponentialRampToValueAtTime(0.001, now + sweepTime + 0.1);
-    
-    kickClickOsc.frequency.setValueAtTime(clickFreq, now);
-    kickClickGain.gain.setValueAtTime(volume * punch * 0.9, now);
-    kickClickGain.gain.exponentialRampToValueAtTime(0.001, now + clickTime);
-    
-    const filterFreq = 800 + 400 * punch;
-    kickFilter.frequency.setValueAtTime(filterFreq, now);
-    kickFilter.frequency.exponentialRampToValueAtTime(100, now + sweepTime);
-    
-    const distortionAmount = 10 + distortion * 10;
-    const newDistortion = createSoftWaveShaper(distortionAmount);
-    kickDistortion.curve = newDistortion.curve;
-    kickDistortion.oversample = newDistortion.oversample;
-    
-    kickCompressor.threshold.value = -24 - punch * 6;
-}
-
-function toggleKickSolo() {
-    if (!AppState.audioCtx) {
-        showStatus('Please start synth first');
-        return;
-    }
-    
-    AppState.kickSolo = !AppState.kickSolo;
-    
-    if (AppState.kickSolo) {
-        if (AppState.isPlaying) {
-            AppState.masterGain.disconnect();
-        }
-        showStatus('Kick solo: ON - Only kick drum audible');
-    } else {
-        if (AppState.isPlaying) {
-            connectAudioGraph();
-        }
-        showStatus('Kick solo: OFF');
-    }
-    updateButtonStates();
-}
-
-function startRhythm() {
-    if (!isAudioContextValid()) {
-        showStatus('Please start synth first');
-        return;
-    }
-    
-    stopRhythm();
-    AppState.rhythmActive = true;
-    updateButtonStates();
-    
-    let beat = 0;
-    rhythmInterval = setInterval(() => {
-        if (!isAudioContextValid()) {
-            stopRhythm();
-            return;
-        }
-        
-        const intensity = AppState.rhythmIntensity / 100;
-        const baseGain = 0.1 + intensity * 0.3;
-        const pattern = [baseGain, baseGain * 0.2, baseGain * 0.8, baseGain * 0.1, baseGain, baseGain * 0.3, baseGain * 0.7, baseGain * 0.2];
-        
-        safeAudioOperation(() => {
-            AppState.masterGain.gain.setTargetAtTime(pattern[beat % 8], AppState.audioCtx.currentTime, 0.05);
+function startRhythm(){
+    if(!isAudioContextValid()){showStatus('Start synth first');return;}
+    stopRhythm();AppState.rhythmActive=true;updateRhythmButtonStates();
+    let beat=0;rhythmInterval=setInterval(()=>{
+        if(!isAudioContextValid())return;
+        const intensity=AppState.rhythmIntensity/100;const baseGain=0.1+intensity*0.3;
+        const pattern=[baseGain,baseGain*0.2,baseGain*0.8,baseGain*0.1,baseGain,baseGain*0.3,baseGain*0.7,baseGain*0.2];
+        safeAudioOperation(()=>{
+            AppState.masterGain.gain.setTargetAtTime(pattern[beat%8],AppState.audioCtx.currentTime,0.001);
             playKick(beat);
         });
-        
-        if (beat % 8 === 0) {
-            const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
-            updateThemeColor(randomColor);
-        }
-        beat++;
-    }, 60000 / AppState.rhythmSpeed);
-    
-    showStatus('Rhythm started');
+        const randomColor=noteColors[Math.floor(Math.random()*noteColors.length)];updateThemeColor(randomColor);beat++;
+    },60000/AppState.rhythmSpeed);showStatus('Rhythm Started');
 }
 
-function stopRhythm() {
-    AppState.rhythmActive = false;
-    if (rhythmInterval) {
-        clearInterval(rhythmInterval);
-        rhythmInterval = null;
-    }
-    updateButtonStates();
-    showStatus('Rhythm stopped');
+function stopRhythm(){
+    AppState.rhythmActive=false;updateRhythmButtonStates();
+    if(rhythmInterval){clearInterval(rhythmInterval);rhythmInterval=null;}showStatus('Rhythm Stopped');
 }
 
-function updateRhythmSpeed(value) {
-    AppState.rhythmSpeed = parseInt(value);
-    document.getElementById('rhythmSpeedValue').textContent = value;
-    if (AppState.rhythmActive) {
-        stopRhythm();
-        startRhythm();
-    }
+function updateRhythmButtonStates() {
+    elements.startRhythmBtn.disabled = AppState.rhythmActive;
+    elements.stopRhythmBtn.disabled = !AppState.rhythmActive;
 }
 
-function updateRhythmIntensity(value) {
-    AppState.rhythmIntensity = parseInt(value);
-    document.getElementById('rhythmIntensityValue').textContent = value;
+function updateRhythmSpeed(value){AppState.rhythmSpeed=value;if(AppState.rhythmActive){stopRhythm();startRhythm();}}
+function updateRhythmIntensity(value){AppState.rhythmIntensity=value;}
+function updateKickVolume(value){AppState.kickSettings.volume=parseInt(value);}
+function updateKickPattern(value){AppState.kickSettings.pattern=value;}
+function updateKickPunch(value){AppState.kickSettings.punch=parseInt(value);}
+function updateKickBass(value){AppState.kickSettings.bass=parseInt(value);}
+function updateKickDistortion(value){AppState.kickSettings.distortion=parseInt(value);}
+function updateKickSweep(value){AppState.kickSettings.sweep=parseInt(value);}
+
+function startWaveAnimation(){
+    const canvas=elements.waveCanvas;const ctx=canvas.getContext('2d');
+    function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;if(animations[AppState.currentAnimation].init){animations[AppState.currentAnimation].init();}}
+    resize();window.addEventListener('resize',resize);let lastTime=0;
+    function animate(time){if(!AppState.isPlaying)return;const delta=time-lastTime;if(delta<16){animationFrameId=requestAnimationFrame(animate);return;}lastTime=time;animationFrameId=requestAnimationFrame(animate);const timeSec=time*0.001;animations[AppState.currentAnimation].draw(ctx,timeSec);}
+    animate();
 }
 
-function updateKickVolume(value) {
-    AppState.kickSettings.volume = parseInt(value);
-    document.getElementById('kickVolumeValue').textContent = value;
+function stopWaveAnimation(){
+    if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null;const ctx=elements.waveCanvas.getContext('2d');ctx.clearRect(0,0,elements.waveCanvas.width,elements.waveCanvas.height);}
 }
 
-function updateKickPattern(value) {
-    AppState.kickSettings.pattern = value;
-}
+function setAnimation(animationName){AppState.currentAnimation=animationName;if(AppState.isPlaying){stopWaveAnimation();startWaveAnimation();}showStatus(`Animation: ${animationName==='none'?'None':animationName}`);}
+function updateAnimationSpeed(value){AppState.animationSpeed=parseFloat(value);}
+function updateAnimationIntensity(value){AppState.animationIntensity=parseFloat(value);}
 
-function updateKickPunch(value) {
-    AppState.kickSettings.punch = parseInt(value);
-    document.getElementById('kickPunchValue').textContent = value;
-}
-
-function updateKickBass(value) {
-    AppState.kickSettings.bass = parseInt(value);
-    document.getElementById('kickBassValue').textContent = value;
-}
-
-function updateKickDistortion(value) {
-    AppState.kickSettings.distortion = parseInt(value);
-    document.getElementById('kickDistortionValue').textContent = value;
-}
-
-function updateKickSweep(value) {
-    AppState.kickSettings.sweep = parseInt(value);
-    document.getElementById('kickSweepValue').textContent = value;
-}
-
-function startWaveAnimation() {
-    const canvas = elements.waveCanvas;
-    const ctx = canvas.getContext('2d');
-    
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        if (animations[AppState.currentAnimation].init) {
-            animations[AppState.currentAnimation].init();
-        }
-    }
-    
-    resize();
-    window.addEventListener('resize', resize);
-    
-    let lastTime = 0;
-    function animate(time) {
-        if (!AppState.isPlaying || !animationFrameId) return;
-        
-        animationFrameId = requestAnimationFrame(animate);
-        const delta = time - lastTime;
-        
-        if (delta < 16) return;
-        lastTime = time;
-        
-        const timeSec = time * 0.001;
-        try {
-            animations[AppState.currentAnimation].draw(ctx, timeSec);
-        } catch (e) {
-            console.error('Animation error:', e);
-        }
-    }
-    
-    stopWaveAnimation();
-    animationFrameId = requestAnimationFrame(animate);
-}
-
-function stopWaveAnimation() {
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-    }
-    const ctx = elements.waveCanvas.getContext('2d');
-    ctx.clearRect(0, 0, elements.waveCanvas.width, elements.waveCanvas.height);
-}
-
-function setAnimation(animationName) {
-    AppState.currentAnimation = animationName;
-    if (AppState.isPlaying) {
-        stopWaveAnimation();
-        startWaveAnimation();
-    }
-    showStatus(`Animation: ${animationName === 'none' ? 'None' : animationName}`);
-}
-
-function updateAnimationSpeed(value) {
-    AppState.animationSpeed = parseFloat(value);
-    document.getElementById('animSpeedValue').textContent = value;
-}
-
-function updateAnimationIntensity(value) {
-    AppState.animationIntensity = parseFloat(value);
-    document.getElementById('animIntensityValue').textContent = value;
-}
-
-function updateValueDisplays() {
-    document.getElementById('detuneValue').textContent = AppState.detuneAmount;
-    document.getElementById('filterFreqValue').textContent = audioNodes.filter ? Math.round(audioNodes.filter.frequency.value) : 8000;
-    document.getElementById('filterResoValue').textContent = audioNodes.filter ? audioNodes.filter.Q.value : 1;
-    document.getElementById('autoWahRateValue').textContent = audioNodes.autoWahLFO ? audioNodes.autoWahLFO.frequency.value : 1;
-    document.getElementById('autoWahDepthValue').textContent = audioNodes.autoWahGain ? Math.round(audioNodes.autoWahGain.gain.value) : 800;
-}
-
-function initializeEventListeners() {
-    elements.pad.addEventListener("touchstart", handleTouchStart, { passive: false });
-    elements.pad.addEventListener("touchmove", handleTouchMove, { passive: false });
-    elements.pad.addEventListener("touchend", handleTouchEnd);
-    elements.pad.addEventListener("touchcancel", handleTouchEnd);
-    
-    elements.pad.addEventListener("mousedown", handleMouseDown);
-    elements.pad.addEventListener("mousemove", handleMouseMove);
-    elements.pad.addEventListener("mouseup", handleMouseUp);
-    elements.pad.addEventListener("mouseleave", handleMouseUp);
-    
-    elements.startBtn.addEventListener("click", startSynth);
-    elements.stopBtn.addEventListener("click", stopSynth);
-    
-    elements.motionBtn.addEventListener("click", () => {
-        AppState.motionEnabled ? disableMotion() : requestMotionPermission();
+function initializeEventListeners(){
+    elements.pad.addEventListener("touchstart",handleTouch,{passive:true});
+    elements.pad.addEventListener("touchmove",handleTouch,{passive:true});
+    elements.pad.addEventListener("mousedown",handleTouch);
+    elements.pad.addEventListener("mousemove",e=>{if(e.buttons===1)handleTouch(e);});
+    elements.startBtn.addEventListener("click",startSynth);
+    elements.stopBtn.addEventListener("click",stopSynth);
+    elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():requestMotionPermission();});
+    elements.panBtn.addEventListener("click",togglePan);
+    elements.toggleControls.addEventListener("click",toggleControls);
+    elements.startRhythmBtn.addEventListener("click",startRhythm);
+    elements.stopRhythmBtn.addEventListener("click",stopRhythm);
+    elements.kickVolume.addEventListener("input",e=>{updateKickVolume(e.target.value);});
+    elements.kickPattern.addEventListener("change",e=>{updateKickPattern(e.target.value);});
+    elements.kickPunch.addEventListener("input",e=>{updateKickPunch(e.target.value);});
+    elements.kickBass.addEventListener("input",e=>{updateKickBass(e.target.value);});
+    elements.kickDistortion.addEventListener("input",e=>{updateKickDistortion(e.target.value);});
+    elements.kickSweep.addEventListener("input",e=>{updateKickSweep(e.target.value);});
+    elements.kickSoloBtn.addEventListener("click",toggleKickSolo);
+    document.getElementById("octUp").addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();createNoteRuler();});
+    document.getElementById("octDown").addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();createNoteRuler();});
+    document.getElementById("permissionAllow").addEventListener("click",()=>{
+        DeviceOrientationEvent.requestPermission().then(r=>{
+            elements.permissionModal.style.display='none';
+            if(r==='granted'){startMotionControl();}else{showStatus('Motion permission denied');}
+        }).catch(e=>{elements.permissionModal.style.display='none';showStatus('Permission error');});
     });
-    
-    elements.panBtn.addEventListener("click", togglePan);
-    elements.toggleControls.addEventListener("click", toggleControls);
-    
-    elements.startRhythmBtn.addEventListener("click", startRhythm);
-    elements.stopRhythmBtn.addEventListener("click", stopRhythm);
-    
-    elements.kickVolume.addEventListener("input", e => updateKickVolume(e.target.value));
-    elements.kickPattern.addEventListener("change", e => updateKickPattern(e.target.value));
-    elements.kickPunch.addEventListener("input", e => updateKickPunch(e.target.value));
-    elements.kickBass.addEventListener("input", e => updateKickBass(e.target.value));
-    elements.kickDistortion.addEventListener("input", e => updateKickDistortion(e.target.value));
-    elements.kickSweep.addEventListener("input", e => updateKickSweep(e.target.value));
-    elements.kickSoloBtn.addEventListener("click", toggleKickSolo);
-    
-    document.getElementById("octUp").addEventListener("click", () => {
-        AppState.octaveOffset++;
-        applyPitch();
-        createNoteRuler();
-    });
-    
-    document.getElementById("octDown").addEventListener("click", () => {
-        AppState.octaveOffset--;
-        applyPitch();
-        createNoteRuler();
-    });
-    
-    document.getElementById("permissionAllow").addEventListener("click", async () => {
-        try {
-            const response = await DeviceOrientationEvent.requestPermission();
-            elements.permissionModal.style.display = 'none';
-            if (response === 'granted') {
-                startMotionControl();
-            } else {
-                showStatus('Motion permission denied');
-            }
-        } catch (e) {
-            console.error('Permission error:', e);
-            elements.permissionModal.style.display = 'none';
-            showStatus('Permission request failed');
-        }
-    });
-    
-    document.getElementById("permissionDeny").addEventListener("click", () => {
-        elements.permissionModal.style.display = 'none';
-        showStatus('Motion access denied');
-    });
-    
-    document.getElementById("waveSelect").addEventListener("change", e => {
-        AppState.waveType = e.target.value;
-        cleanupOscillators();
-        createOscillators();
-        connectAudioGraph();
-        showStatus('Wave: ' + AppState.waveType);
-    });
-    
-    document.getElementById("detuneRange").addEventListener("input", e => {
-        AppState.detuneAmount = parseFloat(e.target.value);
-        document.getElementById('detuneValue').textContent = e.target.value;
-        if (AppState.oscillators.length > 0) {
-            AppState.oscillators.forEach((osc, i) => {
-                if (osc.detune) {
-                    osc.detune.value = (i - Math.floor(AppState.NUM_OSC / 2)) * AppState.detuneAmount;
-                }
-            });
-        }
-    });
-    
-    document.getElementById("filterFreq").addEventListener("input", e => {
-        const value = parseFloat(e.target.value);
-        document.getElementById('filterFreqValue').textContent = Math.round(value);
-        if (audioNodes.filter) {
-            audioNodes.filter.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
-        }
-    });
-    
-    document.getElementById("filterReso").addEventListener("input", e => {
-        const value = parseFloat(e.target.value);
-        document.getElementById('filterResoValue').textContent = value;
-        if (audioNodes.filter) {
-            audioNodes.filter.Q.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
-        }
-    });
-    
-    document.getElementById("autoWahRate").addEventListener("input", e => {
-        const value = parseFloat(e.target.value);
-        document.getElementById('autoWahRateValue').textContent = value;
-        if (audioNodes.autoWahLFO) {
-            audioNodes.autoWahLFO.frequency.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
-        }
-    });
-    
-    document.getElementById("autoWahDepth").addEventListener("input", e => {
-        const value = parseFloat(e.target.value);
-        document.getElementById('autoWahDepthValue').textContent = Math.round(value);
-        if (audioNodes.autoWahGain) {
-            audioNodes.autoWahGain.gain.setTargetAtTime(value, AppState.audioCtx.currentTime, 0.02);
-        }
-    });
-    
-    const toggleMap = {
-        toggleDist: 'dist',
-        toggleAutoWah: 'autoWah',
-        toggleFlanger: 'flanger',
-        toggleChorus: 'chorus',
-        toggleTremolo: 'tremolo',
-        toggleDelay: 'delay',
-        toggleReverb: 'reverb'
-    };
-    
-    Object.entries(toggleMap).forEach(([id, effect]) => {
-        document.getElementById(id).addEventListener("click", () => {
-            effects[effect] = !effects[effect];
-            document.getElementById(id).classList.toggle('active', effects[effect]);
-            connectAudioGraph();
-            showStatus(effect + ' ' + (effects[effect] ? 'ON' : 'OFF'));
-            
-            if (effect === 'autoWah') {
-                elements.wahDisplay.style.display = effects[effect] ? 'block' : 'none';
-                elements.wahDisplay.textContent = 'Wah:' + (effects[effect] ? 'ON' : 'OFF');
-            }
-        });
-    });
-    
-    document.getElementById("rhythmSpeed").addEventListener("input", e => updateRhythmSpeed(e.target.value));
-    document.getElementById("rhythmIntensity").addEventListener("input", e => updateRhythmIntensity(e.target.value));
-    
-    elements.animationSelect.addEventListener("change", e => setAnimation(e.target.value));
-    elements.animSpeed.addEventListener("input", e => updateAnimationSpeed(e.target.value));
-    elements.animIntensity.addEventListener("input", e => updateAnimationIntensity(e.target.value));
-    
-    document.addEventListener('keydown', e => {
-        if (e.code === 'Space') {
-            e.preventDefault();
-            AppState.rhythmActive ? stopRhythm() : startRhythm();
-        }
-    });
-    
-    window.addEventListener('beforeunload', () => {
-        stopSynth();
-        disableMotion();
-        stopWaveAnimation();
-    });
+    document.getElementById("permissionDeny").addEventListener("click",()=>{elements.permissionModal.style.display='none';showStatus('Motion disabled');});
+    document.getElementById("waveSelect").addEventListener("change",e=>{AppState.waveType=e.target.value;cleanupOscillators();createOscillators();connectAudioGraph();showStatus('Wave: '+AppState.waveType);});
+    document.getElementById("detuneRange").addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{if(osc.detune)osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;});}});
+    document.getElementById("filterFreq").addEventListener("input",e=>{if(audioNodes.filter)audioNodes.filter.frequency.exponentialRampToValueAtTime(parseFloat(e.target.value), AppState.audioCtx.currentTime + 0.01);});
+    document.getElementById("filterReso").addEventListener("input",e=>{if(audioNodes.filter)audioNodes.filter.Q.value=parseFloat(e.target.value);});
+    document.getElementById("autoWahRate").addEventListener("input",e=>{if(audioNodes.autoWahLFO)audioNodes.autoWahLFO.frequency.value=parseFloat(e.target.value);});
+    document.getElementById("autoWahDepth").addEventListener("input",e=>{if(audioNodes.autoWahGain)audioNodes.autoWahGain.gain.value=parseFloat(e.target.value);});
+    const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleDelay:'delay',toggleReverb:'reverb'};
+    Object.entries(toggleMap).forEach(([id,effect])=>{document.getElementById(id).addEventListener("click",()=>{
+        effects[effect]=!effects[effect];document.getElementById(id).classList.toggle('active',effects[effect]);
+        connectAudioGraph();showStatus(effect+' '+(effects[effect]?'ON':'OFF'));
+        if(effect==='autoWah'){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'ON':'OFF');}
+    });});
+    document.getElementById("rhythmSpeed").addEventListener("input",e=>{updateRhythmSpeed(parseInt(e.target.value));});
+    document.getElementById("rhythmIntensity").addEventListener("input",e=>{updateRhythmIntensity(parseInt(e.target.value));});
+    elements.animationSelect.addEventListener("change",e=>{setAnimation(e.target.value);});
+    elements.animSpeed.addEventListener("input",e=>updateAnimationSpeed(e.target.value));
+    elements.animIntensity.addEventListener("input",e=>updateAnimationIntensity(e.target.value));
+    document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();AppState.rhythmActive?stopRhythm():startRhythm();}});
 }
 
-window.addEventListener('load', () => {
-    updateThemeColor([255, 100, 100]);
-    initializeEventListeners();
-    updateButtonStates();
-    createNoteRuler();
-    updateValueDisplays();
-    showStatus('Ready - Click Start to begin! SPACE for rhythm control');
+window.addEventListener('load',()=>{
+    updateThemeColor([255,100,100]);initializeEventListeners();updateButtonStates();createNoteRuler();
+    showStatus('Ready - Click Start then try effects! SPACE for rhythm');
 });
-
-window.addEventListener("contextmenu", e => e.preventDefault());
+window.addEventListener("contextmenu",e=>e.preventDefault());
 </script>
 </body>
 </html>
