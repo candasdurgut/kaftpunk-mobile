@@ -144,7 +144,7 @@ const noteColors=[[255,100,100],[255,150,80],[255,220,80],[220,255,80],[120,255,
 const elements={pad:document.getElementById("pad"),noteDisplay:document.getElementById("noteDisplay"),motionDisplay:document.getElementById("motionDisplay"),wahDisplay:document.getElementById("wahDisplay"),panDisplay:document.getElementById("panDisplay"),startBtn:document.getElementById("startBtn"),stopBtn:document.getElementById("stopBtn"),motionBtn:document.getElementById("motionBtn"),panBtn:document.getElementById("panBtn"),statusMessage:document.getElementById("statusMessage"),permissionModal:document.getElementById("permissionModal"),controls:document.getElementById("controls"),toggleControls:document.getElementById("toggleControls"),noteRuler:document.getElementById("noteRuler"),startRhythmBtn:document.getElementById("startRhythmBtn"),stopRhythmBtn:document.getElementById("stopRhythmBtn"),kickVolume:document.getElementById("kickVolume"),kickPattern:document.getElementById("kickPattern"),kickPunch:document.getElementById("kickPunch"),kickBass:document.getElementById("kickBass"),kickDistortion:document.getElementById("kickDistortion"),kickSweep:document.getElementById("kickSweep"),waveCanvas:document.getElementById("waveAnimation"),animSpeed:document.getElementById("animSpeed"),animIntensity:document.getElementById("animIntensity"),animationSelect:document.getElementById("animationSelect"),kickSoloBtn:document.getElementById("kickSoloBtn"),masterVolume:document.getElementById("masterVolume"),synthVolume:document.getElementById("synthVolume"),effectsVolume:document.getElementById("effectsVolume"),credit:document.getElementById("credit")};
 const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const patternMap={'4/4':[1,0,0.8,0,1,0,0.6,0],'2/4':[1,0,0,0,1,0,0,0],'breakbeat':[1,0,0.7,0,0.8,0.3,0,0.6],'offbeat':[0,1,0,0.8,0,1,0,0.7],'techno':[1,0,0,0.5,1,0,0,0.5],'house':[1,0,0.8,0,0.6,0,0.8,0],'minimal':[1,0,0,0,0.5,0,0,0]};
-const animations={none:{init(){},draw(ctx){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);}},psychedelic:{init(){},draw(ctx,time){const w=ctx.canvas.width,h=ctx.canvas.height;ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,w,h);const centerX=w/2,centerY=h/2;for(let i=0;i<5;i++){ctx.save();ctx.translate(centerX,centerY);ctx.rotate(time*(0.1+i*0.05)*AppState.animationSpeed);const hue=(animationHue+i*30+time*20)%360;ctx.strokeStyle=`hsla(${hue},100%,60%,${0.15-i*0.02})`;ctx.lineWidth=2-i*0.3;ctx.beginPath();for(let j=0;j<6;j++){const angle=(j/6)*Math.PI*2;const radius=100+Math.sin(time*2+i)*50*AppState.animationIntensity+i*20;const x=Math.cos(angle+time)*radius;const y=Math.sin(angle+time)*radius;if(j===0)ctx.moveTo(x,y);else{const cpx=Math.cos(angle-0.5+time)*(radius*1.5);const cpy=Math.sin(angle-0.5+time)*(radius*1.5);ctx.quadraticCurveTo(cpx,cpy,x,y);}}ctx.closePath();ctx.stroke();ctx.restore();}}},cosmicDust:{particles:[],init(){this.particles=[];const particleCount=Math.min(150,Math.floor(window.innerWidth*window.innerHeight/4000));for(let i=0;i<particleCount;i++){this.particles.push({x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,size:Math.random()*2+0.5,sx:(Math.random()*0.5-0.25)*AppState.animationSpeed,sy:(Math.random()*0.5-0.25)*AppState.animationSpeed});}},draw(ctx){ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);this.particles.forEach(p=>{p.x+=p.sx;p.y+=p.sy;if(p.x>ctx.canvas.width)p.x=0;if(p.x<0)p.x=ctx.canvas.width;if(p.y>ctx.canvas.height)p.y=0;if(p.y<0)p.y=ctx.canvas.height;ctx.fillStyle=`hsl(${animationHue},100%,70%)`;ctx.shadowBlur=10*AppState.animationIntensity;ctx.shadowColor=`hsl(${animationHue},100%,70%)`;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();});ctx.shadowBlur=0;}},network:{nodes:[],init(){this.nodes=[];const nodeCount=Math.min(80,Math.floor(window.innerWidth*window.innerHeight/4000));for(let i=0;i<nodeCount;i++){this.nodes.push({x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,vx:(Math.random()-0.5)*0.5*AppState.animationSpeed,vy:(Math.random()-0.5)*0.5*AppState.animationSpeed});}},draw(ctx){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);this.nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>ctx.canvas.width)n.vx=-n.vx;if(n.y<0||n.y>ctx.canvas.height)n.vy=-n.vy;});for(let i=0;i<this.nodes.length;i++){for(let j=i+1;j<this.nodes.length;j++){const dx=this.nodes[i].x-this.nodes[j].x;const dy=this.nodes[i].y-this.nodes[j].y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){const opacity=(1-(dist/150))*AppState.animationIntensity;ctx.strokeStyle=`hsla(${animationHue},100%,60%,${opacity*0.5})`;ctx.beginPath();ctx.moveTo(this.nodes[i].x,this.nodes[i].y);ctx.lineTo(this.nodes[j].x,this.nodes[j].y);ctx.stroke();}}}this.nodes.forEach(n=>{ctx.fillStyle=`hsla(${animationHue},100%,80%,0.8)`;ctx.beginPath();ctx.arc(n.x,n.y,2,0,Math.PI*2);ctx.fill();});}},metaballs:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const balls=[{x:ctx.canvas.width/2+Math.sin(time)*100,y:ctx.canvas.height/2+Math.cos(time)*80,r:40},{x:ctx.canvas.width/2+Math.sin(time*1.3)*120,y:ctx.canvas.height/2+Math.cos(time*0.7)*90,r:35},{x:ctx.canvas.width/2+Math.sin(time*0.7)*80,y:ctx.canvas.height/2+Math.cos(time*1.5)*70,r:45}];for(let x=0;x<ctx.canvas.width;x+=4){for(let y=0;y<ctx.canvas.height;y+=4){let sum=0;balls.forEach(ball=>{const dx=x-ball.x;const dy=y-ball.y;const d=Math.sqrt(dx*dx+dy*dy);sum+=ball.r/d;});if(sum>1){ctx.fillStyle=`hsla(${animationHue},100%,${Math.min(100,sum*30)}%,${Math.min(1,sum-1)})`;ctx.fillRect(x-2,y-2,4,4);}}}}},oscilloscope:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.strokeStyle=`hsl(${animationHue},100%,70%)`;ctx.lineWidth=2;ctx.beginPath();for(let x=0;x<ctx.canvas.width;x++){const y=ctx.canvas.height/2+Math.sin(x*0.05+time*3)*50*AppState.animationIntensity+Math.sin(x*0.03+time*2)*30*AppState.animationSpeed;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}},equalizer:{bars:[],init(){this.bars=Array(32).fill(0);},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const barWidth=ctx.canvas.width/this.bars.length;this.bars.forEach((bar,i)=>{const height=20+Math.sin(time*2+i*0.3)*15*AppState.animationIntensity+Math.sin(time*3+i*0.5)*10*AppState.animationSpeed;const hue=(animationHue+i*5)%360;ctx.fillStyle=`hsl(${hue},100%,60%)`;ctx.fillRect(i*barWidth,ctx.canvas.height-height,barWidth-2,height);});}},circularWave:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2;for(let i=0;i<5;i++){const radius=50+i*30+Math.sin(time+i)*20*AppState.animationIntensity;const hue=(animationHue+i*40)%360;ctx.strokeStyle=`hsla(${hue},100%,60%,${0.8-i*0.15})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(centerX,centerY,radius,0,Math.PI*2);ctx.stroke();}}},kaleidoscope:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const segments=12,centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2;maxRadius=Math.min(centerX,centerY);for(let i=0;i<segments;i++){const angle=(i/segments)*Math.PI*2,hue=(animationHue+i*30)%360;ctx.save();ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.fillStyle=`hsla(${hue},100%,60%,0.3)`;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,maxRadius,0,Math.PI/segments);ctx.closePath();ctx.fill();ctx.strokeStyle=`hsla(${hue},100%,80%,0.8)`;ctx.lineWidth=2;ctx.stroke();ctx.restore();}}},spiral:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2;ctx.strokeStyle=`hsl(${animationHue},100%,70%)`;ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<200;i++){const angle=0.1*i,radius=5+i*0.5,x=centerX+Math.cos(angle+time)*radius,y=centerY+Math.sin(angle+time)*radius;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}},matrix:{chars:"01",columns:[],init(){this.columns=Array(Math.floor(window.innerWidth/20)).fill(0);},draw(ctx){ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.fillStyle=`hsl(${animationHue},100%,60%)`;ctx.font='15px monospace';this.columns.forEach((y,i)=>{const x=i*20,char=this.chars[Math.floor(Math.random()*this.chars.length)];ctx.fillText(char,x,y);if(y>100+Math.random()*10000){this.columns[i]=0;}else{this.columns[i]=y+20;}});}}};
+const animations={none:{init(){},draw(ctx){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);}},psychedelic:{init(){},draw(ctx,time){const w=ctx.canvas.width,h=ctx.canvas.height;ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,w,h);const centerX=w/2,centerY=h/2;for(let i=0;i<5;i++){ctx.save();ctx.translate(centerX,centerY);ctx.rotate(time*(0.1+i*0.05)*AppState.animationSpeed);const hue=(animationHue+i*30+time*20)%360;ctx.strokeStyle=`hsla(${hue},100%,60%,${0.15-i*0.02})`;ctx.lineWidth=2-i*0.3;ctx.beginPath();for(let j=0;j<6;j++){const angle=(j/6)*Math.PI*2;const radius=100+Math.sin(time*2+i)*50*AppState.animationIntensity+i*20;const x=Math.cos(angle+time)*radius;const y=Math.sin(angle+time)*radius;if(j===0)ctx.moveTo(x,y);else{const cpx=Math.cos(angle-0.5+time)*(radius*1.5);const cpy=Math.sin(angle-0.5+time)*(radius*1.5);ctx.quadraticCurveTo(cpx,cpy,x,y);}}ctx.closePath();ctx.stroke();ctx.restore();}}},cosmicDust:{particles:[],init(){this.particles=[];const particleCount=Math.min(150,Math.floor(window.innerWidth*window.innerHeight/4000));for(let i=0;i<particleCount;i++){this.particles.push({x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,size:Math.random()*2+0.5,sx:(Math.random()*0.5-0.25)*AppState.animationSpeed,sy:(Math.random()*0.5-0.25)*AppState.animationSpeed});}},draw(ctx){ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);this.particles.forEach(p=>{p.x+=p.sx;p.y+=p.sy;if(p.x>ctx.canvas.width)p.x=0;if(p.x<0)p.x=ctx.canvas.width;if(p.y>ctx.canvas.height)p.y=0;if(p.y<0)p.y=ctx.canvas.height;ctx.fillStyle=`hsl(${animationHue},100%,70%)`;ctx.shadowBlur=10*AppState.animationIntensity;ctx.shadowColor=`hsl(${animationHue},100%,70%)`;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();});ctx.shadowBlur=0;}},network:{nodes:[],init(){this.nodes=[];const nodeCount=Math.min(80,Math.floor(window.innerWidth*window.innerHeight/4000));for(let i=0;i<nodeCount;i++){this.nodes.push({x:Math.random()*elements.waveCanvas.width,y:Math.random()*elements.waveCanvas.height,vx:(Math.random()-0.5)*0.5*AppState.animationSpeed,vy:(Math.random()-0.5)*0.5*AppState.animationSpeed});}},draw(ctx){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);this.nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>ctx.canvas.width)n.vx=-n.vx;if(n.y<0||n.y>ctx.canvas.height)n.vy=-n.vy;});for(let i=0;i<this.nodes.length;i++){for(let j=i+1;j<this.nodes.length;j++){const dx=this.nodes[i].x-this.nodes[j].x;const dy=this.nodes[i].y-this.nodes[j].y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){const opacity=(1-(dist/150))*AppState.animationIntensity;ctx.strokeStyle=`hsla(${animationHue},100%,60%,${opacity*0.5})`;ctx.beginPath();ctx.moveTo(this.nodes[i].x,this.nodes[i].y);ctx.lineTo(this.nodes[j].x,this.nodes[j].y);ctx.stroke();}}}this.nodes.forEach(n=>{ctx.fillStyle=`hsla(${animationHue},100%,80%,0.8)`;ctx.beginPath();ctx.arc(n.x,n.y,2,0,Math.PI*2);ctx.fill();});}},metaballs:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const balls=[{x:ctx.canvas.width/2+Math.sin(time)*100,y:ctx.canvas.height/2+Math.cos(time)*80,r:40},{x:ctx.canvas.width/2+Math.sin(time*1.3)*120,y:ctx.canvas.height/2+Math.cos(time*0.7)*90,r:35},{x:ctx.canvas.width/2+Math.sin(time*0.7)*80,y:ctx.canvas.height/2+Math.cos(time*1.5)*70,r:45}];for(let x=0;x<ctx.canvas.width;x+=4){for(let y=0;y<ctx.canvas.height;y+=4){let sum=0;balls.forEach(ball=>{const dx=x-ball.x;const dy=y-ball.y;const d=Math.sqrt(dx*dx+dy*dy);sum+=ball.r/d;});if(sum>1){ctx.fillStyle=`hsla(${animationHue},100%,${Math.min(100,sum*30)}%,${Math.min(1,sum-1)})`;ctx.fillRect(x-2,y-2,4,4);}}}}},oscilloscope:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.strokeStyle=`hsl(${animationHue},100%,70%)`;ctx.lineWidth=2;ctx.beginPath();for(let x=0;x<ctx.canvas.width;x++){const y=ctx.canvas.height/2+Math.sin(x*0.05+time*3)*50*AppState.animationIntensity+Math.sin(x*0.03+time*2)*30*AppState.animationSpeed;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}},equalizer:{bars:[],init(){this.bars=Array(32).fill(0);},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const barWidth=ctx.canvas.width/this.bars.length;this.bars.forEach((bar,i)=>{const height=20+Math.sin(time*2+i*0.3)*15*AppState.animationIntensity+Math.sin(time*3+i*0.5)*10*AppState.animationSpeed;const hue=(animationHue+i*5)%360;ctx.fillStyle=`hsl(${hue},100%,60%)`;ctx.fillRect(i*barWidth,ctx.canvas.height-height,barWidth-2,height);});}},circularWave:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2;for(let i=0;i<5;i++){const radius=50+i*30+Math.sin(time+i)*20*AppState.animationIntensity;const hue=(animationHue+i*40)%360;ctx.strokeStyle=`hsla(${hue},100%,60%,${0.8-i*0.15})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(centerX,centerY,radius,0,Math.PI*2);ctx.stroke();}}},kaleidoscope:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const segments=12,centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2,maxRadius=Math.min(centerX,centerY);for(let i=0;i<segments;i++){const angle=(i/segments)*Math.PI*2,hue=(animationHue+i*30)%360;ctx.save();ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.fillStyle=`hsla(${hue},100%,60%,0.3)`;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,maxRadius,0,Math.PI/segments);ctx.closePath();ctx.fill();ctx.strokeStyle=`hsla(${hue},100%,80%,0.8)`;ctx.lineWidth=2;ctx.stroke();ctx.restore();}}},spiral:{init(){},draw(ctx,time){ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);const centerX=ctx.canvas.width/2,centerY=ctx.canvas.height/2;ctx.strokeStyle=`hsl(${animationHue},100%,70%)`;ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<200;i++){const angle=0.1*i,radius=5+i*0.5,x=centerX+Math.cos(angle+time)*radius,y=centerY+Math.sin(angle+time)*radius;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}},matrix:{chars:"01",columns:[],init(){this.columns=Array(Math.floor(window.innerWidth/20)).fill(0);},draw(ctx){ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.fillStyle=`hsl(${animationHue},100%,60%)`;ctx.font='15px monospace';this.columns.forEach((y,i)=>{const x=i*20,char=this.chars[Math.floor(Math.random()*this.chars.length)];ctx.fillText(char,x,y);if(y>100+Math.random()*10000){this.columns[i]=0;}else{this.columns[i]=y+20;}});}}};
 function isAudioContextValid(){return AppState.audioCtx&&(AppState.audioCtx.state==='running'||AppState.audioCtx.state==='suspended');}
 function safeAudioOperation(op){if(!isAudioContextValid()){showStatus('Ses bağlamı hazır değil. Önce synth\'i başlatman lazım!');return false;}try{op();return true;}catch(e){console.error('Ses işlemi başarısız:',e);showStatus('Ses hatası: '+e.message+' - Kulakların için üzgünüm!');return false;}}
 function showStatus(msg,dur=1500){if(!elements.statusMessage)return;elements.statusMessage.textContent=msg;elements.statusMessage.classList.add('show');setTimeout(()=>{if(elements.statusMessage)elements.statusMessage.classList.remove('show');},dur);}
@@ -158,56 +158,542 @@ function updateKickDistortionCurve(amount){if(!kickDistortion)return;try{const n
 function updatePulseWidth(node,width){if(!node)return;try{const curve=new Float32Array(256);for(let i=0;i<256;i++){curve[i]=i<128*width?-1:1;}node.curve=curve;}catch(error){console.error('Pulse genişlik güncelleme hatası:',error);}}
 function createAudioNodes(){try{cleanupOscillators();cleanupAudioNodes();AppState.masterGain=AppState.audioCtx.createGain();AppState.synthGain=AppState.audioCtx.createGain();AppState.kickGain=AppState.audioCtx.createGain();AppState.effectsGain=AppState.audioCtx.createGain();updateAllVolumes();audioNodes.panner=AppState.audioCtx.createStereoPanner();audioNodes.panner.pan.value=0;audioNodes.distortion=createWaveShaper(50);audioNodes.distortionGain=AppState.audioCtx.createGain();audioNodes.distortionGain.gain.value=0;audioNodes.autoWah=AppState.audioCtx.createBiquadFilter();audioNodes.autoWah.type="bandpass";audioNodes.autoWah.frequency.value=800;audioNodes.autoWah.Q.value=5;audioNodes.autoWahLFO=AppState.audioCtx.createOscillator();audioNodes.autoWahLFO.frequency.value=1;audioNodes.autoWahGain=AppState.audioCtx.createGain();audioNodes.autoWahGain.gain.value=0;audioNodes.flangerDelay=AppState.audioCtx.createDelay(0.02);audioNodes.flangerDelay.delayTime.value=0.005;audioNodes.flangerLFO=AppState.audioCtx.createOscillator();audioNodes.flangerLFO.frequency.value=0.2;audioNodes.flangerGain=AppState.audioCtx.createGain();audioNodes.flangerGain.gain.value=0.005;audioNodes.flangerFeedback=AppState.audioCtx.createGain();audioNodes.flangerFeedback.gain.value=0.5;audioNodes.chorusDelay=AppState.audioCtx.createDelay(0.05);audioNodes.chorusDelay.delayTime.value=0.025;audioNodes.chorusLFO=AppState.audioCtx.createOscillator();audioNodes.chorusLFO.frequency.value=0.5;audioNodes.chorusGain=AppState.audioCtx.createGain();audioNodes.chorusGain.gain.value=0.01;audioNodes.tremoloLFO=AppState.audioCtx.createOscillator();audioNodes.tremoloLFO.frequency.value=5;audioNodes.tremoloGain=AppState.audioCtx.createGain();audioNodes.tremoloGain.gain.value=1;audioNodes.filter=AppState.audioCtx.createBiquadFilter();audioNodes.filter.type="lowpass";audioNodes.filter.frequency.value=8000;audioNodes.filter.Q.value=1;audioNodes.delay=AppState.audioCtx.createDelay(2);audioNodes.delay.delayTime.value=0.3;audioNodes.delayFeedback=AppState.audioCtx.createGain();audioNodes.delayFeedback.gain.value=0.5;audioNodes.reverb=AppState.audioCtx.createConvolver();const buffer=AppState.audioCtx.createBuffer(2,AppState.audioCtx.sampleRate*2,AppState.audioCtx.sampleRate);for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<buffer.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/buffer.length,2);}}audioNodes.reverb.buffer=buffer;createKickNodes();createOscillators();connectAudioGraph();}catch(error){console.error('Ses düğümü oluşturma hatası:',error);showStatus('Ses kurulumu başarısız: '+error.message+' - Tekrar deneyelim!');}}
 function createKickNodes(){try{kickOsc=AppState.audioCtx.createOscillator();kickOsc.type='sine';kickGain=AppState.audioCtx.createGain();kickGain.gain.value=0;kickClickOsc=AppState.audioCtx.createOscillator();kickClickOsc.type='triangle';kickClickGain=AppState.audioCtx.createGain();kickClickGain.gain.value=0;kickFilter=AppState.audioCtx.createBiquadFilter();kickFilter.type='lowpass';kickFilter.frequency.value=1000;kickFilter.Q.value=1;kickDistortion=createSoftWaveShaper(15);kickCompressor=AppState.audioCtx.createDynamicsCompressor();kickCompressor.threshold.value=-24;kickCompressor.knee.value=30;kickCompressor.ratio.value=12;kickCompressor.attack.value=0.003;kickCompressor.release.value=0.25;kickOsc.connect(kickGain);kickClickOsc.connect(kickClickGain);kickGain.connect(kickFilter);kickClickGain.connect(kickFilter);kickFilter.connect(kickDistortion);kickDistortion.connect(kickCompressor);kickOsc.start();kickClickOsc.start();}catch(error){console.error('Kick düğümü oluşturma hatası:',error);}}
-function createOscillators(){try{const now=AppState.audioCtx.currentTime;for(let i=0;i<AppState.NUM_OSC;i++){let osc;if(AppState.waveType==='fm'){osc=AppState.audioCtx.createOscillator();osc.type='sine';const modulator=AppState.audioCtx.createOscillator();modulator.type='sine';modulator.frequency.value=AppState.baseFreq*2;const modGain=AppState.audioCtx.createGain();modGain.gain.value=100;modulator.connect(modGain);modGain.connect(osc.frequency);modulator.start(now);osc.modulator=modulator;osc.modGain=modGain;osc.connect(AppState.synthGain);}else if(AppState.waveType==='pulse'){osc=AppState.audioCtx.createOscillator();osc.type='square';const pulseWidth=AppState.audioCtx.createWaveShaper();updatePulseWidth(pulseWidth,AppState.pulseWidth);osc.connect(pulseWidth);pulseWidth.connect(AppState.synthGain);osc.pulseWidth=pulseWidth;}else{osc=AppState.audioCtx.createOscillator();osc.type=AppState.waveType;osc.connect(AppState.synthGain);}osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;osc.start(now);AppState.oscillators.push(osc);}}catch(error){console.error('Osilatör oluşturma hatası:',error);}}
-function startLFOs(){if(lfoStarted)return;try{if(audioNodes.autoWahLFO)audioNodes.autoWahLFO.start();if(audioNodes.flangerLFO)audioNodes.flangerLFO.start();if(audioNodes.chorusLFO)audioNodes.chorusLFO.start();if(audioNodes.tremoloLFO)audioNodes.tremoloLFO.start();lfoStarted=true;}catch(e){console.log('LFO başlatma hatası:',e);}}
-function connectAudioGraph(){if(!AppState.audioCtx)return;try{if(AppState.masterGain)AppState.masterGain.disconnect();if(AppState.synthGain)AppState.synthGain.disconnect();if(AppState.kickGain)AppState.kickGain.disconnect();if(AppState.effectsGain)AppState.effectsGain.disconnect();if(audioNodes.panner)audioNodes.panner.disconnect();Object.values(audioNodes).forEach(node=>{if(node&&typeof node.disconnect==='function'){try{node.disconnect();}catch(e){console.log('Düğüm bağlantı kesme hatası:',e);}}});startLFOs();let synthSignal=AppState.synthGain;if(effects.dist&&audioNodes.distortion){synthSignal.connect(audioNodes.distortion);synthSignal=audioNodes.distortion;}if(effects.autoWah&&audioNodes.autoWah){synthSignal.connect(audioNodes.autoWah);synthSignal=audioNodes.autoWah;}if(effects.flanger&&audioNodes.flangerDelay){synthSignal.connect(audioNodes.flangerDelay);audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);synthSignal=audioNodes.flangerDelay;}if(effects.chorus&&audioNodes.chorusDelay){synthSignal.connect(audioNodes.chorusDelay);synthSignal=audioNodes.chorusDelay;}if(audioNodes.filter){synthSignal.connect(audioNodes.filter);synthSignal=audioNodes.filter;}if(effects.delay&&audioNodes.delay){synthSignal.connect(audioNodes.delay);audioNodes.delay.connect(audioNodes.delayFeedback);audioNodes.delayFeedback.connect(audioNodes.delay);synthSignal=audioNodes.delay;}if(effects.reverb&&audioNodes.reverb){synthSignal.connect(audioNodes.reverb);synthSignal=audioNodes.reverb;}if(effects.tremolo&&audioNodes.tremoloGain){synthSignal.connect(audioNodes.tremoloGain);synthSignal=audioNodes.tremoloGain;}if(audioNodes.panner){synthSignal.connect(audioNodes.panner);audioNodes.panner.connect(AppState.effectsGain);}if(kickCompressor){kickCompressor.connect(AppState.kickGain);}if(AppState.effectsGain)AppState.effectsGain.connect(AppState.masterGain);if(AppState.kickGain)AppState.kickGain.connect(AppState.masterGain);if(AppState.masterGain)AppState.masterGain.connect(AppState.audioCtx.destination);if(audioNodes.distortionGain){audioNodes.distortionGain.gain.value=effects.dist?1:0;}if(audioNodes.tremoloGain){audioNodes.tremoloGain.gain.value=effects.tremolo?0.5:1;}if(effects.autoWah&&audioNodes.autoWahLFO&&audioNodes.autoWahGain&&audioNodes.autoWah){audioNodes.autoWahLFO.connect(audioNodes.autoWahGain);audioNodes.autoWahGain.connect(audioNodes.autoWah.frequency);audioNodes.autoWahGain.gain.value=600;}else if(audioNodes.autoWahGain){audioNodes.autoWahGain.gain.value=0;}if(effects.flanger&&audioNodes.flangerLFO&&audioNodes.flangerGain&&audioNodes.flangerDelay){audioNodes.flangerLFO.connect(audioNodes.flangerGain);audioNodes.flangerGain.connect(audioNodes.flangerDelay.delayTime);}if(effects.chorus&&audioNodes.chorusLFO&&audioNodes.chorusGain&&audioNodes.chorusDelay){audioNodes.chorusLFO.connect(audioNodes.chorusGain);audioNodes.chorusGain.connect(audioNodes.chorusDelay.delayTime);}if(effects.tremolo&&audioNodes.tremoloLFO&&audioNodes.tremoloGain){audioNodes.tremoloLFO.connect(audioNodes.tremoloGain.gain);}}catch(error){console.error('Ses grafiği bağlantı hatası:',error);showStatus('Ses bağlantı hatası - Tekrar bağlanıyoruz!');}}
-function updateAllVolumes(){if(!AppState.audioCtx)return;const now=AppState.audioCtx.currentTime;try{if(AppState.masterGain){const masterVol=AppState.volumeSettings.master/100;AppState.masterGain.gain.setTargetAtTime(masterVol,now,0.02);}if(AppState.synthGain){const synthVol=AppState.volumeSettings.synth/100;AppState.synthGain.gain.setTargetAtTime(synthVol,now,0.02);}if(AppState.kickGain){const kickVol=AppState.volumeSettings.kick/100;AppState.kickGain.gain.setTargetAtTime(kickVol,now,0.02);}if(AppState.effectsGain){const effectsVol=AppState.volumeSettings.effects/100;AppState.effectsGain.gain.setTargetAtTime(effectsVol,now,0.02);}const masterValue=document.getElementById('masterVolumeValue'),synthValue=document.getElementById('synthVolumeValue'),kickValue=document.getElementById('kickVolumeValue'),effectsValue=document.getElementById('effectsVolumeValue');if(masterValue)masterValue.textContent=AppState.volumeSettings.master;if(synthValue)synthValue.textContent=AppState.volumeSettings.synth;if(kickValue)kickValue.textContent=AppState.volumeSettings.kick;if(effectsValue)effectsValue.textContent=AppState.volumeSettings.effects;}catch(error){console.error('Ses güncelleme hatası:',error);}}
-function createNoteRuler(){if(!elements.noteRuler)return;const notes=['C6','B5','A#5','A5','G#5','G5','F#5','F5','E5','D#5','D5','C#5','C5','B4','A#4','A4','G#4','G4','F#4','F4','E4','D#4','D4','C#4','C4'];elements.noteRuler.innerHTML='';notes.forEach(note=>{const div=document.createElement('div');div.className='ruler-note';div.textContent=note;elements.noteRuler.appendChild(div);});}
-function freqToNote(freq){const A4=440,semitonesFromA4=12*Math.log2(freq/A4),noteIndex=Math.round(semitonesFromA4+9)%12,octave=Math.floor((semitonesFromA4+9)/12),noteName=noteNames[(noteIndex+12)%12];return{name:noteName,octave:octave,fullName:`${noteName}${octave}`};}
-function updateThemeColor(color){try{document.documentElement.style.setProperty('--r',color[0]);document.documentElement.style.setProperty('--g',color[1]);document.documentElement.style.setProperty('--b',color[2]);const r=color[0]/255,g=color[1]/255,b=color[2]/255,max=Math.max(r,g,b),min=Math.min(r,g,b);let h,s,l=(max+min)/2;if(max===min){h=s=0;}else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}}animationHue=Math.round(h*360);}catch(error){console.error('Tema rengi güncelleme hatası:',error);}}
-function noteFromPad(y){const padHeight=window.innerHeight,ratio=1-(y/padHeight),baseFreq=65.41*Math.pow(2,AppState.octaveOffset);return baseFreq*Math.pow(2,(ratio*24)/12);}
-function applyPitch(){if(!safeAudioOperation(()=>{const freq=AppState.baseFreq,noteInfo=freqToNote(freq);AppState.oscillators.forEach((osc,i)=>{if(osc&&osc.frequency){osc.frequency.setTargetAtTime(freq,AppState.audioCtx.currentTime,0.01);}});if(elements.noteDisplay){elements.noteDisplay.textContent=noteInfo.fullName;}const colorIndex=noteNames.indexOf(noteInfo.name);if(colorIndex!==-1)updateThemeColor(noteColors[colorIndex]);}))return;}
-function handleTouchStart(e){e.preventDefault();if(!isAudioContextValid()){showStatus('Lütfen önce synth\'i başlat! Yoksa çalamayız!');return;}const now=performance.now();if(now-lastTouchTime<8)return;lastTouchTime=now;Array.from(e.touches).forEach(touch=>{activeTouches.set(touch.identifier,{x:touch.clientX,y:touch.clientY});});if(e.touches[0]){handleTouchPosition(e.touches[0].clientX,e.touches[0].clientY);}}
-function handleTouchMove(e){e.preventDefault();if(!isAudioContextValid())return;const now=performance.now();if(now-lastTouchTime<8)return;lastTouchTime=now;Array.from(e.touches).forEach(touch=>{activeTouches.set(touch.identifier,{x:touch.clientX,y:touch.clientY});});if(e.touches.length===1&&e.touches[0]){handleTouchPosition(e.touches[0].clientX,e.touches[0].clientY);}}
-function handleTouchEnd(e){Array.from(e.changedTouches).forEach(touch=>{activeTouches.delete(touch.identifier);});}
-function handleTouchPosition(clientX,clientY){if(!elements.pad)return;const rect=elements.pad.getBoundingClientRect(),x=Math.max(0,Math.min(rect.width,clientX-rect.left)),y=Math.max(0,Math.min(rect.height,clientY-rect.top));touchPoint={x,y};AppState.baseFreq=noteFromPad(y);applyPitch();}
-function handleMouseDown(e){if(!isAudioContextValid()){showStatus('Lütfen önce synth\'i başlat! Yoksa çalamayız!');return;}handleTouchPosition(e.clientX,e.clientY);}
-function handleMouseMove(e){if(e.buttons===1){handleTouchPosition(e.clientX,e.clientY);}}
-function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.01);if(elements.panDisplay){const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;}});}
-async function startSynth(){try{if(!AppState.audioCtx){AppState.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}if(AppState.audioCtx.state==='suspended'){await AppState.audioCtx.resume();showStatus('Ses geri döndü, kulakların hazır mı?');return;}else if(AppState.audioCtx.state==='closed'){AppState.audioCtx=new(window.AudioContext||window.webkitAudioContext)();await AppState.audioCtx.resume();}else if(AppState.audioCtx.state==='running'){showStatus('Synth sıfırlanıyor, biraz sabır...');cleanupOscillators();createAudioNodes();showStatus('Synth sıfırlandı, temiz başlangıç!');return;}await AppState.audioCtx.resume();createAudioNodes();AppState.isPlaying=true;updateButtonStates();startWaveAnimation();showStatus('Synth başladı! Efektlerle eğlenmeye başla! 🎹');}catch(e){console.error('Başlatma hatası:',e);showStatus('Ses başlatılamadı: '+e.message+' - Tekrar deneyelim!');}}
-async function stopSynth(){try{cleanupOscillators();stopRhythm();stopWaveAnimation();if(AppState.audioCtx&&AppState.audioCtx.state!=='closed'){await AppState.audioCtx.suspend();}AppState.isPlaying=false;updateButtonStates();showStatus('Synth durdu, sessizliğe hoş geldin! 🤫');}catch(e){console.error('Durdurma hatası:',e);if(AppState.audioCtx){await AppState.audioCtx.close();AppState.audioCtx=null;}AppState.isPlaying=false;updateButtonStates();showStatus('Synth temizlikle durdu, her şey tertemiz! 🧹');}}
-function toggleControls(){if(!elements.controls||!elements.toggleControls)return;elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
-function requestMotionPermission(){if(typeof DeviceOrientationEvent.requestPermission==='function'){if(elements.permissionModal){elements.permissionModal.style.display='flex';}}else{startMotionControl();}}
-function startMotionControl(){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;if(elements.motionDisplay){elements.motionDisplay.style.display='block';}updateButtonStates();showStatus('Hareket aktif! Cihazı eğerek perdeyi kontrol et, dikkatli ol! 📱');}
-function disableMotion(){window.removeEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=false;AppState.tiltBend=0;if(elements.motionDisplay){elements.motionDisplay.style.display='none';}updateButtonStates();showStatus('Hareket devre dışı, artık sallanma! 🛑');}
-function togglePan(){AppState.panEnabled=!AppState.panEnabled;if(elements.panDisplay){elements.panDisplay.style.display=AppState.panEnabled?'block':'none';}updateButtonStates();if(!AppState.panEnabled){updatePan(0);}showStatus(AppState.panEnabled?'Pan aktif! Yana eğerek stereo kaydır, sallanmak serbest! 🎛️':'Pan devre dışı, artık düz dur! 🛑');}
-function handleOrientation(e){const now=performance.now();if(now-lastOrientationTime<30)return;lastOrientationTime=now;if(e.beta===null||e.gamma===null)return;const tilt=Math.max(-90,Math.min(90,e.beta)),pan=Math.max(-90,Math.min(90,e.gamma));if(AppState.motionEnabled){AppState.tiltBend=tilt/45*12;const baseFreq=65.41*Math.pow(2,AppState.octaveOffset);AppState.baseFreq=baseFreq*Math.pow(2,AppState.tiltBend/12);if(elements.motionDisplay){elements.motionDisplay.textContent=`Eğim:${Math.round(AppState.tiltBend*10)/10}yarımton`;}applyPitch();}if(AppState.panEnabled&&pan!==null){const panValue=Math.max(-1,Math.min(1,pan/90));updatePan(panValue);}}
-function toggleKickSolo(){if(!AppState.audioCtx){showStatus('Lütfen önce synth\'i başlat!');return;}AppState.kickSolo=!AppState.kickSolo;if(AppState.kickSolo){if(AppState.effectsGain){AppState.effectsGain.disconnect();}showStatus('Kick solo AÇIK! Sadece bas davul, diğerleri kıskanıyor! 🥁');}else{connectAudioGraph();showStatus('Kick solo KAPALI, herkes geri döndü! 🎵');}updateButtonStates();}
-function startRhythm(){if(!isAudioContextValid()){showStatus('Lütfen önce synth\'i başlat!');return;}stopRhythm();AppState.rhythmActive=true;updateButtonStates();let beat=0;rhythmInterval=setInterval(()=>{if(!isAudioContextValid()){stopRhythm();return;}playKick(beat);if(beat%8===0){const randomColor=noteColors[Math.floor(Math.random()*noteColors.length)];updateThemeColor(randomColor);}beat++;},60000/AppState.rhythmSpeed);showStatus('Ritim başladı, ayaklar yerden kesilebilir! 💃');}
-function stopRhythm(){AppState.rhythmActive=false;if(rhythmInterval){clearInterval(rhythmInterval);rhythmInterval=null;}updateButtonStates();showStatus('Ritim durdu, ayaklar yere basıyor! 🛑');}
-function updateRhythmSpeed(value){AppState.rhythmSpeed=parseInt(value);const display=document.getElementById('rhythmSpeedValue');if(display)display.textContent=value;if(AppState.rhythmActive){stopRhythm();startRhythm();}}
-function updateRhythmIntensity(value){AppState.rhythmIntensity=parseInt(value);const display=document.getElementById('rhythmIntensityValue');if(display)display.textContent=value;}
-function updateKickPattern(value){AppState.kickSettings.pattern=value;}
-function updateKickPunch(value){AppState.kickSettings.punch=parseInt(value);const display=document.getElementById('kickPunchValue');if(display)display.textContent=value;}
-function updateKickBass(value){AppState.kickSettings.bass=parseInt(value);const display=document.getElementById('kickBassValue');if(display)display.textContent=value;}
-function updateKickDistortion(value){AppState.kickSettings.distortion=parseInt(value);const display=document.getElementById('kickDistortionValue');if(display)display.textContent=value;}
-function updateKickSweep(value){AppState.kickSettings.sweep=parseInt(value);const display=document.getElementById('kickSweepValue');if(display)display.textContent=value;}
-function updateMasterVolume(value){AppState.volumeSettings.master=parseInt(value);updateAllVolumes();}
-function updateSynthVolume(value){AppState.volumeSettings.synth=parseInt(value);updateAllVolumes();}
-function updateKickVolume(value){AppState.volumeSettings.kick=parseInt(value);updateAllVolumes();}
-function updateEffectsVolume(value){AppState.volumeSettings.effects=parseInt(value);updateAllVolumes();}
-function startWaveAnimation(){const canvas=elements.waveCanvas;if(!canvas)return;const ctx=canvas.getContext('2d');function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;if(animations[AppState.currentAnimation].init){animations[AppState.currentAnimation].init();}}resize();if(resizeHandler){window.removeEventListener('resize',resizeHandler);}resizeHandler=resize;window.addEventListener('resize',resize);function animate(time){if(!AppState.isPlaying||!animationFrameId)return;animationFrameId=requestAnimationFrame(animate);const timeSec=time*0.001;try{animations[AppState.currentAnimation].draw(ctx,timeSec);}catch(e){console.error('Animasyon hatası:',e);}}stopWaveAnimation();animationFrameId=requestAnimationFrame(animate);}
-function stopWaveAnimation(){if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null;}if(resizeHandler){window.removeEventListener('resize',resizeHandler);resizeHandler=null;}const ctx=elements.waveCanvas?.getContext('2d');if(ctx){ctx.clearRect(0,0,elements.waveCanvas.width,elements.waveCanvas.height);}}
-function setAnimation(animationName){AppState.currentAnimation=animationName;if(AppState.isPlaying){stopWaveAnimation();startWaveAnimation();}showStatus(`Animasyon: ${animationName==='none'?'Yok - sadece müzik, gözler dinlensin! 👀':animationName+' - gözlerin bayram etsin! 🎇'}`);}
-function updateAnimationSpeed(value){AppState.animationSpeed=parseFloat(value);const display=document.getElementById('animSpeedValue');if(display)display.textContent=value;}
-function updateAnimationIntensity(value){AppState.animationIntensity=parseFloat(value);const display=document.getElementById('animIntensityValue');if(display)display.textContent=value;}
-function updateValueDisplays(){const detuneDisplay=document.getElementById('detuneValue'),filterFreqDisplay=document.getElementById('filterFreqValue'),filterResoDisplay=document.getElementById('filterResoValue'),wahRateDisplay=document.getElementById('autoWahRateValue'),wahDepthDisplay=document.getElementById('autoWahDepthValue');if(detuneDisplay)detuneDisplay.textContent=AppState.detuneAmount;if(filterFreqDisplay)filterFreqDisplay.textContent=audioNodes.filter?Math.round(audioNodes.filter.frequency.value):8000;if(filterResoDisplay)filterResoDisplay.textContent=audioNodes.filter?audioNodes.filter.Q.value:1;if(wahRateDisplay)wahRateDisplay.textContent=audioNodes.autoWahLFO?audioNodes.autoWahLFO.frequency.value:1;if(wahDepthDisplay)wahDepthDisplay.textContent=audioNodes.autoWahGain?Math.round(audioNodes.autoWahGain.gain.value):800;}
-function getCandyFromPool(){if(candyPool.length>0){return candyPool.pop();}const candy=document.createElement('div');candy.className='candy';return candy;}
-function returnCandyToPool(candy){candyPool.push(candy);}
-function createCandyRain(){const candies=['🍬','🍭','🍫','🍩','🍪','🎂','🍰','🧁','🍦','🍡'],duration=3000,startTime=Date.now();function createCandy(){if(Date.now()-startTime>duration)return;const candy=getCandyFromPool();candy.textContent=candies[Math.floor(Math.random()*candies.length)];candy.style.left=Math.random()*window.innerWidth+'px';candy.style.top='-50px';document.body.appendChild(candy);const animation=candy.animate([{transform:`translateY(0px) rotate(0deg)`,opacity:1},{transform:`translateY(${window.innerHeight+50}px) rotate(360deg)`,opacity:0}],{duration:1000+Math.random()*2000,easing:'cubic-bezier(0.1,0.2,0.8,0.9)'});animation.onfinish=()=>{candy.remove();returnCandyToPool(candy);};setTimeout(createCandy,100+Math.random()*200);}createCandy();}
-function initializeEventListeners(){try{if(elements.pad){elements.pad.addEventListener("touchstart",handleTouchStart,{passive:false});elements.pad.addEventListener("touchmove",handleTouchMove,{passive:false});elements.pad.addEventListener("touchend",handleTouchEnd);elements.pad.addEventListener("touchcancel",handleTouchEnd);elements.pad.addEventListener("mousedown",handleMouseDown);elements.pad.addEventListener("mousemove",handleMouseMove);elements.pad.addEventListener("mouseup",handleTouchEnd);elements.pad.addEventListener("mouseleave",handleTouchEnd);}if(elements.startBtn)elements.startBtn.addEventListener("click",startSynth);if(elements.stopBtn)elements.stopBtn.addEventListener("click",stopSynth);if(elements.motionBtn)elements.motionBtn.addEventListener("click",()=>{AppState.motionEnabled?disableMotion():requestMotionPermission();});if(elements.panBtn)elements.panBtn.addEventListener("click",togglePan);if(elements.toggleControls)elements.toggleControls.addEventListener("click",toggleControls);if(elements.startRhythmBtn)elements.startRhythmBtn.addEventListener("click",startRhythm);if(elements.stopRhythmBtn)elements.stopRhythmBtn.addEventListener("click",stopRhythm);if(elements.kickSoloBtn)elements.kickSoloBtn.addEventListener("click",toggleKickSolo);if(elements.masterVolume)elements.masterVolume.addEventListener("input",e=>updateMasterVolume(e.target.value));if(elements.synthVolume)elements.synthVolume.addEventListener("input",e=>updateSynthVolume(e.target.value));if(elements.kickVolume)elements.kickVolume.addEventListener("input",e=>updateKickVolume(e.target.value));if(elements.effectsVolume)elements.effectsVolume.addEventListener("input",e=>updateEffectsVolume(e.target.value));if(elements.kickPattern)elements.kickPattern.addEventListener("change",e=>updateKickPattern(e.target.value));if(elements.kickPunch)elements.kickPunch.addEventListener("input",e=>updateKickPunch(e.target.value));if(elements.kickBass)elements.kickBass.addEventListener("input",e=>updateKickBass(e.target.value));if(elements.kickDistortion)elements.kickDistortion.addEventListener("input",e=>updateKickDistortion(e.target.value));if(elements.kickSweep)elements.kickSweep.addEventListener("input",e=>updateKickSweep(e.target.value));const octUp=document.getElementById("octUp"),octDown=document.getElementById("octDown");if(octUp)octUp.addEventListener("click",()=>{AppState.octaveOffset++;applyPitch();createNoteRuler();});if(octDown)octDown.addEventListener("click",()=>{AppState.octaveOffset--;applyPitch();createNoteRuler();});const permissionAllow=document.getElementById("permissionAllow"),permissionDeny=document.getElementById("permissionDeny");if(permissionAllow){permissionAllow.addEventListener("click",async()=>{try{const response=await DeviceOrientationEvent.requestPermission();if(elements.permissionModal){elements.permissionModal.style.display='none';}if(response==='granted'){startMotionControl();}else{showStatus('Hareket izni reddedildi, sensörlere erişemiyoruz! 😢');}}catch(e){console.error('İzin hatası:',e);if(elements.permissionModal){elements.permissionModal.style.display='none';}showStatus('İzin isteği başarısız, bir şeyler ters gitti! 🤔');}});}if(permissionDeny){permissionDeny.addEventListener("click",()=>{if(elements.permissionModal){elements.permissionModal.style.display='none';}showStatus('Hareket erişimi reddedildi! 🚫');});}const waveSelect=document.getElementById("waveSelect"),detuneRange=document.getElementById("detuneRange"),filterFreq=document.getElementById("filterFreq"),filterReso=document.getElementById("filterReso"),autoWahRate=document.getElementById("autoWahRate"),autoWahDepth=document.getElementById("autoWahDepth");if(waveSelect)waveSelect.addEventListener("change",e=>{AppState.waveType=e.target.value;cleanupOscillators();createOscillators();connectAudioGraph();showStatus('Dalga türü: '+AppState.waveType+' - bu dalga seni götürecek! 🌊');});if(detuneRange)detuneRange.addEventListener("input",e=>{AppState.detuneAmount=parseFloat(e.target.value);const display=document.getElementById('detuneValue');if(display)display.textContent=e.target.value;if(AppState.oscillators.length>0){AppState.oscillators.forEach((osc,i)=>{if(osc&&osc.detune){osc.detune.value=(i-Math.floor(AppState.NUM_OSC/2))*AppState.detuneAmount;}});}});if(filterFreq)filterFreq.addEventListener("input",e=>{const value=parseFloat(e.target.value),display=document.getElementById('filterFreqValue');if(display)display.textContent=Math.round(value);if(audioNodes.filter){audioNodes.filter.frequency.setTargetAtTime(value,AppState.audioCtx.currentTime,0.01);}});if(filterReso)filterReso.addEventListener("input",e=>{const value=parseFloat(e.target.value),display=document.getElementById('filterResoValue');if(display)display.textContent=value;if(audioNodes.filter){audioNodes.filter.Q.setTargetAtTime(value,AppState.audioCtx.currentTime,0.01);}});if(autoWahRate)autoWahRate.addEventListener("input",e=>{const value=parseFloat(e.target.value),display=document.getElementById('autoWahRateValue');if(display)display.textContent=value;if(audioNodes.autoWahLFO){audioNodes.autoWahLFO.frequency.setTargetAtTime(value,AppState.audioCtx.currentTime,0.01);}});if(autoWahDepth)autoWahDepth.addEventListener("input",e=>{const value=parseFloat(e.target.value),display=document.getElementById('autoWahDepthValue');if(display)display.textContent=Math.round(value);if(audioNodes.autoWahGain){audioNodes.autoWahGain.gain.setTargetAtTime(value,AppState.audioCtx.currentTime,0.01);}});const toggleMap={toggleDist:'dist',toggleAutoWah:'autoWah',toggleFlanger:'flanger',toggleChorus:'chorus',toggleTremolo:'tremolo',toggleDelay:'delay',toggleReverb:'reverb'};Object.entries(toggleMap).forEach(([id,effect])=>{const element=document.getElementById(id);if(element){element.addEventListener("click",()=>{effects[effect]=!effects[effect];element.classList.toggle('active',effects[effect]);connectAudioGraph();const durum=effects[effect]?'AÇIK':'KAPALI';let mesaj='';switch(effect){case'dist':mesaj='Distorsiyon '+durum+' - kulakların çınlayabilir! 🤘';break;case'autoWah':mesaj='Auto Wah '+durum+' - vak vak vak! 🦆';break;case'flanger':mesaj='Flanger '+durum+' - uçuyoruz! ✈️';break;case'chorus':mesaj='Chorus '+durum+' - sanki bir korodayız! 🎤';break;case'tremolo':mesaj='Tremolo '+durum+' - titreme modu! 🥶';break;case'delay':mesaj='Delay '+durum+' - yankılanma zamanı! 🗣️';break;case'reverb':mesaj='Reverb '+durum+' - mağara etkisi! 🏔️';break;}showStatus(mesaj);if(effect==='autoWah'&&elements.wahDisplay){elements.wahDisplay.style.display=effects[effect]?'block':'none';elements.wahDisplay.textContent='Wah:'+(effects[effect]?'AÇIK':'KAPALI');}});}});const rhythmSpeed=document.getElementById("rhythmSpeed"),rhythmIntensity=document.getElementById("rhythmIntensity");if(rhythmSpeed)rhythmSpeed.addEventListener("input",e=>updateRhythmSpeed(e.target.value));if(rhythmIntensity)rhythmIntensity.addEventListener("input",e=>updateRhythmIntensity(e.target.value));if(elements.animationSelect)elements.animationSelect.addEventListener("change",e=>setAnimation(e.target.value));if(elements.animSpeed)elements.animSpeed.addEventListener("input",e=>updateAnimationSpeed(e.target.value));if(elements.animIntensity)elements.animIntensity.addEventListener("input",e=>updateAnimationIntensity(e.target.value));if(elements.credit){elements.credit.addEventListener("click",function(e){e.preventDefault();createCandyRain();showStatus('Tatlı! Şeker yağmuru! 🍬 - şekerlemeler yağıyor! 🌧️');});}document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();AppState.rhythmActive?stopRhythm():startRhythm();}});window.addEventListener('beforeunload',()=>{stopSynth();disableMotion();stopWaveAnimation();});window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){startSynth();}}); }catch(error){console.error('Olay dinleyici başlatma hatası:',error);}}
-window.addEventListener('load',()=>{try{updateThemeColor([255,100,100]);initializeEventListeners();updateButtonStates();createNoteRuler();updateValueDisplays();updateAllVolumes();showStatus('Hazır - Başlamak için Başlat\'a tıkla! Ritim kontrolü için BOŞLUK tuşunu kullan! 🎮');}catch(error){console.error('Uygulama başlatma hatası:',error);}});
-window.addEventListener("contextmenu",e=>e.preventDefault());
+function createOscillators(){try{cleanupOscillators();const now=AppState.audioCtx.currentTime;for(let i=0;i<AppState.NUM_OSC;i++){let osc;if(AppState.waveType==='fm'){
+          osc = AppState.audioCtx.createOscillator();
+          osc.type = 'sine'; // FM taşıyıcı dalga
+          const modulator = AppState.audioCtx.createOscillator();
+          modulator.type = 'sine';
+          const modGain = AppState.audioCtx.createGain();
+          modulator.connect(modGain);
+          modGain.connect(osc.frequency);
+          osc.modulator = modulator;
+          osc.modGain = modGain;
+          modulator.start(now);
+        } else if (AppState.waveType === 'pulse') {
+          osc = AppState.audioCtx.createOscillator();
+          osc.type = 'sawtooth'; // Pulse için temel
+          const shaper = AppState.audioCtx.createWaveShaper(); // Pulse shaping için
+          osc.pulseWidth = shaper;
+          osc.connect(shaper);
+        } else {
+          osc = AppState.audioCtx.createOscillator();
+          osc.type = AppState.waveType;
+        }
+
+        // Frekans ve Detune Ayarları
+        const detune = (Math.random() - 0.5) * AppState.detuneAmount * (i / AppState.NUM_OSC);
+        osc.detune.value = detune;
+        
+        // Bağlantılar
+        if (AppState.waveType === 'pulse' && osc.pulseWidth) {
+           osc.pulseWidth.connect(AppState.synthGain);
+           updatePulseWidth(osc.pulseWidth, AppState.pulseWidth);
+        } else {
+           osc.connect(AppState.synthGain);
+        }
+
+        osc.start(now);
+        AppState.oscillators.push(osc);
+      }
+      
+      updateFrequency(); // Başlangıç frekansını ayarla
+      
+    } catch (error) {
+      console.error('Osilatör oluşturma hatası:', error);
+    }
+  }
+
+  function connectAudioGraph() {
+    try {
+      // Sinyal Akışı: Synth -> Distortion -> Filter -> AutoWah -> Modülasyonlar -> Master
+      
+      // 1. Synth Gain Çıkışı
+      AppState.synthGain.disconnect();
+      
+      // 2. Efekt Zinciri
+      let currentInput = AppState.synthGain;
+
+      // Distortion
+      if (effects.dist) {
+        currentInput.connect(audioNodes.distortion);
+        audioNodes.distortion.connect(audioNodes.distortionGain);
+        audioNodes.distortionGain.gain.value = 1; // Basit gain
+        currentInput = audioNodes.distortionGain;
+      }
+
+      // Filtre (Her zaman aktif ama açık olabilir)
+      currentInput.connect(audioNodes.filter);
+      currentInput = audioNodes.filter;
+
+      // Auto Wah
+      if (effects.autoWah) {
+        currentInput.connect(audioNodes.autoWah);
+        currentInput.connect(audioNodes.autoWahGain); // Dry signal
+        audioNodes.autoWah.connect(audioNodes.autoWahGain);
+        currentInput = audioNodes.autoWahGain;
+        
+        if(!lfoStarted) {
+             audioNodes.autoWahLFO.start();
+             audioNodes.flangerLFO.start();
+             audioNodes.chorusLFO.start();
+             audioNodes.tremoloLFO.start();
+             lfoStarted = true;
+        }
+        audioNodes.autoWahLFO.connect(audioNodes.autoWah.frequency);
+      }
+
+      // Flanger
+      if (effects.flanger) {
+         currentInput.connect(audioNodes.flangerDelay);
+         audioNodes.flangerDelay.connect(audioNodes.flangerGain);
+         audioNodes.flangerFeedback.connect(audioNodes.flangerDelay);
+         audioNodes.flangerDelay.connect(audioNodes.flangerFeedback);
+         audioNodes.flangerLFO.connect(audioNodes.flangerDelay.delayTime);
+         // Basit mix
+         const merger = AppState.audioCtx.createChannelMerger(2);
+         currentInput.connect(merger, 0, 0);
+         audioNodes.flangerGain.connect(merger, 0, 1);
+         currentInput = merger; 
+      }
+
+      // Chorus
+      if (effects.chorus) {
+          // Basit chorus routing
+          currentInput.connect(audioNodes.chorusDelay);
+          audioNodes.chorusLFO.connect(audioNodes.chorusDelay.delayTime);
+          audioNodes.chorusDelay.connect(audioNodes.chorusGain);
+          // Mix
+          const chorused = AppState.audioCtx.createGain();
+          currentInput.connect(chorused);
+          audioNodes.chorusGain.connect(chorused);
+          currentInput = chorused;
+      }
+
+      // Tremolo
+      if (effects.tremolo) {
+        currentInput.connect(audioNodes.tremoloGain);
+        audioNodes.tremoloLFO.connect(audioNodes.tremoloGain.gain);
+        currentInput = audioNodes.tremoloGain;
+      }
+      
+      // Delay
+      if (effects.delay) {
+        currentInput.connect(audioNodes.delay);
+        audioNodes.delay.connect(audioNodes.delayFeedback);
+        audioNodes.delayFeedback.connect(audioNodes.delay);
+        // Delay mix
+        const delayMix = AppState.audioCtx.createGain();
+        currentInput.connect(delayMix);
+        audioNodes.delay.connect(delayMix);
+        currentInput = delayMix;
+      }
+
+      // Reverb
+      if (effects.reverb) {
+        const reverbMix = AppState.audioCtx.createGain();
+        currentInput.connect(reverbMix); // Dry
+        currentInput.connect(audioNodes.reverb);
+        audioNodes.reverb.connect(reverbMix); // Wet
+        currentInput = reverbMix;
+      }
+
+      // Efekt çıkışını Effects Gain'e bağla
+      currentInput.connect(AppState.effectsGain);
+
+      // Ana Mikser Bağlantıları
+      // Kick doğrudan Master'a (veya kompresörden sonra)
+      if (kickCompressor) {
+          kickCompressor.connect(AppState.kickGain);
+          AppState.kickGain.connect(AppState.masterGain);
+      }
+      
+      AppState.effectsGain.connect(AppState.masterGain);
+      
+      // Master -> Panner -> Destination
+      AppState.masterGain.connect(audioNodes.panner);
+      audioNodes.panner.connect(AppState.audioCtx.destination);
+
+    } catch (error) {
+      console.error('Ses grafiği bağlama hatası:', error);
+    }
+  }
+
+  function updateFrequency() {
+    if (!AppState.oscillators.length) return;
+    
+    // Hareket sensörü etkisi
+    const tiltFactor = AppState.motionEnabled ? AppState.tiltBend : 0;
+    const targetFreq = AppState.baseFreq * Math.pow(2, AppState.octaveOffset + tiltFactor / 12);
+
+    AppState.oscillators.forEach((osc, index) => {
+      const detune = osc.detune.value;
+      const freq = targetFreq; // Detune zaten osc üzerinde ayarlı
+      
+      try {
+          if (AppState.waveType === 'fm' && osc.modulator) {
+              osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
+              // FM Oranı
+              const modRatio = 2; 
+              osc.modulator.frequency.setTargetAtTime(freq * modRatio, AppState.audioCtx.currentTime, 0.01);
+              osc.modGain.gain.setTargetAtTime(freq * 0.5, AppState.audioCtx.currentTime, 0.01);
+          } else {
+              osc.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.01);
+          }
+      } catch(e) {}
+    });
+  }
+
+  function handleInput(x, y) {
+      // Y ekseni: Pitch (Nota)
+      const rect = elements.pad.getBoundingClientRect();
+      const relativeY = 1 - (y - rect.top) / rect.height;
+      const relativeX = (x - rect.left) / rect.width;
+
+      // X ekseni: Filtre / Rezonans
+      const minFreq = 200, maxFreq = 10000;
+      const freq = minFreq + (maxFreq - minFreq) * relativeX;
+      elements.filterFreq.value = freq;
+      elements.filterFreqValue.textContent = Math.floor(freq);
+      if(audioNodes.filter) audioNodes.filter.frequency.setTargetAtTime(freq, AppState.audioCtx.currentTime, 0.05);
+
+      // Pan kontrolü (Eğer aktifse)
+      if (AppState.panEnabled && audioNodes.panner) {
+          const pan = (relativeX * 2) - 1;
+          audioNodes.panner.pan.setTargetAtTime(pan, AppState.audioCtx.currentTime, 0.1);
+          elements.panDisplay.textContent = `Pan: ${Math.round(pan * 100)}%`;
+          elements.panDisplay.style.display = 'block';
+      }
+
+      // Nota hesaplama (Tam notalar)
+      const totalNotes = 24; // 2 oktav aralığı
+      const noteIndex = Math.floor(relativeY * totalNotes);
+      const note = noteNames[noteIndex % 12];
+      const octave = Math.floor(noteIndex / 12) + 3 + AppState.octaveOffset;
+      
+      elements.noteDisplay.textContent = `${note}${octave}`;
+      elements.noteDisplay.style.color = `rgb(${noteColors[noteIndex%12].join(',')})`;
+      
+      // Frekansı güncelle
+      // C3 = 130.81 Hz referans alınarak
+      const freqY = 130.81 * Math.pow(2, noteIndex / 12);
+      AppState.baseFreq = freqY;
+      updateFrequency();
+
+      // Dokunma efekti (Particle)
+      touchPoint = {x, y};
+  }
+
+  function updateAllVolumes() {
+      if(!AppState.masterGain) return;
+      const now = AppState.audioCtx ? AppState.audioCtx.currentTime : 0;
+      
+      AppState.masterGain.gain.setTargetAtTime(AppState.volumeSettings.master / 100, now, 0.05);
+      AppState.synthGain.gain.setTargetAtTime(AppState.volumeSettings.synth / 100, now, 0.05);
+      AppState.kickGain.gain.setTargetAtTime(AppState.volumeSettings.kick / 100, now, 0.05);
+      AppState.effectsGain.gain.setTargetAtTime(AppState.volumeSettings.effects / 100, now, 0.05);
+  }
+
+  // --- Event Listeners ---
+
+  // Mouse / Touch Events
+  const startInput = (e) => {
+      e.preventDefault();
+      if (!isAudioContextValid()) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      handleInput(x, y);
+      
+      // Amp Envelope (Basit Gate)
+      AppState.synthGain.gain.cancelScheduledValues(AppState.audioCtx.currentTime);
+      AppState.synthGain.gain.setValueAtTime(0, AppState.audioCtx.currentTime);
+      AppState.synthGain.gain.linearRampToValueAtTime(AppState.volumeSettings.synth / 100, AppState.audioCtx.currentTime + 0.05);
+      
+      elements.noteDisplay.style.transform = "translateX(-50%) scale(1.2)";
+  };
+
+  const moveInput = (e) => {
+      e.preventDefault();
+      if (!isAudioContextValid()) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      handleInput(x, y);
+  };
+
+  const stopInput = (e) => {
+      if (!isAudioContextValid()) return;
+      // Release
+      AppState.synthGain.gain.cancelScheduledValues(AppState.audioCtx.currentTime);
+      AppState.synthGain.gain.setTargetAtTime(0, AppState.audioCtx.currentTime, 0.1);
+      
+      elements.noteDisplay.style.transform = "translateX(-50%) scale(1)";
+      elements.panDisplay.style.display = 'none';
+  };
+
+  elements.pad.addEventListener('mousedown', startInput);
+  elements.pad.addEventListener('mousemove', (e) => { if(e.buttons === 1) moveInput(e); });
+  elements.pad.addEventListener('mouseup', stopInput);
+  elements.pad.addEventListener('touchstart', startInput, {passive: false});
+  elements.pad.addEventListener('touchmove', moveInput, {passive: false});
+  elements.pad.addEventListener('touchend', stopInput);
+
+  // UI Kontrolleri
+  elements.startBtn.addEventListener('click', async () => {
+    if (!AppState.audioCtx) {
+        AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    await AppState.audioCtx.resume();
+    createAudioNodes();
+    AppState.isPlaying = true;
+    updateButtonStates();
+    animate();
+    showStatus('Synth Başlatıldı!');
+  });
+
+  // *** DÜZELTİLMİŞ KOD BURADA BAŞLAR ***
+  elements.stopBtn.addEventListener('click', () => {
+    // 1. Ritim döngüsünü durdur
+    if(AppState.rhythmActive) {
+        clearInterval(rhythmInterval);
+        AppState.rhythmActive = false;
+    }
+
+    // 2. Ses bağlamını askıya al
+    if (AppState.audioCtx) {
+        AppState.audioCtx.suspend();
+    }
+    
+    // 3. Durumları güncelle
+    AppState.isPlaying = false;
+    updateButtonStates();
+    
+    // 4. Animasyonu durdur (isteğe bağlı, ama temizlik için iyi)
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    
+    showStatus('Durduruldu.');
+  });
+  // *** DÜZELTİLMİŞ KOD BURADA BİTER ***
+  
+  elements.toggleControls.addEventListener('click', () => {
+      elements.controls.classList.toggle('expanded');
+      elements.toggleControls.textContent = elements.controls.classList.contains('expanded') ? '⬇️' : '⚙️';
+  });
+
+  // Dalga Tipi
+  document.getElementById('waveSelect').addEventListener('change', (e) => {
+      AppState.waveType = e.target.value;
+      if(AppState.isPlaying) createOscillators();
+  });
+
+  // Oktav Kontrolleri
+  document.getElementById('octUp').addEventListener('click', () => { AppState.octaveOffset++; updateFrequency(); showStatus(`Oktav: ${AppState.octaveOffset}`); });
+  document.getElementById('octDown').addEventListener('click', () => { AppState.octaveOffset--; updateFrequency(); showStatus(`Oktav: ${AppState.octaveOffset}`); });
+
+  // Volume Sliderları
+  elements.masterVolume.addEventListener('input', (e) => { 
+      AppState.volumeSettings.master = parseInt(e.target.value); 
+      document.getElementById('masterVolumeValue').textContent = e.target.value; 
+      updateAllVolumes(); 
+  });
+  elements.synthVolume.addEventListener('input', (e) => { 
+      AppState.volumeSettings.synth = parseInt(e.target.value);
+      document.getElementById('synthVolumeValue').textContent = e.target.value; 
+      updateAllVolumes();
+  });
+  elements.kickVolume.addEventListener('input', (e) => { 
+      AppState.volumeSettings.kick = parseInt(e.target.value);
+      document.getElementById('kickVolumeValue').textContent = e.target.value;
+      if(kickGain) updateAllVolumes();
+  });
+   elements.effectsVolume.addEventListener('input', (e) => { 
+      AppState.volumeSettings.effects = parseInt(e.target.value);
+      document.getElementById('effectsVolumeValue').textContent = e.target.value;
+      updateAllVolumes();
+  });
+
+  // Efekt Butonları
+  const toggleEffect = (id, effectKey) => {
+      document.getElementById(id).addEventListener('click', (e) => {
+          effects[effectKey] = !effects[effectKey];
+          e.target.classList.toggle('active', effects[effectKey]);
+          if(AppState.isPlaying) connectAudioGraph();
+      });
+  };
+
+  toggleEffect('toggleDist', 'dist');
+  toggleEffect('toggleAutoWah', 'autoWah');
+  toggleEffect('toggleFlanger', 'flanger');
+  toggleEffect('toggleChorus', 'chorus');
+  toggleEffect('toggleTremolo', 'tremolo');
+  toggleEffect('toggleDelay', 'delay');
+  toggleEffect('toggleReverb', 'reverb');
+
+  // Parametre Sliderları
+  document.getElementById('detuneRange').addEventListener('input', (e) => {
+      AppState.detuneAmount = parseInt(e.target.value);
+      document.getElementById('detuneValue').textContent = e.target.value;
+      if(AppState.isPlaying) createOscillators();
+  });
+  
+  elements.filterFreq = document.getElementById('filterFreq');
+  elements.filterFreqValue = document.getElementById('filterFreqValue');
+  
+  elements.filterFreq.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      elements.filterFreqValue.textContent = val;
+      if(audioNodes.filter) audioNodes.filter.frequency.setTargetAtTime(val, AppState.audioCtx.currentTime, 0.05);
+  });
+
+  document.getElementById('filterReso').addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      document.getElementById('filterResoValue').textContent = val;
+      if(audioNodes.filter) audioNodes.filter.Q.value = val;
+  });
+
+  // Kick Kontrolleri
+  elements.kickPattern.addEventListener('change', (e) => { AppState.kickSettings.pattern = e.target.value; });
+  elements.kickPunch.addEventListener('input', (e) => { AppState.kickSettings.punch = parseInt(e.target.value); document.getElementById('kickPunchValue').textContent = e.target.value; });
+  elements.kickBass.addEventListener('input', (e) => { AppState.kickSettings.bass = parseInt(e.target.value); document.getElementById('kickBassValue').textContent = e.target.value; });
+  elements.kickDistortion.addEventListener('input', (e) => { AppState.kickSettings.distortion = parseInt(e.target.value); document.getElementById('kickDistortionValue').textContent = e.target.value; });
+  
+  elements.startRhythmBtn.addEventListener('click', () => {
+      if(!AppState.isPlaying) return;
+      AppState.rhythmActive = true;
+      let beat = 0;
+      const ms = 60000 / AppState.rhythmSpeed * 0.25; // 16th notes
+      
+      clearInterval(rhythmInterval);
+      rhythmInterval = setInterval(() => {
+          playKick(beat);
+          beat++;
+      }, ms); // Basit zamanlayıcı, gerçek ses zamanlaması için AudioContext clock kullanılmalı ama bu demo için yeterli
+      
+      updateButtonStates();
+  });
+
+  elements.stopRhythmBtn.addEventListener('click', () => {
+      AppState.rhythmActive = false;
+      clearInterval(rhythmInterval);
+      updateButtonStates();
+  });
+  
+  document.getElementById('rhythmSpeed').addEventListener('input', (e) => {
+      AppState.rhythmSpeed = parseInt(e.target.value);
+      document.getElementById('rhythmSpeedValue').textContent = e.target.value;
+      if(AppState.rhythmActive) { elements.stopRhythmBtn.click(); elements.startRhythmBtn.click(); }
+  });
+
+  // Motion & Pan Butonları
+  elements.motionBtn.addEventListener('click', () => {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          elements.permissionModal.style.display = 'flex';
+      } else {
+          AppState.motionEnabled = !AppState.motionEnabled;
+          updateButtonStates();
+      }
+  });
+  
+  document.getElementById('permissionAllow').addEventListener('click', () => {
+      DeviceOrientationEvent.requestPermission()
+          .then(response => {
+              if (response == 'granted') {
+                  AppState.motionEnabled = true;
+                  updateButtonStates();
+              }
+              elements.permissionModal.style.display = 'none';
+          })
+          .catch(console.error);
+  });
+  
+  document.getElementById('permissionDeny').addEventListener('click', () => {
+      elements.permissionModal.style.display = 'none';
+  });
+
+  elements.panBtn.addEventListener('click', () => {
+      AppState.panEnabled = !AppState.panEnabled;
+      updateButtonStates();
+  });
+
+  window.addEventListener('deviceorientation', (e) => {
+      if (!AppState.motionEnabled) return;
+      // Beta: Ön-Arka eğim (-180, 180) -> Pitch Bend
+      AppState.tiltBend = Math.min(Math.max(e.beta, -45), 45) / 45 * 2; // +/- 2 semitone
+      elements.motionDisplay.textContent = `Eğim: ${Math.round(e.beta)}°`;
+      elements.motionDisplay.style.display = 'block';
+      updateFrequency();
+  });
+
+  // Animasyon Ayarları
+  elements.animationSelect.addEventListener('change', (e) => {
+      AppState.currentAnimation = e.target.value;
+      const anim = animations[AppState.currentAnimation];
+      if(anim && anim.init) anim.init();
+  });
+  
+  elements.animSpeed.addEventListener('input', (e) => { AppState.animationSpeed = parseFloat(e.target.value); document.getElementById('animSpeedValue').textContent = e.target.value; });
+  elements.animIntensity.addEventListener('input', (e) => { AppState.animationIntensity = parseFloat(e.target.value); document.getElementById('animIntensityValue').textContent = e.target.value; });
+
+  // Animasyon Döngüsü
+  function animate() {
+      if (!AppState.isPlaying) {
+          // Durdurulduysa animasyon döngüsünden çık
+          animationFrameId = null;
+          return;
+      }
+      
+      const ctx = elements.waveCanvas.getContext('2d');
+      elements.waveCanvas.width = window.innerWidth;
+      elements.waveCanvas.height = window.innerHeight;
+      
+      animationHue = (animationHue + 1) % 360;
+      const time = Date.now() / 1000;
+      
+      const anim = animations[AppState.currentAnimation];
+      if (anim) {
+          if (anim.draw.length > 1) {
+             anim.draw(ctx, time);
+          } else {
+             anim.draw(ctx);
+          }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+  }
+
+  // İlk Başlatma (Ruler çizimi vb.)
+  function init() {
+      const ruler = elements.noteRuler;
+      ruler.innerHTML = '';
+      for(let i=0; i<24; i++) {
+          const div = document.createElement('div');
+          div.className = 'ruler-note';
+          const noteName = noteNames[i % 12];
+          div.textContent = (i % 12 === 0 || i % 12 === 5 || i % 12 === 9) ? noteName : '-';
+          div.style.backgroundColor = (noteName.includes('#')) ? 'rgba(0,0,0,0.3)' : 'transparent';
+          ruler.appendChild(div);
+      }
+      
+      // İlk animasyon başlatma
+      const anim = animations[AppState.currentAnimation];
+      if(anim && anim.init) anim.init();
+      
+      // Canvas boyutu
+      elements.waveCanvas.width = window.innerWidth;
+      elements.waveCanvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', () => {
+      elements.waveCanvas.width = window.innerWidth;
+      elements.waveCanvas.height = window.innerHeight;
+      if(animations[AppState.currentAnimation].init) animations[AppState.currentAnimation].init();
+  });
+
+  // Uygulamayı hazırla
+  init();
+  updateButtonStates();
+
 </script>
 </body>
 </html>
