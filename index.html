@@ -165,7 +165,7 @@ function cleanupAudioNodes(){
     if (audioNodes.tremoloLFO && audioNodes.tremoloLFO.stop) {
         try { audioNodes.tremoloLFO.stop(); } catch(e) {}
     }
-   
+  
     // Tüm ses düğümlerinin bağlantısını kes
     Object.values(audioNodes).forEach(node=>{
         if(node&&typeof node.disconnect==='function'){
@@ -174,7 +174,7 @@ function cleanupAudioNodes(){
     });
     audioNodes={};
     lfoStarted=false;
-   
+  
     // Kick düğümlerini temizle
     const kickNodes=[kickOsc,kickGain,kickClickOsc,kickClickGain,kickFilter,kickDistortion,kickCompressor];
     kickNodes.forEach(node=>{
@@ -209,67 +209,42 @@ function handleTouchPosition(clientX,clientY){if(!elements.pad)return;const rect
 function handleMouseDown(e){if(!isAudioContextValid()){showStatus('Lütfen önce synth\'i başlat! Yoksa çalamayız!');return;}handleTouchPosition(e.clientX,e.clientY);}
 function handleMouseMove(e){if(e.buttons===1){handleTouchPosition(e.clientX,e.clientY);}}
 function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.01);if(elements.panDisplay){const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;}});}
-async function startSynth(){try{
-    // Önce tam bir temizlik yapalım
-    await stopSynth();
-    
-    // Yeni bir AudioContext oluştur
-    AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    await AppState.audioCtx.resume();
-    
-    // Ses düğümlerini oluştur
-    createAudioNodes();
-    
-    // Durumu güncelle
-    AppState.isPlaying = true;
-    updateButtonStates();
-    
-    // Animasyonları başlat
-    startWaveAnimation();
-    
-    showStatus('Synth başladı! Efektlerle eğlenmeye başla! 🎹');
-    
-} catch(e) {
-    console.error('Başlatma hatası:', e);
-    showStatus('Ses başlatılamadı: ' + e.message + ' - Tekrar deneyelim!');
-}}
+async function startSynth(){try{if(AppState.audioCtx){if(AppState.audioCtx.state !== 'running'){try{await AppState.audioCtx.close();}catch(e){}AppState.audioCtx = null;}else{showStatus('Synth sıfırlanıyor, biraz sabır...');cleanupOscillators();createAudioNodes();showStatus('Synth sıfırlandı, temiz başlangıç!');return;}}AppState.audioCtx=new(window.AudioContext||window.webkitAudioContext)();await AppState.audioCtx.resume();createAudioNodes();AppState.isPlaying=true;updateButtonStates();startWaveAnimation();showStatus('Synth başladı! Efektlerle eğlenmeye başla! 🎹');}catch(e){console.error('Başlatma hatası:',e);showStatus('Ses başlatılamadı: '+e.message+' - Tekrar deneyelim!');}}
 async function stopSynth(){
     try {
-        // Oscillator'ları temizle
         cleanupOscillators();
-        
-        // Ritmi durdur
         stopRhythm();
-        
-        // Animasyonları durdur
         stopWaveAnimation();
-        
-        // Ses düğümlerini temizle
-        cleanupAudioNodes();
-        
-        // AudioContext'i tamamen kapat
+      
         if (AppState.audioCtx && AppState.audioCtx.state !== 'closed') {
-            try {
-                await AppState.audioCtx.close();
-            } catch (e) {
-                console.error('AudioContext kapatma hatası:', e);
+            // Master gain'ı sıfırla (fade-out efekti için)
+            if (AppState.masterGain) {
+                const now = AppState.audioCtx.currentTime;
+                AppState.masterGain.gain.setTargetAtTime(0.001, now, 0.02);
+              
+                // Kısa bir bekleme süresi ekle (fade-out için)
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
+          
+            // Tüm ses düğümlerinin bağlantısını kes
+            cleanupAudioNodes();
+          
+            // Audio context'i kapat
+            await AppState.audioCtx.close();
             AppState.audioCtx = null;
         }
-        
-        // State'i temizle
+      
         AppState.masterGain = null;
         AppState.synthGain = null;
         AppState.kickGain = null;
         AppState.effectsGain = null;
         AppState.isPlaying = false;
-        
         updateButtonStates();
         showStatus('Synth durdu, sessizliğe hoş geldin! 🤫');
-        
+      
     } catch (e) {
         console.error('Durdurma hatası:', e);
-        
+      
         // Hata durumunda daha agresif temizlik
         if (AppState.audioCtx) {
             try {
@@ -281,14 +256,14 @@ async function stopSynth(){
             }
             AppState.audioCtx = null;
         }
-        
+      
         // State'i sıfırla
         AppState.masterGain = null;
         AppState.synthGain = null;
         AppState.kickGain = null;
         AppState.effectsGain = null;
         AppState.isPlaying = false;
-        
+      
         updateButtonStates();
         showStatus('Synth temizlikle durdu, her şey tertemiz! 🧹');
     }
