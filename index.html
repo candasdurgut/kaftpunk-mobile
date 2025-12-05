@@ -68,6 +68,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <button id="panBtn">Pan</button>
 <button id="octDown">Oktav-</button>
 <button id="octUp">Oktav+</button>
+
 <div class="volume-panel">
 <div class="volume-title">SES MİKSerİ</div>
 <div class="volume-controls">
@@ -77,6 +78,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group"><label>Efekt Ses</label><input type="range" id="effectsVolume" min="0" max="100" value="70"><div class="value-display" id="effectsVolumeValue">70</div></div>
 </div>
 </div>
+
 <div class="effect-group">
 <div class="effect-group-title">SYNTH & EFEKT KONTROLLERİ</div>
 <div class="control-group"><label>Dalga</label><select id="waveSelect"><option value="sawtooth">Testere</option><option value="triangle">Üçgen</option><option value="square">Kare</option><option value="sine">Sinüs</option><option value="pulse">Pulse</option><option value="fm">FM</option></select></div>
@@ -85,6 +87,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group"><label>Filtre Rezonans</label><input type="range" id="filterReso" min="0.5" max="20" value="1" step="0.5"><div class="value-display" id="filterResoValue">1</div></div>
 <div class="control-group"><label>Wah Hızı</label><input type="range" id="autoWahRate" min="0.1" max="5" value="1" step="0.1"><div class="value-display" id="autoWahRateValue">1</div></div>
 <div class="control-group"><label>Wah Derinlik</label><input type="range" id="autoWahDepth" min="100" max="1500" value="800"><div class="value-display" id="autoWahDepthValue">800</div></div>
+
 <div class="effect-group-title" style="margin-top:8px;">EFEKT ANAHTARLARI</div>
 <button id="toggleDist">Distortion</button>
 <button id="toggleAutoWah">Auto Wah</button>
@@ -94,6 +97,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <button id="toggleDelay">Delay</button>
 <button id="toggleReverb">Reverb</button>
 </div>
+
 <div class="rhythm-panel">
 <div class="rhythm-title">DİNAMİK RİTİM</div>
 <div class="control-group"><label>Hız</label><input type="range" id="rhythmSpeed" min="30" max="2000" value="120"><div class="value-display" id="rhythmSpeedValue">120</div></div>
@@ -103,6 +107,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <button id="stopRhythmBtn" disabled>Ritmi Durdur</button>
 </div>
 </div>
+
 <div class="kick-panel">
 <div class="kick-title">KİCK DAVUL - GÜÇLENDİRİLMİŞ BAS</div>
 <div class="kick-controls">
@@ -114,6 +119,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 <button id="kickSoloBtn" style="grid-column:1/-1;margin-top:8px;">Kick Solo</button>
 </div>
+
 <div class="animation-panel">
 <div class="animation-title">GÖRSEL ANİMASYONLAR</div>
 <div class="control-group"><select id="animationSelect"><option value="none">Yok</option><option value="psychedelic">Psikedelik</option><option value="cosmicDust">Kozmik Toz</option><option value="network" selected>Ağ</option><option value="metaballs">Metaballs</option><option value="oscilloscope">Osiloskop</option><option value="equalizer">Ekolayzır</option><option value="circularWave">Dairesel Dalga</option><option value="kaleidoscope">Kaleidoskop</option><option value="spiral">Spiral</option><option value="matrix">Matrix</option></select></div>
@@ -122,9 +128,11 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 <div class="control-group"><label>Yoğunluk</label><input type="range" id="animIntensity" min="0.1" max="2" value="1" step="0.1"><div class="value-display" id="animIntensityValue">1</div></div>
 </div>
 </div>
+
 <a href="#" id="credit">Designed by C.D. v0.31α</a>
 </div>
 </div>
+
 <div id="statusMessage"></div>
 <div id="permissionModal" class="modal">
 <div class="modal-content">
@@ -136,6 +144,7 @@ select{padding:8px;cursor:pointer;min-height:40px;width:100%;}
 </div>
 </div>
 </div>
+
 <script>
 const AppState={audioCtx:null,oscillators:[],masterGain:null,synthGain:null,kickGain:null,effectsGain:null,baseFreq:261.63,octaveOffset:0,tiltBend:0,detuneAmount:15,waveType:"sawtooth",isPlaying:false,motionEnabled:false,panEnabled:false,NUM_OSC:7,pulseWidth:0.5,rhythmActive:false,rhythmSpeed:120,rhythmIntensity:50,currentAnimation:"network",animationSpeed:1,animationIntensity:1,kickSolo:false,volumeSettings:{master:60,synth:80,kick:80,effects:70},kickSettings:{pattern:'4/4',punch:70,bass:90,distortion:40,sweep:80}};
 const effects={dist:false,autoWah:false,flanger:false,chorus:false,tremolo:false,delay:false,reverb:false};
@@ -151,7 +160,42 @@ function showStatus(msg,dur=1500){if(!elements.statusMessage)return;elements.sta
 function updateButtonStates(){if(!elements.startBtn)return;elements.startBtn.disabled=AppState.isPlaying;elements.stopBtn.disabled=!AppState.isPlaying;elements.startRhythmBtn.disabled=AppState.rhythmActive||!AppState.isPlaying;elements.stopRhythmBtn.disabled=!AppState.rhythmActive;elements.motionBtn.textContent=AppState.motionEnabled?"Hareket AÇIK":"Hareket";elements.motionBtn.classList.toggle('active',AppState.motionEnabled);elements.panBtn.textContent=AppState.panEnabled?"Pan AÇIK":"Pan";elements.panBtn.classList.toggle('active',AppState.panEnabled);elements.kickSoloBtn.classList.toggle('active',AppState.kickSolo);}
 function playKick(beat){if(!isAudioContextValid())return;const pattern=patternMap[AppState.kickSettings.pattern],intensity=AppState.rhythmIntensity/100;if(!pattern||!pattern[beat%pattern.length]||Math.random()>intensity)return;const now=AppState.audioCtx.currentTime,punch=AppState.kickSettings.punch/100,bass=AppState.kickSettings.bass/100,distortion=AppState.kickSettings.distortion/100,sweep=AppState.kickSettings.sweep/100,baseFreq=50+40*punch*(1-bass*0.3),endFreq=25+20*(1-sweep)*(1-bass*0.5),sweepTime=0.08+0.08*sweep+bass*0.12,clickFreq=1200+800*punch,clickTime=0.008,bassBoost=0.5+bass*0.8;try{kickOsc.frequency.setValueAtTime(baseFreq,now);kickOsc.frequency.exponentialRampToValueAtTime(endFreq,now+sweepTime);kickGain.gain.setValueAtTime(1.5*bassBoost,now);kickGain.gain.exponentialRampToValueAtTime(0.001,now+sweepTime+0.15+bass*0.1);kickClickOsc.frequency.setValueAtTime(clickFreq,now);kickClickGain.gain.setValueAtTime(punch*1.2,now);kickClickGain.gain.exponentialRampToValueAtTime(0.001,now+clickTime);const filterFreq=800+400*punch-bass*600,filterQ=1+bass*2;kickFilter.frequency.setValueAtTime(filterFreq,now);kickFilter.frequency.exponentialRampToValueAtTime(60+bass*40,now+sweepTime);kickFilter.Q.setValueAtTime(filterQ,now);const distortionAmount=15+distortion*20;updateKickDistortionCurve(distortionAmount);kickCompressor.threshold.value=-30-punch*10-bass*5;}catch(error){console.error('Kick çalma hatası:',error);}}
 function cleanupOscillators(){if(AppState.oscillators.length>0){AppState.oscillators.forEach(osc=>{try{if(osc.stop)osc.stop();if(osc.disconnect)osc.disconnect();if(osc.modulator){try{osc.modulator.stop();osc.modulator.disconnect();}catch(e){console.log('Modülatör temizleme hatası:',e);}}if(osc.pulseWidth){try{osc.pulseWidth.disconnect();}catch(e){console.log('Pulse genişlik temizleme hatası:',e);}}if(osc.modGain){try{osc.modGain.disconnect();}catch(e){console.log('Mod kazancı temizleme hatası:',e);}}}catch(e){console.log('Osilatör temizleme hatası:',e);}});AppState.oscillators=[];}}
-function cleanupAudioNodes(){Object.values(audioNodes).forEach(node=>{if(node&&typeof node.disconnect==='function'){try{node.disconnect();if((node===audioNodes.autoWahLFO||node===audioNodes.flangerLFO||node===audioNodes.chorusLFO||node===audioNodes.tremoloLFO)&&node.stop){node.stop();}}catch(e){console.log('Ses düğümü temizleme hatası:',e);}}});audioNodes={};lfoStarted=false;const kickNodes=[kickOsc,kickGain,kickClickOsc,kickClickGain,kickFilter,kickDistortion,kickCompressor];kickNodes.forEach(node=>{if(node){try{node.disconnect();if(node.stop){node.stop();}}catch(e){console.log('Kick düğümü temizleme hatası:',e);}}});kickOsc=null;kickGain=null;kickClickOsc=null;kickClickGain=null;kickFilter=null;kickDistortion=null;kickCompressor=null;}
+function cleanupAudioNodes(){
+    // LFO'ları durdur
+    if (audioNodes.autoWahLFO && audioNodes.autoWahLFO.stop) {
+        try { audioNodes.autoWahLFO.stop(); } catch(e) {}
+    }
+    if (audioNodes.flangerLFO && audioNodes.flangerLFO.stop) {
+        try { audioNodes.flangerLFO.stop(); } catch(e) {}
+    }
+    if (audioNodes.chorusLFO && audioNodes.chorusLFO.stop) {
+        try { audioNodes.chorusLFO.stop(); } catch(e) {}
+    }
+    if (audioNodes.tremoloLFO && audioNodes.tremoloLFO.stop) {
+        try { audioNodes.tremoloLFO.stop(); } catch(e) {}
+    }
+    
+    // Tüm ses düğümlerinin bağlantısını kes
+    Object.values(audioNodes).forEach(node=>{
+        if(node&&typeof node.disconnect==='function'){
+            try{node.disconnect();}catch(e){console.log('Ses düğümü bağlantı kesme hatası:',e);}
+        }
+    });
+    audioNodes={};
+    lfoStarted=false;
+    
+    // Kick düğümlerini temizle
+    const kickNodes=[kickOsc,kickGain,kickClickOsc,kickClickGain,kickFilter,kickDistortion,kickCompressor];
+    kickNodes.forEach(node=>{
+        if(node){
+            try{
+                node.disconnect();
+                if(node.stop){node.stop();}
+            }catch(e){console.log('Kick düğümü temizleme hatası:',e);}
+        }
+    });
+    kickOsc=null;kickGain=null;kickClickOsc=null;kickClickGain=null;kickFilter=null;kickDistortion=null;kickCompressor=null;
+}
 function createWaveShaper(amount){try{const ws=AppState.audioCtx.createWaveShaper(),n=4096,curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=(3+amount)*Math.tanh(x*5)/(Math.PI+amount*Math.abs(x));}ws.curve=curve;return ws;}catch(error){console.error('WaveShaper oluşturma hatası:',error);return null;}}
 function createSoftWaveShaper(amount){try{const ws=AppState.audioCtx.createWaveShaper(),n=4096,curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=Math.tanh(x*(3+amount*0.1))*0.8;}ws.curve=curve;ws.oversample='4x';return ws;}catch(error){console.error('Yumuşak WaveShaper oluşturma hatası:',error);return null;}}
 function updateKickDistortionCurve(amount){if(!kickDistortion)return;try{const n=4096,curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i-n/2)/(n/2);curve[i]=Math.tanh(x*(3+amount*0.1))*0.8;}kickDistortion.curve=curve;}catch(error){console.error('Kick distorsiyon güncelleme hatası:',error);}}
@@ -175,9 +219,65 @@ function handleMouseDown(e){if(!isAudioContextValid()){showStatus('Lütfen önce
 function handleMouseMove(e){if(e.buttons===1){handleTouchPosition(e.clientX,e.clientY);}}
 function updatePan(position){if(!audioNodes.panner)return;safeAudioOperation(()=>{audioNodes.panner.pan.setTargetAtTime(position,AppState.audioCtx.currentTime,0.01);if(elements.panDisplay){const panPercent=Math.round(position*100);elements.panDisplay.textContent=`Pan:${panPercent}%`;}});}
 async function startSynth(){try{if(AppState.audioCtx){if(AppState.audioCtx.state==='suspended'){await AppState.audioCtx.resume();showStatus('Ses geri döndü, kulakların hazır mı?');return;}else if(AppState.audioCtx.state==='running'){showStatus('Synth sıfırlanıyor, biraz sabır...');cleanupOscillators();createAudioNodes();showStatus('Synth sıfırlandı, temiz başlangıç!');return;}}AppState.audioCtx=new(window.AudioContext||window.webkitAudioContext)();await AppState.audioCtx.resume();createAudioNodes();AppState.isPlaying=true;updateButtonStates();startWaveAnimation();showStatus('Synth başladı! Efektlerle eğlenmeye başla! 🎹');}catch(e){console.error('Başlatma hatası:',e);showStatus('Ses başlatılamadı: '+e.message+' - Tekrar deneyelim!');}}
-async function stopSynth(){try{cleanupOscillators();cleanupAudioNodes(); // Ekledim: Tüm düğümleri temizle
-stopRhythm();stopWaveAnimation();if(AppState.audioCtx&&AppState.audioCtx.state!=='closed'){await AppState.audioCtx.close(); // Değiştirdim: suspend yerine close
-AppState.audioCtx=null;}AppState.isPlaying=false;updateButtonStates();showStatus('Synth durdu, sessizliğe hoş geldin! 🤫');}catch(e){console.error('Durdurma hatası:',e);if(AppState.audioCtx){await AppState.audioCtx.close();AppState.audioCtx=null;}AppState.isPlaying=false;updateButtonStates();showStatus('Synth temizlikle durdu, her şey tertemiz! 🧹');}}
+async function stopSynth(){
+    try {
+        cleanupOscillators();
+        stopRhythm();
+        stopWaveAnimation();
+        
+        if (AppState.audioCtx && AppState.audioCtx.state !== 'closed') {
+            // Master gain'ı sıfırla (fade-out efekti için)
+            if (AppState.masterGain) {
+                const now = AppState.audioCtx.currentTime;
+                AppState.masterGain.gain.setTargetAtTime(0.001, now, 0.02);
+                
+                // Kısa bir bekleme süresi ekle (fade-out için)
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            // Tüm ses düğümlerinin bağlantısını kes
+            cleanupAudioNodes();
+            
+            // Audio context'i suspend et
+            await AppState.audioCtx.suspend();
+            
+            // State'i temizle
+            AppState.masterGain = null;
+            AppState.synthGain = null;
+            AppState.kickGain = null;
+            AppState.effectsGain = null;
+        }
+        
+        AppState.isPlaying = false;
+        updateButtonStates();
+        showStatus('Synth durdu, sessizliğe hoş geldin! 🤫');
+        
+    } catch (e) {
+        console.error('Durdurma hatası:', e);
+        
+        // Hata durumunda daha agresif temizlik
+        if (AppState.audioCtx) {
+            try {
+                cleanupOscillators();
+                cleanupAudioNodes();
+                await AppState.audioCtx.close();
+            } catch (err) {
+                console.error('Temizleme hatası:', err);
+            }
+            AppState.audioCtx = null;
+        }
+        
+        // State'i sıfırla
+        AppState.masterGain = null;
+        AppState.synthGain = null;
+        AppState.kickGain = null;
+        AppState.effectsGain = null;
+        AppState.isPlaying = false;
+        
+        updateButtonStates();
+        showStatus('Synth temizlikle durdu, her şey tertemiz! 🧹');
+    }
+}
 function toggleControls(){if(!elements.controls||!elements.toggleControls)return;elements.controls.classList.toggle('expanded');elements.toggleControls.textContent=elements.controls.classList.contains('expanded')?'✕':'⚙️';}
 function requestMotionPermission(){if(typeof DeviceOrientationEvent.requestPermission==='function'){if(elements.permissionModal){elements.permissionModal.style.display='flex';}}else{startMotionControl();}}
 function startMotionControl(){window.addEventListener("deviceorientation",handleOrientation);AppState.motionEnabled=true;if(elements.motionDisplay){elements.motionDisplay.style.display='block';}updateButtonStates();showStatus('Hareket aktif! Cihazı eğerek perdeyi kontrol et, dikkatli ol! 📱');}
